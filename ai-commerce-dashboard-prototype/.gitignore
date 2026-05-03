@@ -1,0 +1,14 @@
+node_modules/
+dist/
+build/
+.turbo/
+.vite/
+coverage/
+.env
+.env.local
+.env.*.local
+*.log
+.DS_Store
+postgres_data/
+minio_data/
+

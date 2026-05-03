@@ -1,0 +1,8 @@
+{
+  "extends": "@ai-commerce-ops/config/tsconfig/node",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist"
+  },
+  "include": ["src/**/*.ts"]
+}
