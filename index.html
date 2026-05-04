@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AI Commerce Ops Dashboard</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="主导航">
+        <div class="brand">
+          <div class="brand-mark">AI</div>
+          <div>
+            <strong>Commerce Ops</strong>
+            <span>跨境电商中控台</span>
+          </div>
+        </div>
+
+        <section class="user-card" aria-label="用户登录">
+          <div class="user-avatar">未</div>
+          <div class="user-info">
+            <strong>未登录</strong>
+            <span>登录后同步账号、审批和自动化</span>
+          </div>
+          <button class="login-button" id="loginBtn">登录</button>
+        </section>
+
+        <nav class="nav-list" id="navList">
+          <section class="nav-section">
+            <p class="nav-title">电商运营</p>
+            <button class="nav-item active" data-page="overview"><i data-lucide="layout-dashboard"></i><span>总览</span></button>
+            <button class="nav-item" data-page="orders"><i data-lucide="shopping-bag"></i><span>订单</span></button>
+            <button class="nav-item" data-page="products"><i data-lucide="package-search"></i><span>商品</span></button>
+            <button class="nav-item" data-page="messages"><i data-lucide="messages-square"></i><span>消息</span><strong class="nav-bubble">64</strong></button>
+          </section>
+
+          <section class="nav-section">
+            <p class="nav-title">媒体运营</p>
+            <button class="nav-item nav-featured" data-page="media"><i data-lucide="megaphone"></i><span>运营中心</span><strong class="nav-bubble hot">126</strong></button>
+            <button class="nav-item" data-page="mediaCreative"><i data-lucide="clapperboard"></i><span>图像视频生成</span></button>
+            <button class="nav-item" data-page="mediaDrafts"><i data-lucide="file-check-2"></i><span>草稿审核发布</span><strong class="nav-bubble warn-bubble">4</strong></button>
+            <button class="nav-item" data-page="automation"><i data-lucide="workflow"></i><span>自动化</span></button>
+          </section>
+
+          <section class="nav-section">
+            <p class="nav-title">系统设置</p>
+            <button class="nav-item" data-page="accounts"><i data-lucide="key-round"></i><span>平台账号管理</span><strong class="nav-bubble warn-bubble">3</strong></button>
+            <button class="nav-item nav-danger" data-page="autopilot"><i data-lucide="bot"></i><span>自动托管模式</span><em>高风险</em></button>
+            <button class="nav-item" data-page="approval"><i data-lucide="shield-check"></i><span>审批</span></button>
+          </section>
+        </nav>
+
+        <section class="sidebar-status" aria-label="系统状态">
+          <div class="status-row"><span class="dot ok"></span><span>AI 调度层在线</span></div>
+          <div class="status-row"><span class="dot warn"></span><span>3 个平台待授权</span></div>
+        </section>
+      </aside>
+
+      <main class="main">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow" id="pageEyebrow">今日运营中心</p>
+            <h1 id="pageTitle">统一管理电商平台、媒体运营和系统设置</h1>
+          </div>
+          <div class="topbar-actions">
+            <button class="icon-button" title="刷新数据" id="refreshBtn"><i data-lucide="refresh-cw"></i></button>
+            <button class="icon-button" title="通知"><i data-lucide="bell"></i><span class="badge">8</span></button>
+            <button class="primary-button" data-page-shortcut="automation"><i data-lucide="plus"></i><span>新建自动化</span></button>
+          </div>
+        </header>
+
+        <section class="command-center" aria-label="AI 自然语言指挥台">
+          <div class="command-copy">
+            <div class="section-title"><i data-lucide="sparkles"></i><span>AI 指挥台</span></div>
+            <p id="commandHint">输入运营目标或平台操作，AI 会先分析，再把高风险动作放入审批队列。</p>
+          </div>
+          <div class="command-box">
+            <input id="commandInput" value="帮我汇总今天电商订单、媒体互动和待审核发布内容" aria-label="自然语言命令" />
+            <button class="primary-button" id="runCommandBtn"><i data-lucide="send"></i><span>执行</span></button>
+          </div>
+        </section>
+
+        <section id="pageContent" class="page-content"></section>
+      </main>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="./app.js"></script>
+  </body>
+</html>
