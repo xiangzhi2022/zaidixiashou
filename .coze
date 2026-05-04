@@ -1,14 +1,10 @@
 [project]
-entrypoint = "index.html"
-requires = [ "python-3.12" ]
-template = "native-static"
-version = "0.0.20"
-appliedPatches = [ ]
+requires = ["nodejs-24"]
 
 [dev]
-build = [ ]
-run = [ "python", "-m", "http.server", "5000", "--bind", "0.0.0.0" ]
+build = ["pnpm", "install"]
+run = ["bash", "/workspace/projects/start.sh"]
 
 [deploy]
-build = [ ]
-run = [ "python", "-m", "http.server", "5000", "--bind", "0.0.0.0" ]
+build = ["bash", "-c", "pnpm install && pnpm --filter @ai-commerce-ops/shared build && pnpm --filter @ai-commerce-ops/connectors build && pnpm --filter api build && pnpm --filter web build"]
+run = ["bash", "-c", "cd /workspace/projects/apps/api && node dist/main.js & cd /workspace/projects && npx serve apps/web/dist -l 5000"]
