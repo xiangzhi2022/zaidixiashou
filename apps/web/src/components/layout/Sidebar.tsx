@@ -1,4 +1,4 @@
-import { BarChart3, Bot, FileCheck2, ImagePlus, KeyRound, LayoutDashboard, MessageSquare, PackageSearch, ShieldCheck, ShoppingBag, Workflow } from 'lucide-react';
+import { BarChart3, Bot, CreditCard, FileCheck2, ImagePlus, KeyRound, LayoutDashboard, MessageSquare, PackageSearch, ShieldCheck, ShoppingBag, UserPlus, Workflow, Cpu } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 
 const navSections = [
@@ -9,6 +9,12 @@ const navSections = [
       { to: '/commerce/orders', label: '订单', icon: ShoppingBag },
       { to: '/commerce/products', label: '商品', icon: PackageSearch },
       { to: '/commerce/messages', label: '消息', icon: MessageSquare, badge: '64' }
+    ]
+  },
+  {
+    title: '获客',
+    items: [
+      { to: '/acquisition', label: '获客中心', icon: UserPlus, badge: '326' }
     ]
   },
   {
@@ -24,6 +30,8 @@ const navSections = [
     title: '系统设置',
     items: [
       { to: '/settings/accounts', label: '平台账号管理', icon: KeyRound, badge: '3' },
+      { to: '/settings/ai-models', label: 'AI模型设置', icon: Cpu },
+      { to: '/settings/billing', label: '订阅与账单', icon: CreditCard },
       { to: '/settings/autopilot', label: '自动托管模式', icon: Bot },
       { to: '/settings/approval', label: '审批', icon: ShieldCheck }
     ]

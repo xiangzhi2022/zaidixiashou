@@ -8,3 +8,7 @@ run = ["bash", "/workspace/projects/start.sh"]
 [deploy]
 build = ["bash", "-c", "pnpm install && pnpm --filter @ai-commerce-ops/shared build && pnpm --filter @ai-commerce-ops/connectors build && pnpm --filter api build && pnpm --filter web build"]
 run = ["bash", "-c", "cd /workspace/projects/apps/api && node dist/main.js & cd /workspace/projects && npx serve apps/web/dist -l 5000"]
+
+[tasks]
+# 一键同步代码到 GitHub
+sync = ["bash", "-c", "git add . && git commit -m 'chore: 自动同步最新代码' && git push"]

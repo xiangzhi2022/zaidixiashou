@@ -13,6 +13,11 @@ import { AutomationsModule } from './modules/automations/automations.module.js';
 import { ConnectorsModule } from './modules/connectors/connectors.module.js';
 import { AiCommandModule } from './modules/ai-command/ai-command.module.js';
 import { AuditModule } from './modules/audit/audit.module.js';
+import { PaymentModule } from './modules/payment/payment.module.js';
+import { SubscriptionModule } from './modules/subscription/subscription.module.js';
+import { CdpModule } from './modules/cdp/cdp.module.js';
+import { AcquisitionModule } from './modules/acquisition/acquisition.module.js';
+import { AiKeysModule } from './modules/ai-keys/ai-keys.module.js';
 import { PrismaModule } from './infrastructure/prisma/prisma.module.js';
 import { RedisModule } from './infrastructure/redis/redis.module.js';
 import { QueueModule } from './infrastructure/queue/queue.module.js';
@@ -34,7 +39,12 @@ import { QueueModule } from './infrastructure/queue/queue.module.js';
     AutomationsModule,
     ConnectorsModule,
     AiCommandModule,
-    AuditModule
+    AuditModule,
+    PaymentModule,
+    SubscriptionModule,
+    CdpModule,
+    AcquisitionModule,
+    AiKeysModule,
   ]
 })
 export class AppModule {}

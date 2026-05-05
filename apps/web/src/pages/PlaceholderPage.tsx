@@ -1,14 +1,14 @@
 interface PlaceholderPageProps {
   title: string;
-  moduleName: string;
+  moduleName?: string;
 }
 
-export function PlaceholderPage({ title, moduleName }: PlaceholderPageProps) {
+export default function PlaceholderPage({ title, moduleName }: PlaceholderPageProps) {
   return (
     <section className="page-card">
-      <p className="eyebrow">{moduleName}</p>
+      {moduleName && <p className="eyebrow">{moduleName}</p>}
       <h2>{title}</h2>
-      <p>这是 M0 路由占位页。M1 会接入 Mock API 并还原完整静态原型 UI。</p>
+      <p>页面开发中，即将接入完整功能。</p>
     </section>
   );
 }
