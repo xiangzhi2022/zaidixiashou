@@ -103,6 +103,22 @@
       },
       "title": "审批",
       "size": "web"
+    },
+    {
+      "type": "html",
+      "options": {
+        "path": ".cozeproj/prototype/web/login.html"
+      },
+      "title": "登录",
+      "size": "web"
+    },
+    {
+      "type": "html",
+      "options": {
+        "path": ".cozeproj/prototype/web/settings-billing.html"
+      },
+      "title": "订阅与账单",
+      "size": "web"
     }
   ]
 }
