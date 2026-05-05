@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/jquery/jquery-3.7.1.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/lucide/lucide-1.11.0.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/tailwindcss/tailwindcss-browser-4.2.4.min.js"></script>
+
+  <style type="text/tailwindcss">
+    @theme {
+      /* === 品牌色 === */
+      --color-primary:              #2F6BFF;
+      --color-primary-container:    #DBE8FF;
+      --color-on-primary:           #ffffff;
+      /* === 背景 / 表面 === */
+      --color-background:                 #F6F8FB;
+      --color-surface-container-lowest:   #EDF0F5;
+      --color-surface:                    #FFFFFF;
+      --color-surface-container:          #EDF0F5;
+      --color-surface-container-high:     #E1E6EF;
+      --color-surface-container-highest:  #D5DBE8;
+      /* === 文字 === */
+      --color-on-surface:           #152033;
+      --color-on-surface-variant:   #637089;
+      /* === 功能色 === */
+      --color-success:  #16A37B;
+      --color-error:    #E5484D;
+      --color-warning:  #E5A000;
+      /* === 边框 === */
+      --color-outline:          #C4CDD9;
+      --color-outline-variant:  #E6EAF2;
+      /* === 圆角 === */
+      --radius-sm:   0.25rem;
+      --radius-md:   0.375rem;
+      --radius-lg:   0.5rem;
+      --radius-xl:   0.75rem;
+      --radius-2xl:  1rem;
+      --radius-full: 9999px;
+      /* === 阴影 === */
+      --shadow-card:   0 2px 8px rgba(0,0,0,0.08);
+      --shadow-float:  0 10px 25px rgba(0,0,0,0.1);
+      --shadow-dialog: 0 25px 50px rgba(0,0,0,0.15);
+      /* === 字体 === */
+      --font-sans: "Inter", "Noto Sans SC", system-ui, sans-serif;
+    }
+  </style>
+
+  <link href="https://lf-code-agent.coze.cn/obj/x-ai-cn/fonts/google/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+
+  <!-- 图片兜底 -->
+  <script>
+    document.addEventListener('error', function (e) {
+      const img = e.target;
+      if (img.tagName !== 'IMG' || img.dataset.fallback) return;
+      img.dataset.fallback = '1';
+      const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const cat = img.getAttribute('data-category') || '其他';
+      const alt = img.getAttribute('alt') || '';
+      const label = esc(alt.length > 8 ? alt.slice(0, 8) + '…' : alt);
+      const icons = { '人物': '👤', '自然风景': '🏞', '动物': '🐾', '建筑城市': '🏙', '运动体育': '⚽', '交通工具': '🚗', '食物': '🍽', '服饰时尚': '👗', '商业科技': '💼', '游戏娱乐': '🎮', '艺术': '🎨', '其他': '🖼' };
+      const icon = icons[cat] || '🖼';
+      const w = img.width || 400, h = img.height || 300;
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><rect width="100%" height="100%" fill="%23f3f4f6"/><text x="50%" y="45%" text-anchor="middle" font-size="${Math.min(w, h) * 0.18}" dominant-baseline="central">${icon}</text><text x="50%" y="68%" text-anchor="middle" font-size="${Math.min(w, h) * 0.07}" fill="%239ca3af" font-family="system-ui,sans-serif" dominant-baseline="central">${label}</text></svg>`;
+      img.src = 'data:image/svg+xml,' + svg;
+    }, true);
+  </script>
+</head>
+
+<body class="bg-background text-on-surface font-sans">
+
+  <!-- @nav:start -->
+  <header class="bg-surface sticky top-0 z-40 h-14 flex items-center justify-between px-5 border-b border-outline-variant/20">
+    <div class="flex items-center gap-2.5">
+      <i data-lucide="zap" class="w-5 h-5 text-primary"></i>
+      <span class="font-bold text-base text-on-surface">AI Commerce Ops</span>
+    </div>
+    <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2 bg-surface-container rounded-md px-3 py-1.5 text-sm text-on-surface-variant">
+        <i data-lucide="terminal" class="w-4 h-4"></i>
+        <span>输入运营目标，AI 帮你执行</span>
+      </div>
+      <button class="relative p-2 rounded-md hover:bg-surface-container transition-colors">
+        <i data-lucide="bell" class="w-4 h-4 text-on-surface-variant"></i>
+        <span class="absolute top-1 right-1 w-2 h-2 bg-error rounded-full"></span>
+      </button>
+      <div class="w-8 h-8 bg-primary/10 text-primary rounded-full flex items-center justify-center text-sm font-medium">初</div>
+    </div>
+  </header>
+
+  <div class="flex" style="height: calc(100vh - 3.5rem)">
+    <aside class="w-56 shrink-0 bg-surface border-r border-outline-variant/20 overflow-y-auto">
+      <div class="p-3 space-y-0.5">
+        <p class="px-3 py-1 text-xs font-medium text-on-surface-variant/60 uppercase tracking-wider">电商运营</p>
+        <a href="home.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="layout-dashboard" class="w-4 h-4"></i>总览
+        </a>
+        <a href="orders.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="shopping-bag" class="w-4 h-4"></i>订单
+        </a>
+        <a href="products.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="package-search" class="w-4 h-4"></i>商品
+        </a>
+        <a href="messages.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors relative">
+          <i data-lucide="messages-square" class="w-4 h-4"></i>消息
+          <span class="ml-auto bg-error text-white text-xs rounded-full px-1.5 py-0.5 leading-none">64</span>
+        </a>
+
+        <p class="px-3 py-1 mt-2 text-xs font-medium text-on-surface-variant/60 uppercase tracking-wider">获客</p>
+        <a href="acquisition.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="user-plus" class="w-4 h-4"></i>获客中心
+        </a>
+
+        <p class="px-3 py-1 mt-2 text-xs font-medium text-on-surface-variant/60 uppercase tracking-wider">媒体运营</p>
+        <a href="media.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors relative">
+          <i data-lucide="megaphone" class="w-4 h-4"></i>运营中心
+          <span class="ml-auto bg-warning text-on-surface text-xs rounded-full px-1.5 py-0.5 leading-none">4</span>
+        </a>
+        <a href="media-creative.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md bg-primary/10 text-primary text-sm font-medium transition-colors" aria-current="page">
+          <i data-lucide="clapperboard" class="w-4 h-4"></i>图像视频生成
+        </a>
+        <a href="media-drafts.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors relative">
+          <i data-lucide="file-check" class="w-4 h-4"></i>草稿审核发布
+          <span class="ml-auto bg-warning text-on-surface text-xs rounded-full px-1.5 py-0.5 leading-none">4</span>
+        </a>
+        <a href="automation.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="workflow" class="w-4 h-4"></i>自动化
+        </a>
+
+        <p class="px-3 py-1 mt-2 text-xs font-medium text-on-surface-variant/60 uppercase tracking-wider">系统设置</p>
+        <a href="settings-accounts.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors relative">
+          <i data-lucide="key-round" class="w-4 h-4"></i>平台账号管理
+          <span class="ml-auto bg-warning text-on-surface text-xs rounded-full px-1.5 py-0.5 leading-none">3</span>
+        </a>
+        <a href="settings-ai-models.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="brain-circuit" class="w-4 h-4"></i>AI 模型设置
+        </a>
+        <a href="settings-autopilot.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="bot" class="w-4 h-4"></i>自动托管
+        </a>
+        <a href="settings-approval.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="shield-check" class="w-4 h-4"></i>审批
+        </a>
+      </div>
+    </aside>
+  <!-- @nav:end -->
+
+  <main class="flex-1 min-w-0 overflow-y-auto bg-background p-6">
+    <!-- @main-content:start -->
+
+    <!-- 页面标题 -->
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h1 class="text-2xl font-bold text-on-surface">图像视频生成</h1>
+        <p class="text-sm text-on-surface-variant mt-1">AI 内容创作工作台，一键生成图文配图与视频脚本</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <button id="btn-history" class="bg-surface-container text-on-surface px-4 py-2 rounded-md text-sm font-medium hover:bg-surface-container-high active:scale-[0.98] transition-all inline-flex items-center gap-2">
+          <i data-lucide="history" class="w-3.5 h-3.5"></i>历史记录
+        </button>
+        <button id="btn-drafts" class="bg-surface-container text-on-surface px-4 py-2 rounded-md text-sm font-medium hover:bg-surface-container-high active:scale-[0.98] transition-all inline-flex items-center gap-2">
+          <i data-lucide="file-check" class="w-3.5 h-3.5"></i>草稿箱
+        </button>
+      </div>
+    </div>
+
+    <!-- 上方双列：生成器表单 -->
+    <div class="grid grid-cols-2 gap-6 mb-6">
+
+      <!-- 左列：图文与配图生成卡片 -->
+      <div class="bg-surface rounded-lg shadow-card p-5">
+        <div class="flex items-center gap-2 mb-4">
+          <div class="w-8 h-8 bg-primary/10 rounded-md flex items-center justify-center">
+            <i data-lucide="image" class="w-4 h-4 text-primary"></i>
+          </div>
+          <div>
+            <h2 class="text-base font-semibold text-on-surface">图文与配图生成</h2>
+            <p class="text-xs text-on-surface-variant">AI 生成标题、文案与配图建议</p>
+          </div>
+        </div>
+
+        <div class="space-y-3">
+          <div>
+            <label class="block text-sm font-medium text-on-surface mb-1.5">选题输入</label>
+            <input id="input-topic" type="text" value="旅行收纳主题" class="w-full bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors" placeholder="输入选题关键词..." />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-on-surface mb-1.5">发布平台</label>
+            <select id="select-image-platform" class="w-full bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors appearance-none cursor-pointer">
+              <option value="xiaohongshu">小红书</option>
+              <option value="douyin">抖音</option>
+              <option value="tiktok">TikTok</option>
+              <option value="instagram">Instagram</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-on-surface mb-1.5">生成方向</label>
+            <textarea id="input-image-direction" rows="3" class="w-full bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors resize-none" placeholder="描述内容风格、目标人群、调性要求...">旅行收纳技巧分享，实用干货型，年轻女性受众，清新简约风格</textarea>
+          </div>
+
+          <button id="btn-generate-image" class="w-full bg-primary text-on-primary px-4 py-2.5 rounded-md text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all inline-flex items-center justify-center gap-2">
+            <i data-lucide="sparkles" class="w-4 h-4"></i>生成图文配图
+          </button>
+        </div>
+      </div>
+
+      <!-- 右列：视频脚本与分镜卡片 -->
+      <div class="bg-surface rounded-lg shadow-card p-5">
+        <div class="flex items-center gap-2 mb-4">
+          <div class="w-8 h-8 bg-primary/10 rounded-md flex items-center justify-center">
+            <i data-lucide="video" class="w-4 h-4 text-primary"></i>
+          </div>
+          <div>
+            <h2 class="text-base font-semibold text-on-surface">视频脚本与分镜</h2>
+            <p class="text-xs text-on-surface-variant">AI 生成视频脚本与分镜设计</p>
+          </div>
+        </div>
+
+        <div class="space-y-3">
+          <div>
+            <label class="block text-sm font-medium text-on-surface mb-1.5">选题输入</label>
+            <input id="input-video-topic" type="text" value="旅行收纳主题" class="w-full bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors" placeholder="输入视频选题..." />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-on-surface mb-1.5">发布平台</label>
+            <select id="select-video-platform" class="w-full bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors appearance-none cursor-pointer">
+              <option value="douyin">抖音</option>
+              <option value="tiktok">TikTok</option>
+              <option value="instagram">Instagram / IG Reels</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-on-surface mb-1.5">脚本要求</label>
+            <textarea id="input-video-requirement" rows="3" class="w-full bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors resize-none" placeholder="描述视频风格、时长要求、目标受众...">30秒短视频，痛点开场+解决方案+互动引导，节奏紧凑，生活化场景</textarea>
+          </div>
+
+          <button id="btn-generate-video" class="w-full bg-primary text-on-primary px-4 py-2.5 rounded-md text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all inline-flex items-center justify-center gap-2">
+            <i data-lucide="sparkles" class="w-4 h-4"></i>生成脚本分镜
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 下方双列：生成结果 -->
+    <div class="grid grid-cols-2 gap-6 mb-6">
+
+      <!-- 左列：图文生成结果 -->
+      <div id="image-result-card" class="bg-surface rounded-lg shadow-card p-5">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-2">
+            <i data-lucide="image" class="w-4 h-4 text-primary"></i>
+            <h2 class="text-base font-semibold text-on-surface">图文生成结果</h2>
+          </div>
+          <div class="flex items-center gap-2">
+            <button id="btn-image-save" class="text-primary text-sm font-medium hover:underline inline-flex items-center gap-1">
+              <i data-lucide="save" class="w-3.5 h-3.5"></i>保存草稿
+            </button>
+            <button id="btn-image-edit" class="text-primary text-sm font-medium hover:underline inline-flex items-center gap-1">
+              <i data-lucide="pencil" class="w-3.5 h-3.5"></i>编辑
+            </button>
+            <button id="btn-image-submit" class="text-primary text-sm font-medium hover:underline inline-flex items-center gap-1">
+              <i data-lucide="send" class="w-3.5 h-3.5"></i>提交审核
+            </button>
+          </div>
+        </div>
+
+        <div class="space-y-3">
+          <!-- 列表-小红书标题A -->
+          <div class="bg-surface-container rounded-md p-3">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="text-xs font-medium text-on-surface-variant uppercase tracking-wide">标题</span>
+              <span class="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-success/15 text-success">已生成</span>
+            </div>
+            <p class="text-sm font-medium text-on-surface">🧳 旅行收纳这样做！5个技巧让你的行李箱多装一倍</p>
+          </div>
+
+          <!-- 列表-配图建议 -->
+          <div class="bg-surface-container rounded-md p-3">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="text-xs font-medium text-on-surface-variant uppercase tracking-wide">配图建议</span>
+              <span class="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-success/15 text-success">已生成</span>
+            </div>
+            <div class="grid grid-cols-3 gap-2 mt-2">
+              <div class="rounded-md overflow-hidden aspect-square">
+                <img src="https://images.unsplash.com/photo-1553531889-56cc480bf5f5?w=200&h=200&fit=crop" alt="行李箱收纳整理" data-category="商业科技" class="w-full h-full object-cover" />
+              </div>
+              <div class="rounded-md overflow-hidden aspect-square">
+                <img src="https://images.unsplash.com/photo-1596422846543-75c6fc197f07?w=200&h=200&fit=crop" alt="旅行收纳用品" data-category="服饰时尚" class="w-full h-full object-cover" />
+              </div>
+              <div class="rounded-md overflow-hidden aspect-square">
+                <img src="https://images.unsplash.com/photo-1522199710521-72d69614c702?w=200&h=200&fit=crop" alt="行李箱内部布局" data-category="商业科技" class="w-full h-full object-cover" />
+              </div>
+            </div>
+            <p class="text-xs text-on-surface-variant mt-2">建议采用俯拍收纳前后对比图，突出整理效果的视觉冲击力</p>
+          </div>
+
+          <!-- 列表-话题标签 -->
+          <div class="bg-surface-container rounded-md p-3">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="text-xs font-medium text-on-surface-variant uppercase tracking-wide">话题标签</span>
+              <span class="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-success/15 text-success">已生成</span>
+            </div>
+            <div class="flex flex-wrap gap-1.5 mt-1">
+              <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">#旅行收纳</span>
+              <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">#行李箱整理</span>
+              <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">#收纳技巧</span>
+              <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">#出行必备</span>
+              <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">#旅行攻略</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 右列：视频生成结果 -->
+      <div id="video-result-card" class="bg-surface rounded-lg shadow-card p-5">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-2">
+            <i data-lucide="video" class="w-4 h-4 text-primary"></i>
+            <h2 class="text-base font-semibold text-on-surface">视频脚本分镜</h2>
+          </div>
+          <div class="flex items-center gap-2">
+            <button id="btn-video-save" class="text-primary text-sm font-medium hover:underline inline-flex items-center gap-1">
+              <i data-lucide="save" class="w-3.5 h-3.5"></i>保存草稿
+            </button>
+            <button id="btn-video-edit" class="text-primary text-sm font-medium hover:underline inline-flex items-center gap-1">
+              <i data-lucide="pencil" class="w-3.5 h-3.5"></i>编辑
+            </button>
+            <button id="btn-video-submit" class="text-primary text-sm font-medium hover:underline inline-flex items-center gap-1">
+              <i data-lucide="send" class="w-3.5 h-3.5"></i>提交审核
+            </button>
+          </div>
+        </div>
+
+        <div class="space-y-3">
+          <!-- 列表-镜头1 痛点开场 -->
+          <div class="bg-surface-container rounded-md p-3">
+            <div class="flex items-center justify-between mb-1.5">
+              <div class="flex items-center gap-2">
+                <span class="inline-flex items-center justify-center w-5 h-5 bg-primary text-on-primary rounded text-xs font-bold">1</span>
+                <span class="text-sm font-medium text-on-surface">痛点开场</span>
+              </div>
+              <span class="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-primary/10 text-primary">0-3s</span>
+            </div>
+            <p class="text-sm text-on-surface mt-1">画面：行李箱打开后一片混乱，衣物散落各处</p>
+            <p class="text-xs text-on-surface-variant mt-1">旁白："每次出门收拾行李，是不是都像打仗一样？"</p>
+          </div>
+
+          <!-- 列表-镜头2 整理过程 -->
+          <div class="bg-surface-container rounded-md p-3">
+            <div class="flex items-center justify-between mb-1.5">
+              <div class="flex items-center gap-2">
+                <span class="inline-flex items-center justify-center w-5 h-5 bg-primary text-on-primary rounded text-xs font-bold">2</span>
+                <span class="text-sm font-medium text-on-surface">整理过程</span>
+              </div>
+              <span class="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-primary/10 text-primary">3-22s</span>
+            </div>
+            <p class="text-sm text-on-surface mt-1">画面：逐步展示5个收纳技巧——卷衣法、分类袋、鞋套收纳、缝隙填充、顶层配件</p>
+            <p class="text-xs text-on-surface-variant mt-1">旁白："5个收纳技巧，让你的行李箱瞬间多出一倍空间！"</p>
+          </div>
+
+          <!-- 列表-镜头3 互动引导 -->
+          <div class="bg-surface-container rounded-md p-3">
+            <div class="flex items-center justify-between mb-1.5">
+              <div class="flex items-center gap-2">
+                <span class="inline-flex items-center justify-center w-5 h-5 bg-primary text-on-primary rounded text-xs font-bold">3</span>
+                <span class="text-sm font-medium text-on-surface">互动引导</span>
+              </div>
+              <span class="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-primary/10 text-primary">22-30s</span>
+            </div>
+            <p class="text-sm text-on-surface mt-1">画面：整理完毕的行李箱整齐排列，对比画面</p>
+            <p class="text-xs text-on-surface-variant mt-1">旁白："收藏这条，下次旅行一定用得上！你还有什么收纳妙招？评论区告诉我~"</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 底部：平台适配发布建议表格 -->
+    <div class="bg-surface rounded-lg shadow-card overflow-hidden">
+      <div class="px-5 py-4 flex items-center justify-between border-b border-outline-variant/10">
+        <div class="flex items-center gap-2">
+          <i data-lucide="layout-grid" class="w-4 h-4 text-primary"></i>
+          <h2 class="text-base font-semibold text-on-surface">平台适配发布建议</h2>
+        </div>
+        <span class="text-xs text-on-surface-variant">基于生成内容自动推荐各平台适配方案</span>
+      </div>
+
+      <div class="grid grid-cols-6 px-5 py-3 bg-surface-container text-xs font-semibold text-on-surface-variant uppercase tracking-wide">
+        <span>平台</span>
+        <span>内容形态</span>
+        <span>开头钩子</span>
+        <span>素材要求</span>
+        <span>状态</span>
+        <span>操作</span>
+      </div>
+
+      <div class="divide-y divide-outline-variant/50">
+        <!-- 列表-平台行1 小红书 -->
+        <div class="grid grid-cols-6 px-5 py-3.5 hover:bg-surface-container/50 transition-colors items-center">
+          <span class="text-sm font-medium text-on-surface">小红书</span>
+          <span class="text-sm text-on-surface-variant">图文笔记</span>
+          <span class="text-sm text-on-surface-variant">行李箱混乱→整齐对比</span>
+          <span class="text-sm text-on-surface-variant">3:4 竖图 3-9张</span>
+          <span class="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-success/15 text-success w-fit">已适配</span>
+          <button id="btn-publish-xiaohongshu" class="text-primary text-sm font-medium hover:underline">发布</button>
+        </div>
+
+        <!-- 列表-平台行2 抖音 -->
+        <div class="grid grid-cols-6 px-5 py-3.5 hover:bg-surface-container/50 transition-colors items-center">
+          <span class="text-sm font-medium text-on-surface">抖音</span>
+          <span class="text-sm text-on-surface-variant">短视频</span>
+          <span class="text-sm text-on-surface-variant">痛点开场3秒钩住</span>
+          <span class="text-sm text-on-surface-variant">9:16 竖版 15-60s</span>
+          <span class="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-success/15 text-success w-fit">已适配</span>
+          <button id="btn-publish-douyin" class="text-primary text-sm font-medium hover:underline">发布</button>
+        </div>
+
+        <!-- 列表-平台行3 TikTok -->
+        <div class="grid grid-cols-6 px-5 py-3.5 hover:bg-surface-container/50 transition-colors items-center">
+          <span class="text-sm font-medium text-on-surface">TikTok</span>
+          <span class="text-sm text-on-surface-variant">短视频</span>
+          <span class="text-sm text-on-surface-variant">英文字幕+快节奏</span>
+          <span class="text-sm text-on-surface-variant">9:16 15-30s 英文</span>
+          <span class="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-warning/15 text-warning w-fit">需翻译</span>
+          <button id="btn-publish-tiktok" class="text-primary text-sm font-medium hover:underline">生成适配</button>
+        </div>
+
+        <!-- 列表-平台行4 Instagram -->
+        <div class="grid grid-cols-6 px-5 py-3.5 hover:bg-surface-container/50 transition-colors items-center">
+          <span class="text-sm font-medium text-on-surface">Instagram</span>
+          <span class="text-sm text-on-surface-variant">Reels + 轮播图</span>
+          <span class="text-sm text-on-surface-variant">Before/After 轮播</span>
+          <span class="text-sm text-on-surface-variant">1:1 / 9:16 英文</span>
+          <span class="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-warning/15 text-warning w-fit">需翻译</span>
+          <button id="btn-publish-instagram" class="text-primary text-sm font-medium hover:underline">生成适配</button>
+        </div>
+
+        <!-- 列表-平台行5 微博 -->
+        <div class="grid grid-cols-6 px-5 py-3.5 hover:bg-surface-container/50 transition-colors items-center">
+          <span class="text-sm font-medium text-on-surface">微博</span>
+          <span class="text-sm text-on-surface-variant">图文 + 话题</span>
+          <span class="text-sm text-on-surface-variant">数字标题 + 话题联动</span>
+          <span class="text-sm text-on-surface-variant">横图 16:9</span>
+          <span class="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-surface-container-high text-on-surface-variant w-fit">未适配</span>
+          <button id="btn-publish-weibo" class="text-primary text-sm font-medium hover:underline">生成适配</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 生成中遮罩（默认隐藏） -->
+    <div id="generating-overlay" class="hidden fixed inset-0 bg-black/30 flex items-center justify-center z-50">
+      <div class="bg-surface rounded-xl shadow-dialog p-8 flex flex-col items-center gap-4 max-w-sm">
+        <div class="w-10 h-10 border-3 border-primary border-t-transparent rounded-full animate-spin"></div>
+        <div class="text-center">
+          <p class="text-sm font-semibold text-on-surface">AI 正在创作...</p>
+          <p class="text-xs text-on-surface-variant mt-1">预计 10-30 秒生成完成</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- @main-content:end -->
+  </main>
+  </div>
+
+  <script>lucide.createIcons();</script>
+
+  <script>
+  $(function() {
+
+    // 生成图文配图按钮 - 点击后调用 AI 模型生成内容
+    $('#btn-generate-image').on('click', function() {
+      var topic = $('#input-topic').val();
+      var platform = $('#select-image-platform').val();
+      var direction = $('#input-image-direction').val();
+
+      // 显示生成中遮罩
+      $('#generating-overlay').removeClass('hidden');
+
+      // 模拟生成过程：2秒后隐藏遮罩并显示结果
+      // 实际实现应：1. 调用后端 API 传递 topic/platform/direction 参数
+      // 2. 后端调用用户配置的 AI 模型生成标题、配图建议、话题标签
+      // 3. 返回结果后更新 DOM 中图文生成结果区域
+      setTimeout(function() {
+        $('#generating-overlay').addClass('hidden');
+      }, 2000);
+    });
+
+    // 生成脚本分镜按钮 - 点击后调用 AI 模型生成视频脚本
+    $('#btn-generate-video').on('click', function() {
+      var topic = $('#input-video-topic').val();
+      var platform = $('#select-video-platform').val();
+      var requirement = $('#input-video-requirement').val();
+
+      // 显示生成中遮罩
+      $('#generating-overlay').removeClass('hidden');
+
+      // 模拟生成过程：2秒后隐藏遮罩
+      // 实际实现应：1. 调用后端 API 传递 topic/platform/requirement 参数
+      // 2. 后端调用用户配置的 AI 模型生成视频脚本分镜
+      // 3. 返回结果后更新 DOM 中视频生成结果区域
+      setTimeout(function() {
+        $('#generating-overlay').addClass('hidden');
+      }, 2000);
+    });
+
+    // 图文结果-保存草稿 - 保存到草稿库
+    $('#btn-image-save').on('click', function() {
+      // 实际实现应：调用后端 API 保存图文内容到草稿库，返回 draftId
+      console.log('保存图文草稿');
+    });
+
+    // 图文结果-编辑 - 进入编辑模式
+    // 编辑按钮 - 点击后应实现内联编辑：
+    // 1. 将标题、配图建议、话题标签区域切换为可编辑状态（标题变为 input，标签变为可增删列表）
+    // 2. 配图建议区域增加上传/替换操作
+    // 3. 编辑完成后点击"保存"更新内容
+    $('#btn-image-edit').on('click', function() {
+      console.log('编辑图文内容');
+    });
+
+    // 图文结果-提交审核 - 保存草稿并跳转审核页
+    $('#btn-image-submit').on('click', function() {
+      // 实际实现应：1. 调用后端 API 保存内容并创建审批工单
+      // 2. 审批通过后可通过 CDP 发布到平台
+      window.location.href = 'media-drafts.html?from=media-creative&type=image';
+    });
+
+    // 视频结果-保存草稿 - 保存到草稿库
+    $('#btn-video-save').on('click', function() {
+      // 实际实现应：调用后端 API 保存视频脚本到草稿库，返回 draftId
+      console.log('保存视频草稿');
+    });
+
+    // 视频结果-编辑 - 进入编辑模式
+    // 编辑按钮 - 点击后应实现内联编辑：
+    // 1. 将每个镜头的旁白、画面描述变为可编辑 textarea
+    // 2. 支持调整镜头顺序（拖拽排序）
+    // 3. 支持新增/删除镜头
+    // 4. 编辑完成后点击"保存"更新内容
+    $('#btn-video-edit').on('click', function() {
+      console.log('编辑视频脚本');
+    });
+
+    // 视频结果-提交审核 - 保存草稿并跳转审核页
+    $('#btn-video-submit').on('click', function() {
+      window.location.href = 'media-drafts.html?from=media-creative&type=video';
+    });
+
+    // 平台适配-发布按钮（已适配平台）
+    // 发布按钮 - 点击后应：
+    // 1. 调用后端 API 创建发布审批工单
+    // 2. 审批通过后通过 CDP 在目标平台自动发布
+    // 3. 发布前检查浏览器连接状态和平台登录状态
+    $('#btn-publish-xiaohongshu').on('click', function() {
+      console.log('提交小红书发布审批');
+    });
+
+    $('#btn-publish-douyin').on('click', function() {
+      console.log('提交抖音发布审批');
+    });
+
+    // 平台适配-生成适配按钮（需翻译/未适配平台）
+    // 生成适配按钮 - 点击后应：
+    // 1. 调用 AI 模型根据已生成内容，为目标平台生成适配版本
+    // 2. 翻译类：保持原意并适配目标语言语境
+    // 3. 未适配类：根据目标平台的内容形态要求重新生成
+    // 4. 生成完成后状态更新为"已适配"，按钮变为"发布"
+    $('#btn-publish-tiktok').on('click', function() {
+      console.log('为 TikTok 生成适配版本：翻译脚本为英文，调整时长至 15-30s');
+    });
+
+    $('#btn-publish-instagram').on('click', function() {
+      console.log('为 Instagram 生成适配版本：翻译文案，生成 Reels + 轮播图版本');
+    });
+
+    $('#btn-publish-weibo').on('click', function() {
+      console.log('为微博生成适配版本：生成 16:9 横图配文，添加微博话题');
+    });
+
+    // 历史记录按钮 - 跳转或弹出历史面板
+    $('#btn-history').on('click', function() {
+      console.log('查看生成历史记录');
+    });
+
+    // 草稿箱按钮 - 跳转草稿页
+    $('#btn-drafts').on('click', function() {
+      window.location.href = 'media-drafts.html';
+    });
+
+  });
+  </script>
+
+</body>
+
+</html>

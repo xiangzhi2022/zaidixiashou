@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/jquery/jquery-3.7.1.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/lucide/lucide-1.11.0.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/tailwindcss/tailwindcss-browser-4.2.4.min.js"></script>
+
+  <style type="text/tailwindcss">
+    @theme {
+      /* === 品牌色 === */
+      --color-primary:              #2F6BFF;
+      --color-primary-container:    #DBE8FF;
+      --color-on-primary:           #ffffff;
+      /* === 背景 / 表面 === */
+      --color-background:                 #F6F8FB;
+      --color-surface-container-lowest:   #EDF0F5;
+      --color-surface:                    #FFFFFF;
+      --color-surface-container:          #EDF0F5;
+      --color-surface-container-high:     #E1E6EF;
+      --color-surface-container-highest:  #D5DBE8;
+      /* === 文字 === */
+      --color-on-surface:           #152033;
+      --color-on-surface-variant:   #637089;
+      /* === 功能色 === */
+      --color-success:  #16A37B;
+      --color-error:    #E5484D;
+      --color-warning:  #E5A000;
+      /* === 边框 === */
+      --color-outline:          #C4CDD9;
+      --color-outline-variant:  #E6EAF2;
+      /* === 圆角 === */
+      --radius-sm:   0.25rem;
+      --radius-md:   0.375rem;
+      --radius-lg:   0.5rem;
+      --radius-xl:   0.75rem;
+      --radius-2xl:  1rem;
+      --radius-full: 9999px;
+      /* === 阴影 === */
+      --shadow-card:   0 2px 8px rgba(0,0,0,0.08);
+      --shadow-float:  0 10px 25px rgba(0,0,0,0.1);
+      --shadow-dialog: 0 25px 50px rgba(0,0,0,0.15);
+      /* === 字体 === */
+      --font-sans: "Inter", "Noto Sans SC", system-ui, sans-serif;
+    }
+  </style>
+
+  <link href="https://lf-code-agent.coze.cn/obj/x-ai-cn/fonts/google/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+
+  <!-- 图片兜底 -->
+  <script>
+    document.addEventListener('error', function (e) {
+      const img = e.target;
+      if (img.tagName !== 'IMG' || img.dataset.fallback) return;
+      img.dataset.fallback = '1';
+      const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const cat = img.getAttribute('data-category') || '其他';
+      const alt = img.getAttribute('alt') || '';
+      const label = esc(alt.length > 8 ? alt.slice(0, 8) + '…' : alt);
+      const icons = { '人物': '👤', '自然风景': '🏞', '动物': '🐾', '建筑城市': '🏙', '运动体育': '⚽', '交通工具': '🚗', '食物': '🍽', '服饰时尚': '👗', '商业科技': '💼', '游戏娱乐': '🎮', '艺术': '🎨', '其他': '🖼' };
+      const icon = icons[cat] || '🖼';
+      const w = img.width || 400, h = img.height || 300;
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><rect width="100%" height="100%" fill="%23f3f4f6"/><text x="50%" y="45%" text-anchor="middle" font-size="${Math.min(w, h) * 0.18}" dominant-baseline="central">${icon}</text><text x="50%" y="68%" text-anchor="middle" font-size="${Math.min(w, h) * 0.07}" fill="%239ca3af" font-family="system-ui,sans-serif" dominant-baseline="central">${label}</text></svg>`;
+      img.src = 'data:image/svg+xml,' + svg;
+    }, true);
+  </script>
+</head>
+
+<body class="bg-background text-on-surface font-sans">
+
+  <!-- @nav:start -->
+  <header class="bg-surface sticky top-0 z-40 h-14 flex items-center justify-between px-5 border-b border-outline-variant/20">
+    <div class="flex items-center gap-2.5">
+      <i data-lucide="zap" class="w-5 h-5 text-primary"></i>
+      <span class="font-bold text-base text-on-surface">AI Commerce Ops</span>
+    </div>
+    <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2 bg-surface-container rounded-md px-3 py-1.5 text-sm text-on-surface-variant">
+        <i data-lucide="terminal" class="w-4 h-4"></i>
+        <span>输入运营目标，AI 帮你执行</span>
+      </div>
+      <button class="relative p-2 rounded-md hover:bg-surface-container transition-colors">
+        <i data-lucide="bell" class="w-4 h-4 text-on-surface-variant"></i>
+        <span class="absolute top-1 right-1 w-2 h-2 bg-error rounded-full"></span>
+      </button>
+      <div class="w-8 h-8 bg-primary/10 text-primary rounded-full flex items-center justify-center text-sm font-medium">初</div>
+    </div>
+  </header>
+
+  <div class="flex" style="height: calc(100vh - 3.5rem)">
+    <aside class="w-56 shrink-0 bg-surface border-r border-outline-variant/20 overflow-y-auto">
+      <div class="p-3 space-y-0.5">
+        <p class="px-3 py-1 text-xs font-medium text-on-surface-variant/60 uppercase tracking-wider">电商运营</p>
+        <a href="home.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="layout-dashboard" class="w-4 h-4"></i>总览
+        </a>
+        <a href="orders.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="shopping-bag" class="w-4 h-4"></i>订单
+        </a>
+        <a href="products.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-primary bg-primary/10 text-sm font-medium transition-colors" aria-current="page">
+          <i data-lucide="package-search" class="w-4 h-4"></i>商品
+        </a>
+        <a href="messages.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors relative">
+          <i data-lucide="messages-square" class="w-4 h-4"></i>消息
+          <span class="ml-auto bg-error text-white text-xs rounded-full px-1.5 py-0.5 leading-none">64</span>
+        </a>
+
+        <p class="px-3 py-1 mt-2 text-xs font-medium text-on-surface-variant/60 uppercase tracking-wider">获客</p>
+        <a href="acquisition.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="user-plus" class="w-4 h-4"></i>获客中心
+        </a>
+
+        <p class="px-3 py-1 mt-2 text-xs font-medium text-on-surface-variant/60 uppercase tracking-wider">媒体运营</p>
+        <a href="media.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors relative">
+          <i data-lucide="megaphone" class="w-4 h-4"></i>运营中心
+          <span class="ml-auto bg-warning text-on-surface text-xs rounded-full px-1.5 py-0.5 leading-none">4</span>
+        </a>
+        <a href="media-creative.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="clapperboard" class="w-4 h-4"></i>图像视频生成
+        </a>
+        <a href="media-drafts.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors relative">
+          <i data-lucide="file-check" class="w-4 h-4"></i>草稿审核发布
+          <span class="ml-auto bg-warning text-on-surface text-xs rounded-full px-1.5 py-0.5 leading-none">4</span>
+        </a>
+        <a href="automation.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="workflow" class="w-4 h-4"></i>自动化
+        </a>
+
+        <p class="px-3 py-1 mt-2 text-xs font-medium text-on-surface-variant/60 uppercase tracking-wider">系统设置</p>
+        <a href="settings-accounts.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors relative">
+          <i data-lucide="key-round" class="w-4 h-4"></i>平台账号管理
+          <span class="ml-auto bg-warning text-on-surface text-xs rounded-full px-1.5 py-0.5 leading-none">3</span>
+        </a>
+        <a href="settings-ai-models.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="brain-circuit" class="w-4 h-4"></i>AI 模型设置
+        </a>
+        <a href="settings-autopilot.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="bot" class="w-4 h-4"></i>自动托管
+        </a>
+        <a href="settings-approval.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="shield-check" class="w-4 h-4"></i>审批
+        </a>
+      </div>
+    </aside>
+  <!-- @nav:end -->
+
+  <main class="flex-1 min-w-0 overflow-y-auto bg-background p-6">
+    <!-- @main-content:start -->
+
+    <!-- 页面标题 -->
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h1 class="text-2xl font-bold text-on-surface">商品</h1>
+        <p class="text-sm text-on-surface-variant mt-1">管理 Listing、库存和跨平台同步</p>
+      </div>
+      <button id="btn-add-product" class="bg-primary text-on-primary px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all inline-flex items-center gap-2">
+        <i data-lucide="plus" class="w-3.5 h-3.5"></i>添加商品
+      </button>
+    </div>
+
+    <!-- 统计卡片区 -->
+    <div class="grid grid-cols-3 gap-4 mb-6">
+
+      <!-- 统计卡-SKU总数 -->
+      <div id="stat-sku" class="bg-surface rounded-lg shadow-card p-5 cursor-pointer hover:shadow-float transition-shadow">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs font-medium text-on-surface-variant uppercase tracking-wide">SKU 总数</span>
+          <div class="w-8 h-8 bg-primary/10 rounded-md flex items-center justify-center">
+            <i data-lucide="package" class="w-4 h-4 text-primary"></i>
+          </div>
+        </div>
+        <div class="text-2xl font-bold text-on-surface">1,248</div>
+        <div class="flex items-center gap-1 mt-2">
+          <span class="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-primary/10 text-primary">7 个平台同步中</span>
+        </div>
+      </div>
+
+      <!-- 统计卡-低库存 -->
+      <div id="stat-low-stock" class="bg-surface rounded-lg shadow-card p-5 cursor-pointer hover:shadow-float transition-shadow">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs font-medium text-on-surface-variant uppercase tracking-wide">低库存</span>
+          <div class="w-8 h-8 bg-error/10 rounded-md flex items-center justify-center">
+            <i data-lucide="alert-triangle" class="w-4 h-4 text-error"></i>
+          </div>
+        </div>
+        <div class="text-2xl font-bold text-error">32</div>
+        <div class="flex items-center gap-1 mt-2">
+          <span class="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-warning/15 text-warning">建议 48 小时内补货</span>
+        </div>
+      </div>
+
+      <!-- 统计卡-待优化Listing -->
+      <div id="stat-pending-optimize" class="bg-surface rounded-lg shadow-card p-5 cursor-pointer hover:shadow-float transition-shadow">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs font-medium text-on-surface-variant uppercase tracking-wide">待优化 Listing</span>
+          <div class="w-8 h-8 bg-warning/10 rounded-md flex items-center justify-center">
+            <i data-lucide="sparkles" class="w-4 h-4 text-warning"></i>
+          </div>
+        </div>
+        <div class="text-2xl font-bold text-warning">86</div>
+        <div class="flex items-center gap-1 mt-2">
+          <span class="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-warning/15 text-warning">标题主图价格可提升</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 筛选栏 -->
+    <div class="bg-surface rounded-lg shadow-card p-4 mb-4 flex items-center gap-3 flex-wrap">
+      <div class="relative flex-1 min-w-[200px] max-w-xs">
+        <i data-lucide="search" class="w-4 h-4 text-on-surface-variant absolute left-3 top-1/2 -translate-y-1/2"></i>
+        <input id="search-input" type="text" placeholder="搜索 SKU 或商品名" class="w-full bg-surface-container border-none rounded-md pl-9 pr-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"/>
+      </div>
+      <select id="filter-status" class="bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors cursor-pointer">
+        <option value="">全部状态</option>
+        <option value="low-stock">低库存</option>
+        <option value="hot">热卖</option>
+        <option value="pending-optimize">待优化</option>
+        <option value="normal">正常</option>
+      </select>
+      <select id="filter-platform" class="bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors cursor-pointer">
+        <option value="">全部平台</option>
+        <option value="amazon">Amazon</option>
+        <option value="shopee">Shopee</option>
+        <option value="lazada">Lazada</option>
+        <option value="tiktok">TikTok Shop</option>
+        <option value="temu">Temu</option>
+        <option value="shein">SHEIN</option>
+        <option value="ebay">eBay</option>
+      </select>
+      <button id="btn-refresh" class="bg-surface-container text-on-surface px-3 py-2 rounded-md text-sm font-medium hover:bg-surface-container-high active:scale-[0.98] transition-all inline-flex items-center gap-2">
+        <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>刷新
+      </button>
+    </div>
+
+    <!-- 商品表格 -->
+    <div class="bg-surface rounded-lg shadow-card overflow-hidden">
+      <!-- 表头 -->
+      <div class="grid grid-cols-[140px_1fr_100px_1fr_120px_160px] px-5 py-3 bg-surface-container text-xs font-semibold text-on-surface-variant uppercase tracking-wide items-center">
+        <span>SKU 编号</span>
+        <span>商品名</span>
+        <span>库存</span>
+        <span>同步平台</span>
+        <span>状态</span>
+        <span class="text-right">操作</span>
+      </div>
+
+      <div id="product-table-body" class="divide-y divide-outline-variant/50">
+
+        <!-- 列表-商品1: SKU-D112 夏季运动短裤 低库存 -->
+        <div class="product-row grid grid-cols-[140px_1fr_100px_1fr_120px_160px] px-5 py-4 hover:bg-surface-container/50 transition-colors items-center" data-sku="SKU-D112" data-status="low-stock">
+          <span class="text-sm font-medium text-on-surface font-mono">SKU-D112</span>
+          <span class="text-sm text-on-surface">夏季运动短裤</span>
+          <span class="text-sm font-semibold text-error">18</span>
+          <div class="flex items-center gap-1.5 flex-wrap">
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">Amazon</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">Shopee</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">Lazada</span>
+          </div>
+          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-error/15 text-error">低库存</span>
+          <div class="flex items-center justify-end gap-2">
+            <button id="btn-optimize-sku-d112" class="text-primary text-sm font-medium hover:underline" data-sku="SKU-D112">优化建议</button>
+            <button id="btn-sync-sku-d112" class="text-primary text-sm font-medium hover:underline" data-sku="SKU-D112">同步</button>
+          </div>
+        </div>
+
+        <!-- 列表-商品2: SKU-B884 旅行收纳包 热卖 -->
+        <div class="product-row grid grid-cols-[140px_1fr_100px_1fr_120px_160px] px-5 py-4 hover:bg-surface-container/50 transition-colors items-center" data-sku="SKU-B884" data-status="hot">
+          <span class="text-sm font-medium text-on-surface font-mono">SKU-B884</span>
+          <span class="text-sm text-on-surface">旅行收纳包</span>
+          <span class="text-sm font-semibold text-success">220</span>
+          <div class="flex items-center gap-1.5 flex-wrap">
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">Amazon</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">TikTok Shop</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">Temu</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">SHEIN</span>
+          </div>
+          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-success/15 text-success">热卖</span>
+          <div class="flex items-center justify-end gap-2">
+            <button id="btn-optimize-sku-b884" class="text-primary text-sm font-medium hover:underline" data-sku="SKU-B884">优化建议</button>
+            <button id="btn-sync-sku-b884" class="text-primary text-sm font-medium hover:underline" data-sku="SKU-B884">同步</button>
+          </div>
+        </div>
+
+        <!-- 列表-商品3: SKU-X029 宠物梳毛器 待优化 -->
+        <div class="product-row grid grid-cols-[140px_1fr_100px_1fr_120px_160px] px-5 py-4 hover:bg-surface-container/50 transition-colors items-center" data-sku="SKU-X029" data-status="pending-optimize">
+          <span class="text-sm font-medium text-on-surface font-mono">SKU-X029</span>
+          <span class="text-sm text-on-surface">宠物梳毛器</span>
+          <span class="text-sm font-semibold text-on-surface">85</span>
+          <div class="flex items-center gap-1.5 flex-wrap">
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">Amazon</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">Shopee</span>
+          </div>
+          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-warning/15 text-warning">待优化</span>
+          <div class="flex items-center justify-end gap-2">
+            <button id="btn-optimize-sku-x029" class="text-primary text-sm font-medium hover:underline" data-sku="SKU-X029">优化建议</button>
+            <button id="btn-sync-sku-x029" class="text-primary text-sm font-medium hover:underline" data-sku="SKU-X029">同步</button>
+          </div>
+        </div>
+
+        <!-- 列表-商品4: SKU-A201 蓝牙耳机 正常 -->
+        <div class="product-row grid grid-cols-[140px_1fr_100px_1fr_120px_160px] px-5 py-4 hover:bg-surface-container/50 transition-colors items-center" data-sku="SKU-A201" data-status="normal">
+          <span class="text-sm font-medium text-on-surface font-mono">SKU-A201</span>
+          <span class="text-sm text-on-surface">蓝牙耳机</span>
+          <span class="text-sm font-semibold text-on-surface">156</span>
+          <div class="flex items-center gap-1.5 flex-wrap">
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">Amazon</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">eBay</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">Lazada</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">TikTok Shop</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">Temu</span>
+          </div>
+          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-surface-container-high text-on-surface-variant">正常</span>
+          <div class="flex items-center justify-end gap-2">
+            <button id="btn-optimize-sku-a201" class="text-primary text-sm font-medium hover:underline" data-sku="SKU-A201">优化建议</button>
+            <button id="btn-sync-sku-a201" class="text-primary text-sm font-medium hover:underline" data-sku="SKU-A201">同步</button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- 表格底部 -->
+      <div class="px-5 py-3 bg-surface-container/50 flex items-center justify-between text-sm text-on-surface-variant">
+        <span>共 4 条商品</span>
+        <div class="flex items-center gap-2">
+          <button id="btn-prev-page" class="px-3 py-1 rounded-md bg-surface-container hover:bg-surface-container-high text-sm transition-colors disabled:opacity-40" disabled>上一页</button>
+          <span class="px-3 py-1 rounded-md bg-primary/10 text-primary text-sm font-medium">1</span>
+          <button id="btn-next-page" class="px-3 py-1 rounded-md bg-surface-container hover:bg-surface-container-high text-sm transition-colors disabled:opacity-40" disabled>下一页</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 优化建议弹窗 -->
+    <div id="modal-optimize" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 hidden">
+      <div class="bg-surface rounded-xl shadow-dialog max-w-lg w-full max-h-[90vh] overflow-y-auto p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-semibold text-on-surface">Listing 优化建议</h2>
+          <button id="btn-close-optimize" class="p-1.5 rounded-md hover:bg-surface-container transition-colors">
+            <i data-lucide="x" class="w-4 h-4 text-on-surface-variant"></i>
+          </button>
+        </div>
+        <div id="optimize-sku-label" class="text-sm text-on-surface-variant mb-4">SKU-D112 · 夏季运动短裤</div>
+        <div class="space-y-3">
+          <div class="bg-surface-container rounded-md p-3">
+            <div class="flex items-center gap-2 mb-1">
+              <i data-lucide="type" class="w-4 h-4 text-primary"></i>
+              <span class="text-sm font-medium text-on-surface">标题优化</span>
+            </div>
+            <p class="text-sm text-on-surface-variant">建议增加"透气速干""轻薄"等高频搜索词，提升搜索曝光率</p>
+          </div>
+          <div class="bg-surface-container rounded-md p-3">
+            <div class="flex items-center gap-2 mb-1">
+              <i data-lucide="image" class="w-4 h-4 text-primary"></i>
+              <span class="text-sm font-medium text-on-surface">主图优化</span>
+            </div>
+            <p class="text-sm text-on-surface-variant">建议使用模特上身图替代平铺图，增加场景感和购买意愿</p>
+          </div>
+          <div class="bg-surface-container rounded-md p-3">
+            <div class="flex items-center gap-2 mb-1">
+              <i data-lucide="dollar-sign" class="w-4 h-4 text-primary"></i>
+              <span class="text-sm font-medium text-on-surface">价格优化</span>
+            </div>
+            <p class="text-sm text-on-surface-variant">当前定价低于同类竞品 15%，建议调整至 $24.99 以提高利润率</p>
+          </div>
+        </div>
+        <div class="flex justify-end gap-3 mt-5">
+          <button id="btn-cancel-optimize" class="bg-surface-container text-on-surface px-4 py-2 rounded-md text-sm font-medium hover:bg-surface-container-high active:scale-[0.98] transition-all">取消</button>
+          <button id="btn-apply-optimize" class="bg-primary text-on-primary px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all">应用建议</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 同步弹窗 -->
+    <div id="modal-sync" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 hidden">
+      <div class="bg-surface rounded-xl shadow-dialog max-w-md w-full max-h-[90vh] overflow-y-auto p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-semibold text-on-surface">跨平台同步</h2>
+          <button id="btn-close-sync" class="p-1.5 rounded-md hover:bg-surface-container transition-colors">
+            <i data-lucide="x" class="w-4 h-4 text-on-surface-variant"></i>
+          </button>
+        </div>
+        <div id="sync-sku-label" class="text-sm text-on-surface-variant mb-4">SKU-D112 · 夏季运动短裤</div>
+        <p class="text-sm text-on-surface-variant mb-3">选择要同步的平台：</p>
+        <div class="space-y-2 mb-5">
+          <label class="flex items-center gap-2.5 p-2.5 rounded-md bg-surface-container cursor-pointer hover:bg-surface-container-high transition-colors">
+            <input type="checkbox" checked class="w-4 h-4 accent-primary"/>
+            <span class="text-sm text-on-surface">Amazon</span>
+            <span class="ml-auto inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-success/15 text-success">已连接</span>
+          </label>
+          <label class="flex items-center gap-2.5 p-2.5 rounded-md bg-surface-container cursor-pointer hover:bg-surface-container-high transition-colors">
+            <input type="checkbox" checked class="w-4 h-4 accent-primary"/>
+            <span class="text-sm text-on-surface">Shopee</span>
+            <span class="ml-auto inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-success/15 text-success">已连接</span>
+          </label>
+          <label class="flex items-center gap-2.5 p-2.5 rounded-md bg-surface-container cursor-pointer hover:bg-surface-container-high transition-colors">
+            <input type="checkbox" checked class="w-4 h-4 accent-primary"/>
+            <span class="text-sm text-on-surface">Lazada</span>
+            <span class="ml-auto inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-success/15 text-success">已连接</span>
+          </label>
+        </div>
+        <div class="bg-warning/10 rounded-md p-3 flex items-start gap-2 mb-5">
+          <i data-lucide="alert-circle" class="w-4 h-4 text-warning mt-0.5 shrink-0"></i>
+          <span class="text-sm text-on-surface-variant">同步操作将覆盖目标平台现有 Listing 信息，此操作需经审批后执行。</span>
+        </div>
+        <div class="flex justify-end gap-3">
+          <button id="btn-cancel-sync" class="bg-surface-container text-on-surface px-4 py-2 rounded-md text-sm font-medium hover:bg-surface-container-high active:scale-[0.98] transition-all">取消</button>
+          <button id="btn-submit-sync" class="bg-primary text-on-primary px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all">提交审批</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast 提示 -->
+    <div id="toast" class="fixed top-20 right-6 z-50 hidden">
+      <div class="bg-surface rounded-lg shadow-float px-4 py-3 flex items-center gap-2 text-sm font-medium text-on-surface border border-outline-variant/20">
+        <i data-lucide="check-circle" class="w-4 h-4 text-success"></i>
+        <span id="toast-message">操作成功</span>
+      </div>
+    </div>
+
+    <!-- @main-content:end -->
+  </main>
+  </div>
+
+  <script>
+    $(function() {
+      // 显示 Toast 提示
+      function showToast(message) {
+        $('#toast-message').text(message);
+        $('#toast').removeClass('hidden');
+        setTimeout(function() {
+          $('#toast').addClass('hidden');
+        }, 2500);
+      }
+
+      // 统计卡片点击跳转
+      $('#stat-sku').on('click', function() {
+        // 点击 SKU 总数卡片 - 滚动到商品表格
+        $('main').animate({ scrollTop: $('#product-table-body').offset().top - 100 }, 300);
+      });
+
+      $('#stat-low-stock').on('click', function() {
+        // 点击低库存卡片 - 筛选低库存商品
+        $('#filter-status').val('low-stock');
+        filterProducts();
+        showToast('已筛选低库存商品');
+      });
+
+      $('#stat-pending-optimize').on('click', function() {
+        // 点击待优化卡片 - 筛选待优化商品
+        $('#filter-status').val('pending-optimize');
+        filterProducts();
+        showToast('已筛选待优化商品');
+      });
+
+      // 筛选逻辑
+      function filterProducts() {
+        var statusVal = $('#filter-status').val();
+        var platformVal = $('#filter-platform').val();
+        var searchVal = $('#search-input').val().toLowerCase().trim();
+
+        $('.product-row').each(function() {
+          var $row = $(this);
+          var rowStatus = $row.data('status');
+          var rowSku = $row.data('sku').toLowerCase();
+          var rowText = $row.text().toLowerCase();
+
+          var statusMatch = !statusVal || rowStatus === statusVal;
+          var platformMatch = !platformVal || rowText.indexOf(platformVal.toLowerCase()) > -1;
+          var searchMatch = !searchVal || rowSku.indexOf(searchVal) > -1 || rowText.indexOf(searchVal) > -1;
+
+          if (statusMatch && platformMatch && searchMatch) {
+            $row.show();
+          } else {
+            $row.hide();
+          }
+        });
+
+        // 更新可见条数
+        var visibleCount = $('.product-row:visible').length;
+        $('.bg-surface-container\\/50 span:first').text('共 ' + visibleCount + ' 条商品');
+      }
+
+      $('#filter-status').on('change', filterProducts);
+      $('#filter-platform').on('change', filterProducts);
+
+      // 搜索框防抖
+      var searchTimer;
+      $('#search-input').on('input', function() {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(filterProducts, 300);
+      });
+
+      // 刷新按钮
+      $('#btn-refresh').on('click', function() {
+        $('#filter-status').val('');
+        $('#filter-platform').val('');
+        $('#search-input').val('');
+        $('.product-row').show();
+        var visibleCount = $('.product-row').length;
+        $('.bg-surface-container\\/50 span:first').text('共 ' + visibleCount + ' 条商品');
+        showToast('数据已刷新');
+      });
+
+      // 添加商品按钮
+      // 后续应实现：弹出添加商品表单弹窗，包含 SKU、商品名、初始库存、同步平台等字段，提交后添加到表格
+      $('#btn-add-product').on('click', function() {
+        console.log('添加商品 - 后续应实现：1. 弹出添加商品表单弹窗 2. 填写 SKU、商品名、初始库存、选择同步平台 3. 提交后新增行到表格 4. 更新统计卡片数据');
+        showToast('添加商品功能开发中');
+      });
+
+      // 优化建议按钮 - 打开弹窗
+      $('#product-table-body').on('click', '.btn-optimize', function() {
+        var sku = $(this).data('sku');
+        var $row = $(this).closest('.product-row');
+        var productName = $row.find('.text-on-surface').first().text();
+        $('#optimize-sku-label').text(sku + ' · ' + productName);
+        $('#modal-optimize').removeClass('hidden');
+      });
+
+      // 给优化建议按钮添加 class
+      $('[id^="btn-optimize-"]').addClass('btn-optimize');
+
+      // 关闭优化弹窗
+      $('#btn-close-optimize, #btn-cancel-optimize').on('click', function() {
+        $('#modal-optimize').addClass('hidden');
+      });
+
+      // 应用优化建议
+      // 后续应实现：1. 调用 AI 模型根据建议自动修改 Listing 内容 2. 生成修改预览 3. 提交审批后通过 CDP 在各平台执行更新
+      $('#btn-apply-optimize').on('click', function() {
+        var sku = $('#optimize-sku-label').text().split(' · ')[0];
+        console.log('应用优化建议 - SKU:', sku, '后续应实现：1. 调用 AI 模型根据建议自动修改 Listing 2. 生成修改预览供确认 3. 确认后提交审批 4. 审批通过后通过 CDP 在各平台执行更新');
+        $('#modal-optimize').addClass('hidden');
+        showToast('优化建议已提交审批');
+      });
+
+      // 同步按钮 - 打开弹窗
+      $('[id^="btn-sync-"]').addClass('btn-sync');
+      $('#product-table-body').on('click', '.btn-sync', function() {
+        var sku = $(this).data('sku');
+        var $row = $(this).closest('.product-row');
+        var productName = $row.find('.text-on-surface').first().text();
+        $('#sync-sku-label').text(sku + ' · ' + productName);
+        $('#modal-sync').removeClass('hidden');
+      });
+
+      // 关闭同步弹窗
+      $('#btn-close-sync, #btn-cancel-sync').on('click', function() {
+        $('#modal-sync').addClass('hidden');
+      });
+
+      // 提交同步审批
+      // 后续应实现：1. 收集勾选的平台 2. 提交审批队列 3. 审批通过后通过 CDP 在对应平台执行 Listing 同步 4. 实时反馈同步进度
+      $('#btn-submit-sync').on('click', function() {
+        var sku = $('#sync-sku-label').text().split(' · ')[0];
+        console.log('提交同步审批 - SKU:', sku, '后续应实现：1. 收集勾选的平台 2. 创建审批任务 3. 审批通过后通过 CDP 在各平台执行 Listing 同步 4. 实时反馈同步进度和结果');
+        $('#modal-sync').addClass('hidden');
+        showToast('同步请求已提交审批');
+      });
+
+      // 商品行点击 - 展开详情
+      // 后续应实现：点击商品行展开详情面板，显示完整 Listing 信息、历史价格趋势、各平台表现数据、库存变化记录
+      $('#product-table-body').on('click', '.product-row', function(e) {
+        if ($(e.target).is('button') || $(e.target).closest('button').length) return;
+        var sku = $(this).data('sku');
+        console.log('展开商品详情 - SKU:', sku, '后续应实现：1. 在行下方展开详情面板 2. 显示完整 Listing 信息 3. 历史价格趋势图 4. 各平台表现数据 5. 库存变化记录');
+      });
+
+      // 点击弹窗遮罩关闭
+      $('#modal-optimize, #modal-sync').on('click', function(e) {
+        if ($(e.target).is('#modal-optimize') || $(e.target).is('#modal-sync')) {
+          $(this).addClass('hidden');
+        }
+      });
+    });
+  </script>
+
+  <script>lucide.createIcons();</script>
+</body>
+
+</html>
