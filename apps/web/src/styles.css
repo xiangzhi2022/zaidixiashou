@@ -1,10 +1,46 @@
-:root {
-  color: #17202a;
-  background: #f5f7fb;
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+@import "tailwindcss";
+
+@theme {
+  /* === Brand === */
+  --color-primary: #2F6BFF;
+  --color-primary-container: #DBE8FF;
+  --color-on-primary: #ffffff;
+  /* === Background / Surface === */
+  --color-background: #F6F8FB;
+  --color-surface-container-lowest: #EDF0F5;
+  --color-surface: #FFFFFF;
+  --color-surface-container: #EDF0F5;
+  --color-surface-container-high: #E1E6EF;
+  --color-surface-container-highest: #D5DBE8;
+  /* === Text === */
+  --color-on-surface: #152033;
+  --color-on-surface-variant: #637089;
+  /* === Functional === */
+  --color-success: #16A37B;
+  --color-error: #E5484D;
+  --color-warning: #E5A000;
+  /* === Border === */
+  --color-outline: #C4CDD9;
+  --color-outline-variant: #E6EAF2;
+  /* === Radius === */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
+  --radius-full: 9999px;
+  /* === Shadow === */
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-float: 0 10px 25px rgba(0, 0, 0, 0.1);
+  --shadow-dialog: 0 25px 50px rgba(0, 0, 0, 0.15);
+  /* === Font === */
+  --font-sans: "Inter", "Noto Sans SC", system-ui, sans-serif;
 }
 
-* {
+/* Base resets */
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
@@ -13,193 +49,8 @@ body {
 }
 
 button,
-input {
+input,
+select,
+textarea {
   font: inherit;
 }
-
-.app-shell {
-  min-height: 100vh;
-  display: grid;
-  grid-template-columns: 260px minmax(0, 1fr);
-}
-
-.sidebar {
-  height: 100vh;
-  overflow-y: auto;
-  padding: 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  color: #f8fafc;
-  background: #17202a;
-}
-
-.brand,
-.nav-item,
-.topbar,
-.topbar-actions,
-.command-center,
-.command-form {
-  display: flex;
-  align-items: center;
-}
-
-.brand {
-  gap: 12px;
-}
-
-.brand > div {
-  display: grid;
-  gap: 2px;
-}
-
-.brand span:last-child {
-  color: #aeb9c8;
-  font-size: 13px;
-}
-
-.brand-mark {
-  width: 42px;
-  height: 42px;
-  display: grid;
-  place-items: center;
-  border-radius: 8px;
-  background: #f59e0b;
-  color: #111827;
-  font-weight: 800;
-}
-
-.nav-list,
-.nav-section {
-  display: grid;
-  gap: 8px;
-}
-
-.nav-section {
-  padding: 10px 8px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-left: 3px solid #f59e0b;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.035);
-}
-
-.nav-title {
-  margin: 0;
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.nav-item {
-  min-height: 38px;
-  gap: 10px;
-  padding: 0 10px;
-  border-radius: 8px;
-  color: #d6deea;
-  text-decoration: none;
-}
-
-.nav-item.active,
-.nav-item:hover {
-  color: #fff;
-  background: #263241;
-}
-
-.nav-bubble {
-  margin-left: auto;
-  min-width: 22px;
-  height: 22px;
-  padding: 0 6px;
-  border-radius: 999px;
-  display: inline-grid;
-  place-items: center;
-  color: #fff;
-  background: #ef4444;
-  font-size: 12px;
-}
-
-.main {
-  padding: 28px;
-  display: grid;
-  align-content: start;
-  gap: 22px;
-}
-
-.topbar {
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.topbar h1,
-.page-card h2 {
-  margin: 0;
-}
-
-.eyebrow {
-  margin: 0 0 5px;
-  color: #667085;
-  font-size: 13px;
-}
-
-.topbar-actions,
-.command-form {
-  gap: 10px;
-}
-
-.command-center,
-.page-card {
-  padding: 18px;
-  border: 1px solid #d9e2ec;
-  border-radius: 8px;
-  background: #fff;
-  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
-}
-
-.command-center {
-  justify-content: space-between;
-  gap: 20px;
-}
-
-.command-center p,
-.page-card p {
-  color: #667085;
-}
-
-.command-form input {
-  width: min(520px, 45vw);
-  min-height: 40px;
-  padding: 0 12px;
-  border: 1px solid #d9e2ec;
-  border-radius: 8px;
-}
-
-button {
-  min-height: 40px;
-  padding: 0 12px;
-  border: 1px solid #2563eb;
-  border-radius: 8px;
-  color: #fff;
-  background: #2563eb;
-  cursor: pointer;
-}
-
-@media (max-width: 760px) {
-  .app-shell {
-    display: block;
-  }
-
-  .sidebar {
-    height: auto;
-  }
-
-  .topbar,
-  .command-center,
-  .command-form {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .command-form input {
-    width: 100%;
-  }
-}
-

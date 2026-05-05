@@ -23,10 +23,18 @@
   },
   "devDependencies": {
     "@ai-commerce-ops/config": "workspace:*",
+    "@eslint/js": "^10.0.1",
+    "@tailwindcss/vite": "^4.2.4",
     "@types/react": "^19.0.1",
     "@types/react-dom": "^19.0.2",
+    "@typescript-eslint/eslint-plugin": "^8.59.2",
+    "@typescript-eslint/parser": "^8.59.2",
+    "eslint": "^8.57.1",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.4.4",
+    "tailwindcss": "^4.2.4",
     "typescript": "5.4.5",
+    "typescript-eslint": "^8.59.2",
     "vite": "^5.4.11"
   }
 }
-

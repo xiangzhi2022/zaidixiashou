@@ -2,12 +2,20 @@ import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { AppShell } from '../components/layout/AppShell';
 import { LoginPage } from '../pages/LoginPage';
 import { AuthGuard } from '../components/AuthGuard';
-import PlaceholderPage from '../pages/PlaceholderPage';
 import { OverviewPage } from '../pages/OverviewPage';
+import { OrdersPage } from '../pages/OrdersPage';
+import { ProductsPage } from '../pages/ProductsPage';
+import { MessagesPage } from '../pages/MessagesPage';
 import { AcquisitionPage } from '../pages/AcquisitionPage';
+import { MediaPage } from '../pages/MediaPage';
+import { MediaCreativePage } from '../pages/MediaCreativePage';
+import { MediaDraftsPage } from '../pages/MediaDraftsPage';
+import { AutomationPage } from '../pages/AutomationPage';
 import { SettingsAccountsPage } from '../pages/SettingsAccountsPage';
-import { SettingsAiModelsPage } from '../pages/SettingsAiModelsPage';
+import { SettingsAIModelsPage } from '../pages/SettingsAIModelsPage';
 import { SettingsBillingPage } from '../pages/SettingsBillingPage';
+import { SettingsAutopilotPage } from '../pages/SettingsAutopilotPage';
+import { SettingsApprovalPage } from '../pages/SettingsApprovalPage';
 
 export const router = createBrowserRouter([
   {
@@ -24,19 +32,19 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <Navigate to="/overview" replace /> },
       { path: 'overview', element: <OverviewPage /> },
-      { path: 'commerce/orders', element: <PlaceholderPage title="订单" /> },
-      { path: 'commerce/products', element: <PlaceholderPage title="商品" /> },
-      { path: 'commerce/messages', element: <PlaceholderPage title="消息" /> },
+      { path: 'commerce/orders', element: <OrdersPage /> },
+      { path: 'commerce/products', element: <ProductsPage /> },
+      { path: 'commerce/messages', element: <MessagesPage /> },
       { path: 'acquisition', element: <AcquisitionPage /> },
-      { path: 'media/center', element: <PlaceholderPage title="运营中心" /> },
-      { path: 'media/creative', element: <PlaceholderPage title="图像视频生成" /> },
-      { path: 'media/drafts', element: <PlaceholderPage title="草稿审核发布" /> },
-      { path: 'media/automation', element: <PlaceholderPage title="自动化" /> },
+      { path: 'media/center', element: <MediaPage /> },
+      { path: 'media/creative', element: <MediaCreativePage /> },
+      { path: 'media/drafts', element: <MediaDraftsPage /> },
+      { path: 'media/automation', element: <AutomationPage /> },
       { path: 'settings/accounts', element: <SettingsAccountsPage /> },
-      { path: 'settings/ai-models', element: <SettingsAiModelsPage /> },
+      { path: 'settings/ai-models', element: <SettingsAIModelsPage /> },
       { path: 'settings/billing', element: <SettingsBillingPage /> },
-      { path: 'settings/autopilot', element: <PlaceholderPage title="自动托管模式" /> },
-      { path: 'settings/approval', element: <PlaceholderPage title="审批" /> },
+      { path: 'settings/autopilot', element: <SettingsAutopilotPage /> },
+      { path: 'settings/approval', element: <SettingsApprovalPage /> },
     ],
   },
 ]);
