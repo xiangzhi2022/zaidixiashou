@@ -1,0 +1,31 @@
+{
+  "name": "ai-commerce-ops",
+  "version": "0.0.0",
+  "private": true,
+  "packageManager": "pnpm@9.15.4",
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "test": "turbo test",
+    "lint": "turbo lint",
+    "typecheck": "turbo typecheck",
+    "prisma": "prisma",
+    "prepare": "husky"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
+  "devDependencies": {
+    "@ai-commerce-ops/config": "workspace:*",
+    "@prisma/client": "^5.22.0",
+    "eslint": "^8.57.1",
+    "husky": "^9.1.7",
+    "pnpm": "9.15.4",
+    "prettier": "^3.3.3",
+    "prisma": "^5.22.0",
+    "tsx": "^4.19.2",
+    "turbo": "2.9.7",
+    "@turbo/windows-64": "2.9.7",
+    "typescript": "5.4.5"
+  }
+}

@@ -1,0 +1,35 @@
+export const RiskLevels = {
+  LOW: 'LOW',
+  MEDIUM: 'MEDIUM',
+  HIGH: 'HIGH',
+  CRITICAL: 'CRITICAL'
+} as const;
+
+export const ApprovalStatuses = {
+  PENDING: 'PENDING',
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED',
+  CHANGE_REQUESTED: 'CHANGE_REQUESTED',
+  EXPIRED: 'EXPIRED'
+} as const;
+
+export const DraftStatuses = {
+  DRAFT: 'DRAFT',
+  PENDING_REVIEW: 'PENDING_REVIEW',
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED',
+  SCHEDULED: 'SCHEDULED',
+  PUBLISHED: 'PUBLISHED',
+  PUBLISH_FAILED: 'PUBLISH_FAILED'
+} as const;
+
+export const ActionStatuses = {
+  QUEUED: 'QUEUED',
+  RUNNING: 'RUNNING',
+  WAITING_APPROVAL: 'WAITING_APPROVAL',
+  SUCCEEDED: 'SUCCEEDED',
+  FAILED: 'FAILED',
+  CANCELED: 'CANCELED',
+  RETRYING: 'RETRYING'
+} as const;
+

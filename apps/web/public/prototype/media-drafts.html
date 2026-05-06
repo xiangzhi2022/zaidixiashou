@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/jquery/jquery-3.7.1.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/lucide/lucide-1.11.0.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/tailwindcss/tailwindcss-browser-4.2.4.min.js"></script>
+
+  <style type="text/tailwindcss">
+    @theme {
+      /* === 品牌色 === */
+      --color-primary:              #2F6BFF;
+      --color-primary-container:    #DBE8FF;
+      --color-on-primary:           #ffffff;
+      /* === 背景 / 表面 === */
+      --color-background:                 #F6F8FB;
+      --color-surface-container-lowest:   #EDF0F5;
+      --color-surface:                    #FFFFFF;
+      --color-surface-container:          #EDF0F5;
+      --color-surface-container-high:     #E1E6EF;
+      --color-surface-container-highest:  #D5DBE8;
+      /* === 文字 === */
+      --color-on-surface:           #152033;
+      --color-on-surface-variant:   #637089;
+      /* === 功能色 === */
+      --color-success:  #16A37B;
+      --color-error:    #E5484D;
+      --color-warning:  #E5A000;
+      /* === 边框 === */
+      --color-outline:          #C4CDD9;
+      --color-outline-variant:  #E6EAF2;
+      /* === 圆角 === */
+      --radius-sm:   0.25rem;
+      --radius-md:   0.375rem;
+      --radius-lg:   0.5rem;
+      --radius-xl:   0.75rem;
+      --radius-2xl:  1rem;
+      --radius-full: 9999px;
+      /* === 阴影 === */
+      --shadow-card:   0 2px 8px rgba(0,0,0,0.08);
+      --shadow-float:  0 10px 25px rgba(0,0,0,0.1);
+      --shadow-dialog: 0 25px 50px rgba(0,0,0,0.15);
+      /* === 字体 === */
+      --font-sans: "Inter", "Noto Sans SC", system-ui, sans-serif;
+    }
+  </style>
+
+  <link href="https://lf-code-agent.coze.cn/obj/x-ai-cn/fonts/google/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+
+  <!-- 图片兜底 -->
+  <script>
+    document.addEventListener('error', function (e) {
+      const img = e.target;
+      if (img.tagName !== 'IMG' || img.dataset.fallback) return;
+      img.dataset.fallback = '1';
+      const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const cat = img.getAttribute('data-category') || '其他';
+      const alt = img.getAttribute('alt') || '';
+      const label = esc(alt.length > 8 ? alt.slice(0, 8) + '…' : alt);
+      const icons = { '人物': '👤', '自然风景': '🏞', '动物': '🐾', '建筑城市': '🏙', '运动体育': '⚽', '交通工具': '🚗', '食物': '🍽', '服饰时尚': '👗', '商业科技': '💼', '游戏娱乐': '🎮', '艺术': '🎨', '其他': '🖼' };
+      const icon = icons[cat] || '🖼';
+      const w = img.width || 400, h = img.height || 300;
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><rect width="100%" height="100%" fill="%23f3f4f6"/><text x="50%" y="45%" text-anchor="middle" font-size="${Math.min(w, h) * 0.18}" dominant-baseline="central">${icon}</text><text x="50%" y="68%" text-anchor="middle" font-size="${Math.min(w, h) * 0.07}" fill="%239ca3af" font-family="system-ui,sans-serif" dominant-baseline="central">${label}</text></svg>`;
+      img.src = 'data:image/svg+xml,' + svg;
+    }, true);
+  </script>
+</head>
+
+<body class="bg-background text-on-surface font-sans">
+
+  <!-- @nav:start -->
+  <header class="bg-surface sticky top-0 z-40 h-14 flex items-center justify-between px-5 border-b border-outline-variant/20">
+    <div class="flex items-center gap-2.5">
+      <i data-lucide="zap" class="w-5 h-5 text-primary"></i>
+      <span class="font-bold text-base text-on-surface">AI Commerce Ops</span>
+    </div>
+    <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2 bg-surface-container rounded-md px-3 py-1.5 text-sm text-on-surface-variant">
+        <i data-lucide="terminal" class="w-4 h-4"></i>
+        <span>输入运营目标，AI 帮你执行</span>
+      </div>
+      <button class="relative p-2 rounded-md hover:bg-surface-container transition-colors">
+        <i data-lucide="bell" class="w-4 h-4 text-on-surface-variant"></i>
+        <span class="absolute top-1 right-1 w-2 h-2 bg-error rounded-full"></span>
+      </button>
+      <div class="w-8 h-8 bg-primary/10 text-primary rounded-full flex items-center justify-center text-sm font-medium">初</div>
+    </div>
+  </header>
+
+  <div class="flex" style="height: calc(100vh - 3.5rem)">
+    <aside class="w-56 shrink-0 bg-surface border-r border-outline-variant/20 overflow-y-auto">
+      <div class="p-3 space-y-0.5">
+        <p class="px-3 py-1 text-xs font-medium text-on-surface-variant/60 uppercase tracking-wider">电商运营</p>
+        <a href="home.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="layout-dashboard" class="w-4 h-4"></i>总览
+        </a>
+        <a href="orders.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="shopping-bag" class="w-4 h-4"></i>订单
+        </a>
+        <a href="products.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="package-search" class="w-4 h-4"></i>商品
+        </a>
+        <a href="messages.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors relative">
+          <i data-lucide="messages-square" class="w-4 h-4"></i>消息
+          <span class="ml-auto bg-error text-white text-xs rounded-full px-1.5 py-0.5 leading-none">64</span>
+        </a>
+
+        <p class="px-3 py-1 mt-2 text-xs font-medium text-on-surface-variant/60 uppercase tracking-wider">获客</p>
+        <a href="acquisition.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="user-plus" class="w-4 h-4"></i>获客中心
+        </a>
+
+        <p class="px-3 py-1 mt-2 text-xs font-medium text-on-surface-variant/60 uppercase tracking-wider">媒体运营</p>
+        <a href="media.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors relative">
+          <i data-lucide="megaphone" class="w-4 h-4"></i>运营中心
+          <span class="ml-auto bg-warning text-on-surface text-xs rounded-full px-1.5 py-0.5 leading-none">4</span>
+        </a>
+        <a href="media-creative.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="clapperboard" class="w-4 h-4"></i>图像视频生成
+        </a>
+        <a href="media-drafts.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md bg-primary/10 text-primary text-sm font-medium transition-colors relative" aria-current="page">
+          <i data-lucide="file-check" class="w-4 h-4"></i>草稿审核发布
+          <span class="ml-auto bg-warning text-on-surface text-xs rounded-full px-1.5 py-0.5 leading-none">4</span>
+        </a>
+        <a href="automation.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="workflow" class="w-4 h-4"></i>自动化
+        </a>
+
+        <p class="px-3 py-1 mt-2 text-xs font-medium text-on-surface-variant/60 uppercase tracking-wider">系统设置</p>
+        <a href="settings-accounts.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors relative">
+          <i data-lucide="key-round" class="w-4 h-4"></i>平台账号管理
+          <span class="ml-auto bg-warning text-on-surface text-xs rounded-full px-1.5 py-0.5 leading-none">3</span>
+        </a>
+        <a href="settings-ai-models.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="brain-circuit" class="w-4 h-4"></i>AI 模型设置
+        </a>
+        <a href="settings-autopilot.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="bot" class="w-4 h-4"></i>自动托管
+        </a>
+        <a href="settings-approval.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="shield-check" class="w-4 h-4"></i>审批
+        </a>
+      </div>
+    </aside>
+  <!-- @nav:end -->
+
+  <main class="flex-1 min-w-0 overflow-y-auto bg-background p-6">
+    <!-- @main-content:start -->
+
+    <!-- 页面标题区 -->
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h1 class="text-xl font-bold text-on-surface">草稿审核发布</h1>
+        <p class="text-sm text-on-surface-variant mt-1">预览草稿内容，审核检查后发布到各平台</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <button id="btn-batch-approve" class="bg-surface-container text-on-surface px-4 py-2 rounded-md text-sm font-medium hover:bg-surface-container-high active:scale-[0.98] transition-all inline-flex items-center gap-2">
+          <i data-lucide="check-check" class="w-3.5 h-3.5"></i>批量审核通过
+        </button>
+        <button id="btn-refresh" class="bg-primary text-on-primary px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all inline-flex items-center gap-2">
+          <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>刷新
+        </button>
+      </div>
+    </div>
+
+    <!-- 草稿列表卡片 -->
+    <div class="bg-surface rounded-lg shadow-card p-5 mb-6">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-base font-semibold text-on-surface inline-flex items-center gap-2">
+          <i data-lucide="file-text" class="w-4 h-4 text-primary"></i>待审核草稿
+        </h2>
+        <span class="text-xs text-on-surface-variant bg-surface-container px-2 py-1 rounded-md">共 3 条</span>
+      </div>
+      <div class="space-y-3" id="draft-list">
+
+        <!-- 列表-草稿1：旅行收纳清单小红书 -->
+        <div class="draft-item flex items-center gap-4 p-4 rounded-lg border border-outline-variant/30 hover:bg-surface-container/30 transition-colors cursor-pointer" data-draft-id="draft-1">
+          <div class="w-16 h-16 rounded-md overflow-hidden shrink-0 bg-surface-container">
+            <img src="https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=128&h=128&fit=crop" alt="旅行收纳用品" data-category="服饰时尚" class="w-full h-full object-cover">
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="text-sm font-semibold text-on-surface truncate">旅行收纳清单</span>
+              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">小红书</span>
+            </div>
+            <p class="text-xs text-on-surface-variant truncate">出行必备收纳技巧，10 个神器让行李箱整整齐齐…</p>
+          </div>
+          <div class="flex items-center gap-3 shrink-0">
+            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-success/15 text-success">素材完整</span>
+            <button id="btn-preview-draft-1" class="text-primary text-sm font-medium hover:underline inline-flex items-center gap-1">
+              <i data-lucide="eye" class="w-3.5 h-3.5"></i>预览
+            </button>
+            <button id="btn-fix-draft-1" class="text-on-surface-variant text-sm font-medium hover:text-on-surface hover:underline inline-flex items-center gap-1">
+              <i data-lucide="wrench" class="w-3.5 h-3.5"></i>补素材
+            </button>
+          </div>
+        </div>
+
+        <!-- 列表-草稿2：行李箱整理对比TikTok -->
+        <div class="draft-item flex items-center gap-4 p-4 rounded-lg border border-warning/20 bg-warning/5 hover:bg-warning/10 transition-colors cursor-pointer" data-draft-id="draft-2">
+          <div class="w-16 h-16 rounded-md overflow-hidden shrink-0 bg-surface-container">
+            <img src="https://images.unsplash.com/photo-1553522991-71439aa58549?w=128&h=128&fit=crop" alt="行李箱整理" data-category="交通工具" class="w-full h-full object-cover">
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="text-sm font-semibold text-on-surface truncate">行李箱整理对比</span>
+              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-error/10 text-error">TikTok</span>
+            </div>
+            <p class="text-xs text-on-surface-variant truncate">Before vs After 行李箱整理挑战，收纳达人必备…</p>
+          </div>
+          <div class="flex items-center gap-3 shrink-0">
+            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-warning/15 text-warning">缺封面</span>
+            <button id="btn-preview-draft-2" class="text-primary text-sm font-medium hover:underline inline-flex items-center gap-1">
+              <i data-lucide="eye" class="w-3.5 h-3.5"></i>预览
+            </button>
+            <button id="btn-fix-draft-2" class="text-warning text-sm font-medium hover:underline inline-flex items-center gap-1">
+              <i data-lucide="wrench" class="w-3.5 h-3.5"></i>补素材
+            </button>
+          </div>
+        </div>
+
+        <!-- 列表-草稿3：Weekend bag reset Instagram -->
+        <div class="draft-item flex items-center gap-4 p-4 rounded-lg border border-outline-variant/30 hover:bg-surface-container/30 transition-colors cursor-pointer" data-draft-id="draft-3">
+          <div class="w-16 h-16 rounded-md overflow-hidden shrink-0 bg-surface-container">
+            <img src="https://images.unsplash.com/photo-1547949003-9792a18a2601?w=128&h=128&fit=crop" alt="周末背包整理" data-category="服饰时尚" class="w-full h-full object-cover">
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="text-sm font-semibold text-on-surface truncate">Weekend bag reset</span>
+              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gradient-to-r from-purple-500/10 to-pink-500/10 text-purple-600">Instagram</span>
+            </div>
+            <p class="text-xs text-on-surface-variant truncate">Weekend bag reset 🎒 What I pack for a quick getaway…</p>
+          </div>
+          <div class="flex items-center gap-3 shrink-0">
+            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-surface-container-high text-on-surface-variant">待确认</span>
+            <button id="btn-preview-draft-3" class="text-primary text-sm font-medium hover:underline inline-flex items-center gap-1">
+              <i data-lucide="eye" class="w-3.5 h-3.5"></i>预览
+            </button>
+            <button id="btn-fix-draft-3" class="text-on-surface-variant text-sm font-medium hover:text-on-surface hover:underline inline-flex items-center gap-1">
+              <i data-lucide="wrench" class="w-3.5 h-3.5"></i>补素材
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- 双列区：预览文案 + 审核清单 -->
+    <div class="grid grid-cols-2 gap-6 mb-6">
+
+      <!-- 左列：预览文案卡片 -->
+      <div class="bg-surface rounded-lg shadow-card p-5">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-base font-semibold text-on-surface inline-flex items-center gap-2">
+            <i data-lucide="align-left" class="w-4 h-4 text-primary"></i>预览文案
+          </h2>
+          <div class="flex items-center gap-2">
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">小红书</span>
+            <button id="btn-edit-copy" class="text-primary text-sm font-medium hover:underline inline-flex items-center gap-1">
+              <i data-lucide="pencil" class="w-3.5 h-3.5"></i>编辑
+            </button>
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="text-xs font-medium text-on-surface-variant mb-1.5 block">标题</label>
+          <div class="bg-surface-container rounded-md px-3 py-2 text-sm text-on-surface">旅行收纳清单 ✈️ 10个神器让行李箱整整齐齐！</div>
+        </div>
+        <div class="mb-3">
+          <label class="text-xs font-medium text-on-surface-variant mb-1.5 block">正文内容</label>
+          <textarea id="draft-copy-area" class="w-full bg-surface-container border-none rounded-md px-3 py-2.5 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors resize-none" rows="8" readonly>出行收纳真的是一门学问！每次打包都像玩俄罗斯方块🧱
+
+今天给大家整理了 10 个超实用的旅行收纳好物，从此告别行李箱灾难👇
+
+1️⃣ 压缩收纳袋 — 衣服体积瞬间减半
+2️⃣ 分格洗漱包 — 瓶瓶罐罐不再乱滚
+3️⃣ 数据线收纳卷 — 告别线缆纠缠
+4️⃣ 鞋袋分隔包 — 鞋衣分离更卫生
+5️⃣ 内衣分隔包 — 私密物品妥妥的
+6️⃣ 伸缩行李绑带 — 购物满载也不怕
+7️⃣ 便携折叠衣架 — 酒店衣架永远不够用
+8️⃣ 旅行电子秤 — 超重罚款拜拜
+9️⃣ 多功能转换插头 — 全球通用
+🔟 防水证件袋 — 护照证件安全无忧
+
+#旅行收纳 #行李箱整理 #出行必备 #收纳好物 #旅行神器</textarea>
+        </div>
+        <div class="flex items-center gap-2">
+          <label class="text-xs font-medium text-on-surface-variant">标签：</label>
+          <span class="inline-flex items-center px-2 py-0.5 rounded-sm text-xs bg-primary/10 text-primary">#旅行收纳</span>
+          <span class="inline-flex items-center px-2 py-0.5 rounded-sm text-xs bg-primary/10 text-primary">#行李箱整理</span>
+          <span class="inline-flex items-center px-2 py-0.5 rounded-sm text-xs bg-primary/10 text-primary">#出行必备</span>
+          <span class="inline-flex items-center px-2 py-0.5 rounded-sm text-xs bg-primary/10 text-primary">#收纳好物</span>
+          <span class="inline-flex items-center px-2 py-0.5 rounded-sm text-xs bg-primary/10 text-primary">#旅行神器</span>
+        </div>
+      </div>
+
+      <!-- 右列：审核清单卡片 -->
+      <div class="bg-surface rounded-lg shadow-card p-5">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-base font-semibold text-on-surface inline-flex items-center gap-2">
+            <i data-lucide="clipboard-check" class="w-4 h-4 text-primary"></i>审核清单
+          </h2>
+          <button id="btn-rerun-check" class="text-primary text-sm font-medium hover:underline inline-flex items-center gap-1">
+            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>重新检查
+          </button>
+        </div>
+        <div class="space-y-3" id="check-list">
+
+          <!-- 审核项1：敏感词检查 -->
+          <div class="flex items-center gap-3 p-3 rounded-lg bg-success/5 border border-success/20">
+            <div class="w-8 h-8 rounded-full bg-success/15 flex items-center justify-center shrink-0">
+              <i data-lucide="shield-check" class="w-4 h-4 text-success"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <span class="text-sm font-medium text-on-surface">敏感词检查</span>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-success/15 text-success">通过</span>
+              </div>
+              <p class="text-xs text-on-surface-variant mt-0.5">未检测到敏感词汇，内容安全合规</p>
+            </div>
+            <i data-lucide="check-circle-2" class="w-5 h-5 text-success shrink-0"></i>
+          </div>
+
+          <!-- 审核项2：图片尺寸 -->
+          <div class="flex items-center gap-3 p-3 rounded-lg bg-warning/5 border border-warning/20">
+            <div class="w-8 h-8 rounded-full bg-warning/15 flex items-center justify-center shrink-0">
+              <i data-lucide="image" class="w-4 h-4 text-warning"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <span class="text-sm font-medium text-on-surface">图片尺寸</span>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-warning/15 text-warning">需处理</span>
+              </div>
+              <p class="text-xs text-on-surface-variant mt-0.5">封面图尺寸 800×600 不符合小红书推荐比例 3:4，建议裁剪或替换</p>
+            </div>
+            <button id="btn-fix-check-2" class="text-warning text-xs font-medium hover:underline inline-flex items-center gap-1 shrink-0">
+              <i data-lucide="wrench" class="w-3 h-3"></i>修复
+            </button>
+          </div>
+
+          <!-- 审核项3：文字字数 -->
+          <div class="flex items-center gap-3 p-3 rounded-lg bg-success/5 border border-success/20">
+            <div class="w-8 h-8 rounded-full bg-success/15 flex items-center justify-center shrink-0">
+              <i data-lucide="type" class="w-4 h-4 text-success"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <span class="text-sm font-medium text-on-surface">文字字数</span>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-success/15 text-success">通过</span>
+              </div>
+              <p class="text-xs text-on-surface-variant mt-0.5">正文 286 字，符合小红书 300 字以内建议</p>
+            </div>
+            <i data-lucide="check-circle-2" class="w-5 h-5 text-success shrink-0"></i>
+          </div>
+
+          <!-- 审核项4：标签规范 -->
+          <div class="flex items-center gap-3 p-3 rounded-lg bg-success/5 border border-success/20">
+            <div class="w-8 h-8 rounded-full bg-success/15 flex items-center justify-center shrink-0">
+              <i data-lucide="tag" class="w-4 h-4 text-success"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <span class="text-sm font-medium text-on-surface">标签规范</span>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-success/15 text-success">通过</span>
+              </div>
+              <p class="text-xs text-on-surface-variant mt-0.5">5 个标签，包含核心关键词，符合小红书标签规范</p>
+            </div>
+            <i data-lucide="check-circle-2" class="w-5 h-5 text-success shrink-0"></i>
+          </div>
+
+        </div>
+
+        <!-- 审核总结 -->
+        <div class="mt-4 p-3 rounded-lg bg-surface-container">
+          <div class="flex items-center justify-between">
+            <span class="text-sm font-medium text-on-surface">审核总结</span>
+            <span class="text-xs text-on-surface-variant">3/4 项通过</span>
+          </div>
+          <div class="mt-2 w-full bg-surface-container-high rounded-full h-1.5">
+            <div class="bg-warning h-1.5 rounded-full" style="width: 75%"></div>
+          </div>
+          <p class="text-xs text-warning mt-2">⚠ 1 项需处理，建议修复后再发布</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 多平台预览表格 -->
+    <div class="bg-surface rounded-lg shadow-card overflow-hidden">
+      <div class="flex items-center justify-between px-5 py-4 border-b border-outline-variant/30">
+        <h2 class="text-base font-semibold text-on-surface inline-flex items-center gap-2">
+          <i data-lucide="layout-grid" class="w-4 h-4 text-primary"></i>多平台预览
+        </h2>
+        <button id="btn-publish-all" class="bg-primary text-on-primary px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all inline-flex items-center gap-2">
+          <i data-lucide="send" class="w-3.5 h-3.5"></i>发布
+        </button>
+      </div>
+      <div class="grid grid-cols-6 px-5 py-3 bg-surface-container text-xs font-semibold text-on-surface-variant uppercase tracking-wide">
+        <span>平台</span>
+        <span>标题</span>
+        <span>素材</span>
+        <span>风险</span>
+        <span>状态</span>
+        <span class="text-right">操作</span>
+      </div>
+      <div class="divide-y divide-outline-variant/50" id="platform-table">
+
+        <!-- 表格行-平台1：小红书 -->
+        <div class="grid grid-cols-6 px-5 py-3.5 hover:bg-surface-container/50 transition-colors items-center">
+          <div class="flex items-center gap-2">
+            <div class="w-6 h-6 rounded-full bg-error/10 flex items-center justify-center">
+              <i data-lucide="book-open" class="w-3.5 h-3.5 text-error"></i>
+            </div>
+            <span class="text-sm font-medium text-on-surface">小红书</span>
+          </div>
+          <span class="text-sm text-on-surface-variant truncate">旅行收纳清单 ✈️ 10个神器让行李箱…</span>
+          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-success/15 text-success w-fit">完整</span>
+          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-success/15 text-success w-fit">低</span>
+          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-success/15 text-success w-fit">就绪</span>
+          <div class="flex items-center gap-2 justify-end">
+            <button id="btn-preview-platform-1" class="text-primary text-sm font-medium hover:underline">预览</button>
+            <button id="btn-fix-platform-1" class="text-on-surface-variant text-sm font-medium hover:text-on-surface hover:underline">补素材</button>
+            <button id="btn-tag-platform-1" class="text-on-surface-variant text-sm font-medium hover:text-on-surface hover:underline">补标签</button>
+          </div>
+        </div>
+
+        <!-- 表格行-平台2：TikTok -->
+        <div class="grid grid-cols-6 px-5 py-3.5 hover:bg-surface-container/50 transition-colors items-center bg-warning/5">
+          <div class="flex items-center gap-2">
+            <div class="w-6 h-6 rounded-full bg-on-surface/5 flex items-center justify-center">
+              <i data-lucide="music" class="w-3.5 h-3.5 text-on-surface"></i>
+            </div>
+            <span class="text-sm font-medium text-on-surface">TikTok</span>
+          </div>
+          <span class="text-sm text-on-surface-variant truncate">行李箱整理对比 Before vs After</span>
+          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-warning/15 text-warning w-fit">缺封面</span>
+          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-warning/15 text-warning w-fit">中</span>
+          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-warning/15 text-warning w-fit">待修复</span>
+          <div class="flex items-center gap-2 justify-end">
+            <button id="btn-preview-platform-2" class="text-primary text-sm font-medium hover:underline">预览</button>
+            <button id="btn-fix-platform-2" class="text-warning text-sm font-medium hover:underline">补素材</button>
+            <button id="btn-tag-platform-2" class="text-on-surface-variant text-sm font-medium hover:text-on-surface hover:underline">补标签</button>
+          </div>
+        </div>
+
+        <!-- 表格行-平台3：Instagram -->
+        <div class="grid grid-cols-6 px-5 py-3.5 hover:bg-surface-container/50 transition-colors items-center">
+          <div class="flex items-center gap-2">
+            <div class="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500/10 to-pink-500/10 flex items-center justify-center">
+              <i data-lucide="camera" class="w-3.5 h-3.5 text-purple-500"></i>
+            </div>
+            <span class="text-sm font-medium text-on-surface">Instagram</span>
+          </div>
+          <span class="text-sm text-on-surface-variant truncate">Weekend bag reset 🎒</span>
+          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-surface-container-high text-on-surface-variant w-fit">待确认</span>
+          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-surface-container-high text-on-surface-variant w-fit">待定</span>
+          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-surface-container-high text-on-surface-variant w-fit">草稿</span>
+          <div class="flex items-center gap-2 justify-end">
+            <button id="btn-preview-platform-3" class="text-primary text-sm font-medium hover:underline">预览</button>
+            <button id="btn-fix-platform-3" class="text-on-surface-variant text-sm font-medium hover:text-on-surface hover:underline">补素材</button>
+            <button id="btn-tag-platform-3" class="text-on-surface-variant text-sm font-medium hover:text-on-surface hover:underline">补标签</button>
+          </div>
+        </div>
+
+        <!-- 表格行-平台4：抖音 -->
+        <div class="grid grid-cols-6 px-5 py-3.5 hover:bg-surface-container/50 transition-colors items-center">
+          <div class="flex items-center gap-2">
+            <div class="w-6 h-6 rounded-full bg-on-surface/5 flex items-center justify-center">
+              <i data-lucide="video" class="w-3.5 h-3.5 text-on-surface"></i>
+            </div>
+            <span class="text-sm font-medium text-on-surface">抖音</span>
+          </div>
+          <span class="text-sm text-on-surface-variant truncate">行李箱收纳前后对比，强迫症狂喜！</span>
+          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-success/15 text-success w-fit">完整</span>
+          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-success/15 text-success w-fit">低</span>
+          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-success/15 text-success w-fit">就绪</span>
+          <div class="flex items-center gap-2 justify-end">
+            <button id="btn-preview-platform-4" class="text-primary text-sm font-medium hover:underline">预览</button>
+            <button id="btn-fix-platform-4" class="text-on-surface-variant text-sm font-medium hover:text-on-surface hover:underline">补素材</button>
+            <button id="btn-tag-platform-4" class="text-on-surface-variant text-sm font-medium hover:text-on-surface hover:underline">补标签</button>
+          </div>
+        </div>
+
+        <!-- 表格行-平台5：微博 -->
+        <div class="grid grid-cols-6 px-5 py-3.5 hover:bg-surface-container/50 transition-colors items-center">
+          <div class="flex items-center gap-2">
+            <div class="w-6 h-6 rounded-full bg-error/5 flex items-center justify-center">
+              <i data-lucide="at-sign" class="w-3.5 h-3.5 text-error"></i>
+            </div>
+            <span class="text-sm font-medium text-on-surface">微博</span>
+          </div>
+          <span class="text-sm text-on-surface-variant truncate">旅行收纳清单｜10 个神器推荐</span>
+          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-warning/15 text-warning w-fit">缺视频</span>
+          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-warning/15 text-warning w-fit">中</span>
+          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-warning/15 text-warning w-fit">待修复</span>
+          <div class="flex items-center gap-2 justify-end">
+            <button id="btn-preview-platform-5" class="text-primary text-sm font-medium hover:underline">预览</button>
+            <button id="btn-fix-platform-5" class="text-warning text-sm font-medium hover:underline">补素材</button>
+            <button id="btn-tag-platform-5" class="text-on-surface-variant text-sm font-medium hover:text-on-surface hover:underline">补标签</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- @main-content:end -->
+  </main>
+  </div>
+
+  <script>
+    $(function () {
+
+      // 草稿行点击 - 高亮选中态
+      $('#draft-list').on('click', '.draft-item', function (e) {
+        // 如果点击的是按钮则不处理选中
+        if ($(e.target).closest('button').length) return;
+        $('.draft-item').removeClass('ring-2 ring-primary/30');
+        $(this).addClass('ring-2 ring-primary/30');
+        var draftId = $(this).data('draft-id');
+        console.log('选中草稿:', draftId);
+        // 后续应根据 draftId 更新右侧预览文案和审核清单内容
+      });
+
+      // 预览按钮 - 点击打开预览
+      $('#btn-preview-draft-1').on('click', function () {
+        console.log('预览草稿: 旅行收纳清单-小红书');
+        // 后续应实现：弹出模态框展示草稿在目标平台的真实预览效果（模拟手机端排版）
+      });
+      $('#btn-preview-draft-2').on('click', function () {
+        console.log('预览草稿: 行李箱整理对比-TikTok');
+      });
+      $('#btn-preview-draft-3').on('click', function () {
+        console.log('预览草稿: Weekend bag reset-Instagram');
+      });
+
+      // 补素材按钮
+      $('#btn-fix-draft-1').on('click', function () {
+        console.log('补素材: 旅行收纳清单-小红书 (素材已完整，无需补充)');
+        // 素材完整，无需额外操作
+      });
+      $('#btn-fix-draft-2').on('click', function () {
+        console.log('补素材: 行李箱整理对比-TikTok (缺少封面图)');
+        // 后续应实现：
+        // 1. 打开素材补充弹窗或跳转 media-creative.html
+        // 2. 针对缺少的封面图，调用 AI 生成封面
+        // 3. 用户选择封面后更新草稿素材状态
+      });
+      $('#btn-fix-draft-3').on('click', function () {
+        console.log('补素材: Weekend bag reset-Instagram (待确认素材)');
+        // 后续应实现：
+        // 1. 打开素材确认弹窗
+        // 2. 展示待确认的素材列表供用户确认或替换
+        // 3. 确认后更新草稿状态
+      });
+
+      // 编辑文案按钮
+      // 编辑按钮 - 点击后应实现内联编辑：
+      // 1. 将 textarea 的 readonly 属性移除，添加 focus 样式
+      // 2. 显示"保存"和"取消"按钮
+      // 3. 保存时将修改内容提交到草稿，取消时恢复原始内容
+      // 4. 保存后重新触发审核清单检查
+      $('#btn-edit-copy').on('click', function () {
+        var $textarea = $('#draft-copy-area');
+        if ($textarea.prop('readonly')) {
+          $textarea.prop('readonly', false).focus();
+          $(this).html('<i data-lucide="check" class="w-3.5 h-3.5"></i>保存');
+          lucide.createIcons();
+        } else {
+          $textarea.prop('readonly', true);
+          $(this).html('<i data-lucide="pencil" class="w-3.5 h-3.5"></i>编辑');
+          lucide.createIcons();
+          console.log('文案已保存');
+        }
+      });
+
+      // 重新检查按钮
+      $('#btn-rerun-check').on('click', function () {
+        console.log('重新执行审核检查');
+        // 后续应实现：
+        // 1. 调用 AI 模型对当前文案内容重新进行敏感词、尺寸、字数、标签等检查
+        // 2. 更新审核清单中各项状态
+        // 3. 更新审核总结进度条
+      });
+
+      // 审核清单修复按钮
+      // 修复按钮 - 点击后应实现自动修复：
+      // 1. 图片尺寸问题：调用 AI 裁剪/调整图片至推荐比例 3:4
+      // 2. 修复完成后更新审核项状态为"通过"
+      // 3. 更新审核总结进度
+      $('#btn-fix-check-2').on('click', function () {
+        console.log('修复审核项: 图片尺寸 - 自动裁剪至 3:4 比例');
+      });
+
+      // 多平台预览表格操作
+      $('#btn-preview-platform-1').on('click', function () {
+        console.log('平台预览: 小红书');
+        // 后续应实现：弹出模态框，模拟小红书发布后的展示效果
+      });
+      $('#btn-preview-platform-2').on('click', function () {
+        console.log('平台预览: TikTok');
+      });
+      $('#btn-preview-platform-3').on('click', function () {
+        console.log('平台预览: Instagram');
+      });
+      $('#btn-preview-platform-4').on('click', function () {
+        console.log('平台预览: 抖音');
+      });
+      $('#btn-preview-platform-5').on('click', function () {
+        console.log('平台预览: 微博');
+      });
+
+      // 补素材按钮（平台表格）
+      $('#btn-fix-platform-1').on('click', function () {
+        console.log('平台补素材: 小红书 (素材完整)');
+      });
+      $('#btn-fix-platform-2').on('click', function () {
+        console.log('平台补素材: TikTok (缺少封面)');
+        // 后续应跳转 media-creative.html 生成封面
+        window.location.href = 'media-creative.html?task=cover&platform=tiktok&draft=draft-2';
+      });
+      $('#btn-fix-platform-3').on('click', function () {
+        console.log('平台补素材: Instagram (待确认)');
+      });
+      $('#btn-fix-platform-4').on('click', function () {
+        console.log('平台补素材: 抖音 (素材完整)');
+      });
+      $('#btn-fix-platform-5').on('click', function () {
+        console.log('平台补素材: 微博 (缺少视频)');
+        window.location.href = 'media-creative.html?task=video&platform=weibo&draft=draft-5';
+      });
+
+      // 补标签按钮（平台表格）
+      // 补标签按钮 - 点击后应实现：
+      // 1. 弹出标签编辑弹窗，展示当前标签和 AI 推荐标签
+      // 2. 用户可选择添加推荐标签或手动输入新标签
+      // 3. 保存后更新平台行的标签数据
+      $('#btn-tag-platform-1').on('click', function () {
+        console.log('补标签: 小红书');
+      });
+      $('#btn-tag-platform-2').on('click', function () {
+        console.log('补标签: TikTok');
+      });
+      $('#btn-tag-platform-3').on('click', function () {
+        console.log('补标签: Instagram');
+      });
+      $('#btn-tag-platform-4').on('click', function () {
+        console.log('补标签: 抖音');
+      });
+      $('#btn-tag-platform-5').on('click', function () {
+        console.log('补标签: 微博');
+      });
+
+      // 发布按钮
+      // 发布按钮 - 点击后应实现：
+      // 1. 检查审核清单是否全部通过，若有未通过项则弹窗提醒
+      // 2. 弹出发布确认弹窗，展示即将发布的平台列表和内容概要
+      // 3. 用户确认后提交审批流程（需审批）
+      // 4. 审批通过后通过 CDP 在各平台执行发布操作
+      $('#btn-publish-all').on('click', function () {
+        console.log('提交发布审批: 所有就绪平台');
+        // 原型简单交互：弹出确认提示
+        if (confirm('确认将已就绪的草稿提交审批发布？\n\n就绪平台：小红书、抖音\n待修复：TikTok、微博\n待确认：Instagram')) {
+          console.log('已提交审批');
+        }
+      });
+
+      // 批量审核通过按钮
+      // 批量审核通过 - 点击后应实现：
+      // 1. 检查所有草稿的审核清单状态
+      // 2. 仅对审核全部通过的草稿批量提交审批
+      // 3. 弹出确认弹窗列出将要提交的草稿
+      // 4. 确认后批量提交审批
+      $('#btn-batch-approve').on('click', function () {
+        console.log('批量审核通过');
+        if (confirm('确认批量审核通过？\n\n将通过审核的草稿：旅行收纳清单-小红书')) {
+          console.log('已批量提交审批');
+        }
+      });
+
+      // 刷新按钮
+      $('#btn-refresh').on('click', function () {
+        console.log('刷新草稿列表');
+        // 后续应实现：重新拉取草稿数据并更新页面
+      });
+
+    });
+  </script>
+
+  <script>lucide.createIcons();</script>
+</body>
+
+</html>
