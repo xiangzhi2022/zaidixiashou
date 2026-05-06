@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 node_modules
 dist
 .DS_Store
@@ -88,3 +89,19 @@ logs/
 *.pptx
 *.xlsx
 *.csv
+=======
+node_modules/
+dist/
+build/
+.turbo/
+.vite/
+coverage/
+.env
+.env.local
+.env.*.local
+*.log
+.DS_Store
+postgres_data/
+minio_data/
+
+>>>>>>> 6d59da985c388658fed22e22fa6e5b50fda0f7e9

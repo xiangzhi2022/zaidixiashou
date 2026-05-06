@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/jquery/jquery-3.7.1.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/lucide/lucide-1.11.0.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/tailwindcss/tailwindcss-browser-4.2.4.min.js"></script>
+
+  <style type="text/tailwindcss">
+    @theme {
+      /* === 品牌色 === */
+      --color-primary:              #2F6BFF;
+      --color-primary-container:    #DBE8FF;
+      --color-on-primary:           #ffffff;
+      /* === 背景 / 表面 === */
+      --color-background:                 #F6F8FB;
+      --color-surface-container-lowest:   #EDF0F5;
+      --color-surface:                    #FFFFFF;
+      --color-surface-container:          #EDF0F5;
+      --color-surface-container-high:     #E1E6EF;
+      --color-surface-container-highest:  #D5DBE8;
+      /* === 文字 === */
+      --color-on-surface:           #152033;
+      --color-on-surface-variant:   #637089;
+      /* === 功能色 === */
+      --color-success:  #16A37B;
+      --color-error:    #E5484D;
+      --color-warning:  #E5A000;
+      /* === 边框 === */
+      --color-outline:          #C4CDD9;
+      --color-outline-variant:  #E6EAF2;
+      /* === 圆角 === */
+      --radius-sm:   0.25rem;
+      --radius-md:   0.375rem;
+      --radius-lg:   0.5rem;
+      --radius-xl:   0.75rem;
+      --radius-2xl:  1rem;
+      --radius-full: 9999px;
+      /* === 阴影 === */
+      --shadow-card:   0 2px 8px rgba(0,0,0,0.08);
+      --shadow-float:  0 10px 25px rgba(0,0,0,0.1);
+      --shadow-dialog: 0 25px 50px rgba(0,0,0,0.15);
+      /* === 字体 === */
+      --font-sans: "Inter", "Noto Sans SC", system-ui, sans-serif;
+    }
+  </style>
+
+  <link href="https://lf-code-agent.coze.cn/obj/x-ai-cn/fonts/google/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+
+  <!-- 图片兜底 -->
+  <script>
+    document.addEventListener('error', function (e) {
+      const img = e.target;
+      if (img.tagName !== 'IMG' || img.dataset.fallback) return;
+      img.dataset.fallback = '1';
+      const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const cat = img.getAttribute('data-category') || '其他';
+      const alt = img.getAttribute('alt') || '';
+      const label = esc(alt.length > 8 ? alt.slice(0, 8) + '…' : alt);
+      const icons = { '人物': '👤', '自然风景': '🏞', '动物': '🐾', '建筑城市': '🏙', '运动体育': '⚽', '交通工具': '🚗', '食物': '🍽', '服饰时尚': '👗', '商业科技': '💼', '游戏娱乐': '🎮', '艺术': '🎨', '其他': '🖼' };
+      const icon = icons[cat] || '🖼';
+      const w = img.width || 400, h = img.height || 300;
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><rect width="100%" height="100%" fill="%23f3f4f6"/><text x="50%" y="45%" text-anchor="middle" font-size="${Math.min(w, h) * 0.18}" dominant-baseline="central">${icon}</text><text x="50%" y="68%" text-anchor="middle" font-size="${Math.min(w, h) * 0.07}" fill="%239ca3af" font-family="system-ui,sans-serif" dominant-baseline="central">${label}</text></svg>`;
+      img.src = 'data:image/svg+xml,' + svg;
+    }, true);
+  </script>
+</head>
+
+<body class="bg-background text-on-surface font-sans">
+
+  <!-- @nav:start -->
+  <header class="bg-surface sticky top-0 z-40 h-14 flex items-center justify-between px-5 border-b border-outline-variant/20">
+    <div class="flex items-center gap-2.5">
+      <i data-lucide="zap" class="w-5 h-5 text-primary"></i>
+      <span class="font-bold text-base text-on-surface">AI Commerce Ops</span>
+    </div>
+    <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2 bg-surface-container rounded-md px-3 py-1.5 text-sm text-on-surface-variant">
+        <i data-lucide="terminal" class="w-4 h-4"></i>
+        <span>输入运营目标，AI 帮你执行</span>
+      </div>
+      <button class="relative p-2 rounded-md hover:bg-surface-container transition-colors">
+        <i data-lucide="bell" class="w-4 h-4 text-on-surface-variant"></i>
+        <span class="absolute top-1 right-1 w-2 h-2 bg-error rounded-full"></span>
+      </button>
+      <div class="w-8 h-8 bg-primary/10 text-primary rounded-full flex items-center justify-center text-sm font-medium">初</div>
+    </div>
+  </header>
+
+  <div class="flex" style="height: calc(100vh - 3.5rem)">
+    <aside class="w-56 shrink-0 bg-surface border-r border-outline-variant/20 overflow-y-auto">
+      <div class="p-3 space-y-0.5">
+        <p class="px-3 py-1 text-xs font-medium text-on-surface-variant/60 uppercase tracking-wider">电商运营</p>
+        <a href="home.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="layout-dashboard" class="w-4 h-4"></i>总览
+        </a>
+        <a href="orders.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md bg-primary/10 text-primary text-sm font-medium transition-colors" aria-current="page">
+          <i data-lucide="shopping-bag" class="w-4 h-4"></i>订单
+        </a>
+        <a href="products.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="package-search" class="w-4 h-4"></i>商品
+        </a>
+        <a href="messages.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors relative">
+          <i data-lucide="messages-square" class="w-4 h-4"></i>消息
+          <span class="ml-auto bg-error text-white text-xs rounded-full px-1.5 py-0.5 leading-none">64</span>
+        </a>
+
+        <p class="px-3 py-1 mt-2 text-xs font-medium text-on-surface-variant/60 uppercase tracking-wider">获客</p>
+        <a href="acquisition.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="user-plus" class="w-4 h-4"></i>获客中心
+        </a>
+
+        <p class="px-3 py-1 mt-2 text-xs font-medium text-on-surface-variant/60 uppercase tracking-wider">媒体运营</p>
+        <a href="media.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors relative">
+          <i data-lucide="megaphone" class="w-4 h-4"></i>运营中心
+          <span class="ml-auto bg-warning text-on-surface text-xs rounded-full px-1.5 py-0.5 leading-none">4</span>
+        </a>
+        <a href="media-creative.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="clapperboard" class="w-4 h-4"></i>图像视频生成
+        </a>
+        <a href="media-drafts.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors relative">
+          <i data-lucide="file-check" class="w-4 h-4"></i>草稿审核发布
+          <span class="ml-auto bg-warning text-on-surface text-xs rounded-full px-1.5 py-0.5 leading-none">4</span>
+        </a>
+        <a href="automation.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="workflow" class="w-4 h-4"></i>自动化
+        </a>
+
+        <p class="px-3 py-1 mt-2 text-xs font-medium text-on-surface-variant/60 uppercase tracking-wider">系统设置</p>
+        <a href="settings-accounts.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors relative">
+          <i data-lucide="key-round" class="w-4 h-4"></i>平台账号管理
+          <span class="ml-auto bg-warning text-on-surface text-xs rounded-full px-1.5 py-0.5 leading-none">3</span>
+        </a>
+        <a href="settings-ai-models.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="brain-circuit" class="w-4 h-4"></i>AI 模型设置
+        </a>
+        <a href="settings-autopilot.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="bot" class="w-4 h-4"></i>自动托管
+        </a>
+        <a href="settings-approval.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="shield-check" class="w-4 h-4"></i>审批
+        </a>
+      </div>
+    </aside>
+  <!-- @nav:end -->
+
+  <main class="flex-1 min-w-0 overflow-y-auto bg-background p-6">
+    <!-- @main-content:start -->
+
+    <!-- 页面标题 -->
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h1 class="text-xl font-bold text-on-surface">订单工作台</h1>
+        <p class="text-sm text-on-surface-variant mt-0.5">集中处理跨平台订单、物流异常和退款</p>
+      </div>
+      <button id="btn-batch-process" class="bg-surface-container text-on-surface px-4 py-2 rounded-md text-sm font-medium hover:bg-surface-container-high active:scale-[0.98] transition-all inline-flex items-center gap-2">
+        <i data-lucide="list-checks" class="w-3.5 h-3.5"></i>批量处理
+      </button>
+    </div>
+
+    <!-- 指标卡区域 -->
+    <div class="grid grid-cols-4 gap-4 mb-6">
+      <!-- 指标卡-今日订单 -->
+      <div id="metric-today-orders" class="bg-surface rounded-lg shadow-card p-5 hover:shadow-float transition-shadow cursor-pointer">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs font-medium text-on-surface-variant uppercase tracking-wide">今日订单</span>
+          <div class="w-8 h-8 bg-primary/10 rounded-md flex items-center justify-center">
+            <i data-lucide="shopping-cart" class="w-4 h-4 text-primary"></i>
+          </div>
+        </div>
+        <div class="text-2xl font-bold text-on-surface">247</div>
+        <div class="flex items-center gap-1 mt-1">
+          <i data-lucide="trending-up" class="w-3 h-3 text-success"></i>
+          <span class="text-xs text-success font-medium">+12%</span>
+          <span class="text-xs text-on-surface-variant ml-1">较昨日</span>
+        </div>
+      </div>
+
+      <!-- 指标卡-异常订单 -->
+      <div id="metric-abnormal-orders" class="bg-surface rounded-lg shadow-card p-5 hover:shadow-float transition-shadow cursor-pointer">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs font-medium text-on-surface-variant uppercase tracking-wide">异常订单</span>
+          <div class="w-8 h-8 bg-error/10 rounded-md flex items-center justify-center">
+            <i data-lucide="alert-triangle" class="w-4 h-4 text-error"></i>
+          </div>
+        </div>
+        <div class="text-2xl font-bold text-on-surface">18</div>
+        <div class="flex items-center gap-1 mt-1">
+          <i data-lucide="trending-up" class="w-3 h-3 text-error"></i>
+          <span class="text-xs text-error font-medium">+5</span>
+          <span class="text-xs text-on-surface-variant ml-1">较昨日</span>
+        </div>
+      </div>
+
+      <!-- 指标卡-待发货 -->
+      <div id="metric-pending-ship" class="bg-surface rounded-lg shadow-card p-5 hover:shadow-float transition-shadow cursor-pointer">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs font-medium text-on-surface-variant uppercase tracking-wide">待发货</span>
+          <div class="w-8 h-8 bg-warning/10 rounded-md flex items-center justify-center">
+            <i data-lucide="package" class="w-4 h-4 text-warning"></i>
+          </div>
+        </div>
+        <div class="text-2xl font-bold text-on-surface">73</div>
+        <div class="flex items-center gap-1 mt-1">
+          <i data-lucide="trending-down" class="w-3 h-3 text-success"></i>
+          <span class="text-xs text-success font-medium">-8</span>
+          <span class="text-xs text-on-surface-variant ml-1">较昨日</span>
+        </div>
+      </div>
+
+      <!-- 指标卡-退款请求 -->
+      <div id="metric-refund-requests" class="bg-surface rounded-lg shadow-card p-5 hover:shadow-float transition-shadow cursor-pointer">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs font-medium text-on-surface-variant uppercase tracking-wide">退款请求</span>
+          <div class="w-8 h-8 bg-error/10 rounded-md flex items-center justify-center">
+            <i data-lucide="rotate-ccw" class="w-4 h-4 text-error"></i>
+          </div>
+        </div>
+        <div class="text-2xl font-bold text-on-surface">6</div>
+        <div class="flex items-center gap-1 mt-1">
+          <i data-lucide="minus" class="w-3 h-3 text-on-surface-variant"></i>
+          <span class="text-xs text-on-surface-variant">持平</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 筛选条 -->
+    <div class="bg-surface rounded-lg shadow-card p-4 mb-4">
+      <div class="flex items-center gap-3">
+        <!-- 平台下拉 -->
+        <div class="relative">
+          <select id="filter-platform" class="appearance-none bg-surface-container border-none rounded-md pl-3 pr-8 py-2 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors cursor-pointer">
+            <option value="all">全部平台</option>
+            <option value="amazon">Amazon</option>
+            <option value="ebay">eBay</option>
+            <option value="shopify">Shopify</option>
+            <option value="tiktok">TikTok Shop</option>
+          </select>
+          <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-on-surface-variant absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+        </div>
+
+        <!-- 状态下拉 -->
+        <div class="relative">
+          <select id="filter-status" class="appearance-none bg-surface-container border-none rounded-md pl-3 pr-8 py-2 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors cursor-pointer">
+            <option value="all">全部状态</option>
+            <option value="logistics_timeout">物流超时</option>
+            <option value="refund">退款</option>
+            <option value="pending_shipment">待发货</option>
+            <option value="normal">正常</option>
+          </select>
+          <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-on-surface-variant absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+        </div>
+
+        <!-- 优先级下拉 -->
+        <div class="relative">
+          <select id="filter-priority" class="appearance-none bg-surface-container border-none rounded-md pl-3 pr-8 py-2 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors cursor-pointer">
+            <option value="all">全部优先级</option>
+            <option value="high">高</option>
+            <option value="medium">中</option>
+            <option value="low">低</option>
+          </select>
+          <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-on-surface-variant absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+        </div>
+
+        <!-- 搜索框 -->
+        <div class="flex-1 relative">
+          <i data-lucide="search" class="w-4 h-4 text-on-surface-variant absolute left-3 top-1/2 -translate-y-1/2"></i>
+          <input id="filter-search" type="text" placeholder="搜索订单号 / 买家名称..." class="w-full bg-surface-container border-none rounded-md pl-9 pr-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"/>
+        </div>
+
+        <!-- 刷新按钮 -->
+        <button id="btn-refresh" class="bg-surface-container text-on-surface-variant px-3 py-2 rounded-md hover:bg-surface-container-high active:scale-[0.98] transition-all">
+          <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- 订单表格 -->
+    <div class="bg-surface rounded-lg shadow-card overflow-hidden">
+      <!-- 表头 -->
+      <div class="grid grid-cols-6 px-5 py-3 bg-surface-container text-xs font-semibold text-on-surface-variant uppercase tracking-wide">
+        <span>订单号</span>
+        <span>平台</span>
+        <span>状态</span>
+        <span>金额</span>
+        <span>优先级</span>
+        <span>操作</span>
+      </div>
+
+      <!-- 表体 -->
+      <div id="order-table-body" class="divide-y divide-outline-variant/50">
+
+        <!-- 列表-订单1: #A-10482 Amazon 物流超时 高优先级 -->
+        <div class="grid grid-cols-6 px-5 py-4 hover:bg-surface-container/50 transition-colors items-center" data-order-id="A-10482" data-platform="amazon" data-status="logistics_timeout" data-priority="high">
+          <span class="text-sm font-semibold text-on-surface">#A-10482</span>
+          <div class="flex items-center gap-2">
+            <div class="w-6 h-6 bg-[#FF9900]/10 rounded flex items-center justify-center">
+              <span class="text-[10px] font-bold text-[#FF9900]">A</span>
+            </div>
+            <span class="text-sm text-on-surface-variant">Amazon</span>
+          </div>
+          <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-error/10 text-error w-fit">物流超时</span>
+          <span class="text-sm font-semibold text-on-surface">$128.40</span>
+          <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-error/10 text-error w-fit">高</span>
+          <div class="flex items-center gap-2">
+            <button id="btn-process-A10482" class="btn-process bg-primary text-on-primary px-3 py-1.5 rounded-md text-xs font-medium hover:opacity-90 active:scale-[0.98] transition-all inline-flex items-center gap-1.5" data-order-id="A-10482">
+              <i data-lucide="sparkles" class="w-3 h-3"></i>AI 处理
+            </button>
+          </div>
+        </div>
+
+        <!-- 列表-订单2: #E-87312 eBay 退款 高优先级 -->
+        <div class="grid grid-cols-6 px-5 py-4 hover:bg-surface-container/50 transition-colors items-center" data-order-id="E-87312" data-platform="ebay" data-status="refund" data-priority="high">
+          <span class="text-sm font-semibold text-on-surface">#E-87312</span>
+          <div class="flex items-center gap-2">
+            <div class="w-6 h-6 bg-[#E53238]/10 rounded flex items-center justify-center">
+              <span class="text-[10px] font-bold text-[#E53238]">E</span>
+            </div>
+            <span class="text-sm text-on-surface-variant">eBay</span>
+          </div>
+          <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-warning/10 text-warning w-fit">买家要求退款</span>
+          <span class="text-sm font-semibold text-on-surface">$42.90</span>
+          <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-error/10 text-error w-fit">高</span>
+          <div class="flex items-center gap-2">
+            <button id="btn-process-E87312" class="btn-process bg-primary text-on-primary px-3 py-1.5 rounded-md text-xs font-medium hover:opacity-90 active:scale-[0.98] transition-all inline-flex items-center gap-1.5" data-order-id="E-87312">
+              <i data-lucide="sparkles" class="w-3 h-3"></i>AI 处理
+            </button>
+          </div>
+        </div>
+
+        <!-- 列表-订单3: #S-22409 Shopify 待发货 中优先级 -->
+        <div class="grid grid-cols-6 px-5 py-4 hover:bg-surface-container/50 transition-colors items-center" data-order-id="S-22409" data-platform="shopify" data-status="pending_shipment" data-priority="medium">
+          <span class="text-sm font-semibold text-on-surface">#S-22409</span>
+          <div class="flex items-center gap-2">
+            <div class="w-6 h-6 bg-[#96BF48]/10 rounded flex items-center justify-center">
+              <span class="text-[10px] font-bold text-[#96BF48]">S</span>
+            </div>
+            <span class="text-sm text-on-surface-variant">Shopify</span>
+          </div>
+          <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-primary-container text-primary w-fit">待发货</span>
+          <span class="text-sm font-semibold text-on-surface">$86.00</span>
+          <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-warning/10 text-warning w-fit">中</span>
+          <div class="flex items-center gap-2">
+            <button id="btn-process-S22409" class="btn-process bg-primary text-on-primary px-3 py-1.5 rounded-md text-xs font-medium hover:opacity-90 active:scale-[0.98] transition-all inline-flex items-center gap-1.5" data-order-id="S-22409">
+              <i data-lucide="sparkles" class="w-3 h-3"></i>AI 处理
+            </button>
+          </div>
+        </div>
+
+        <!-- 列表-订单4: #TK-8810 TikTok Shop 正常 低优先级 -->
+        <div class="grid grid-cols-6 px-5 py-4 hover:bg-surface-container/50 transition-colors items-center" data-order-id="TK-8810" data-platform="tiktok" data-status="normal" data-priority="low">
+          <span class="text-sm font-semibold text-on-surface">#TK-8810</span>
+          <div class="flex items-center gap-2">
+            <div class="w-6 h-6 bg-[#000000]/10 rounded flex items-center justify-center">
+              <span class="text-[10px] font-bold text-[#000000]">TK</span>
+            </div>
+            <span class="text-sm text-on-surface-variant">TikTok Shop</span>
+          </div>
+          <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-success/10 text-success w-fit">正常</span>
+          <span class="text-sm font-semibold text-on-surface">$54.20</span>
+          <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-surface-container-high text-on-surface-variant w-fit">低</span>
+          <div class="flex items-center gap-2">
+            <button id="btn-process-TK8810" class="btn-process bg-primary text-on-primary px-3 py-1.5 rounded-md text-xs font-medium hover:opacity-90 active:scale-[0.98] transition-all inline-flex items-center gap-1.5" data-order-id="TK-8810">
+              <i data-lucide="sparkles" class="w-3 h-3"></i>AI 处理
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- AI 处理建议弹窗 -->
+    <div id="ai-suggest-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 hidden">
+      <div class="bg-surface rounded-xl shadow-dialog max-w-lg w-full max-h-[80vh] overflow-y-auto">
+        <div class="p-6">
+          <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                <i data-lucide="sparkles" class="w-4 h-4 text-primary"></i>
+              </div>
+              <h3 class="text-base font-bold text-on-surface">AI 处理建议</h3>
+            </div>
+            <button id="btn-close-modal" class="p-1.5 rounded-md hover:bg-surface-container transition-colors">
+              <i data-lucide="x" class="w-4 h-4 text-on-surface-variant"></i>
+            </button>
+          </div>
+
+          <div id="ai-suggest-order-info" class="bg-surface-container rounded-lg p-4 mb-4">
+            <p class="text-sm text-on-surface-variant mb-1">订单号</p>
+            <p id="ai-suggest-order-id" class="text-sm font-semibold text-on-surface">-</p>
+          </div>
+
+          <div id="ai-suggest-content" class="space-y-3">
+            <!-- AI 建议内容区 - 由 JS 动态切换显示 -->
+            <div id="suggest-content-A10482" class="suggest-content hidden">
+              <div class="bg-error/5 border border-error/10 rounded-lg p-4 mb-3">
+                <div class="flex items-center gap-2 mb-2">
+                  <i data-lucide="alert-circle" class="w-4 h-4 text-error"></i>
+                  <span class="text-sm font-semibold text-error">物流超时风险</span>
+                </div>
+                <p class="text-sm text-on-surface-variant">该订单已超过预计送达时间 3 天，物流信息停留在中国海关清关阶段。</p>
+              </div>
+              <p class="text-sm font-semibold text-on-surface mb-2">AI 建议处理步骤：</p>
+              <ol class="space-y-2 text-sm text-on-surface-variant">
+                <li class="flex gap-2"><span class="shrink-0 w-5 h-5 bg-primary/10 text-primary rounded text-xs flex items-center justify-center font-bold">1</span>立即联系物流服务商（DHL）查询清关状态，获取预计放行时间</li>
+                <li class="flex gap-2"><span class="shrink-0 w-5 h-5 bg-primary/10 text-primary rounded text-xs flex items-center justify-center font-bold">2</span>向买家发送物流延误通知邮件，告知当前状态和预计到达时间</li>
+                <li class="flex gap-2"><span class="shrink-0 w-5 h-5 bg-primary/10 text-primary rounded text-xs flex items-center justify-center font-bold">3</span>若 48 小时内未清关完成，建议提供 10% 折扣券作为补偿</li>
+              </ol>
+            </div>
+
+            <div id="suggest-content-E87312" class="suggest-content hidden">
+              <div class="bg-warning/5 border border-warning/10 rounded-lg p-4 mb-3">
+                <div class="flex items-center gap-2 mb-2">
+                  <i data-lucide="rotate-ccw" class="w-4 h-4 text-warning"></i>
+                  <span class="text-sm font-semibold text-warning">退款请求分析</span>
+                </div>
+                <p class="text-sm text-on-surface-variant">买家以"商品与描述不符"为由申请退款，该买家历史退款率 8%，低于平台平均。</p>
+              </div>
+              <p class="text-sm font-semibold text-on-surface mb-2">AI 建议处理步骤：</p>
+              <ol class="space-y-2 text-sm text-on-surface-variant">
+                <li class="flex gap-2"><span class="shrink-0 w-5 h-5 bg-primary/10 text-primary rounded text-xs flex items-center justify-center font-bold">1</span>查看买家上传的退款凭证照片，对比 Listing 描述确认差异</li>
+                <li class="flex gap-2"><span class="shrink-0 w-5 h-5 bg-primary/10 text-primary rounded text-xs flex items-center justify-center font-bold">2</span>同意退款并生成退货标签，预计退款金额 $42.90</li>
+                <li class="flex gap-2"><span class="shrink-0 w-5 h-5 bg-primary/10 text-primary rounded text-xs flex items-center justify-center font-bold">3</span>更新 Listing 商品描述和图片，避免类似退款再次发生</li>
+              </ol>
+            </div>
+
+            <div id="suggest-content-S22409" class="suggest-content hidden">
+              <div class="bg-primary/5 border border-primary/10 rounded-lg p-4 mb-3">
+                <div class="flex items-center gap-2 mb-2">
+                  <i data-lucide="package" class="w-4 h-4 text-primary"></i>
+                  <span class="text-sm font-semibold text-primary">待发货提醒</span>
+                </div>
+                <p class="text-sm text-on-surface-variant">订单已超过 24 小时未发货，Shopify 平台建议在 48 小时内发货以维持店铺评分。</p>
+              </div>
+              <p class="text-sm font-semibold text-on-surface mb-2">AI 建议处理步骤：</p>
+              <ol class="space-y-2 text-sm text-on-surface-variant">
+                <li class="flex gap-2"><span class="shrink-0 w-5 h-5 bg-primary/10 text-primary rounded text-xs flex items-center justify-center font-bold">1</span>检查库存确认商品可发，优先安排发货</li>
+                <li class="flex gap-2"><span class="shrink-0 w-5 h-5 bg-primary/10 text-primary rounded text-xs flex items-center justify-center font-bold">2</span>生成物流面单并标记为已发货，同步物流单号到 Shopify</li>
+                <li class="flex gap-2"><span class="shrink-0 w-5 h-5 bg-primary/10 text-primary rounded text-xs flex items-center justify-center font-bold">3</span>发送发货通知邮件给买家，包含物流追踪链接</li>
+              </ol>
+            </div>
+
+            <div id="suggest-content-TK8810" class="suggest-content hidden">
+              <div class="bg-success/5 border border-success/10 rounded-lg p-4 mb-3">
+                <div class="flex items-center gap-2 mb-2">
+                  <i data-lucide="check-circle" class="w-4 h-4 text-success"></i>
+                  <span class="text-sm font-semibold text-success">订单正常</span>
+                </div>
+                <p class="text-sm text-on-surface-variant">订单状态正常，物流信息更新及时，买家未发起任何异常请求。</p>
+              </div>
+              <p class="text-sm font-semibold text-on-surface mb-2">AI 建议处理步骤：</p>
+              <ol class="space-y-2 text-sm text-on-surface-variant">
+                <li class="flex gap-2"><span class="shrink-0 w-5 h-5 bg-primary/10 text-primary rounded text-xs flex items-center justify-center font-bold">1</span>持续关注物流状态，预计 3-5 个工作日送达</li>
+                <li class="flex gap-2"><span class="shrink-0 w-5 h-5 bg-primary/10 text-primary rounded text-xs flex items-center justify-center font-bold">2</span>在商品妥投后自动发送好评邀请邮件</li>
+                <li class="flex gap-2"><span class="shrink-0 w-5 h-5 bg-primary/10 text-primary rounded text-xs flex items-center justify-center font-bold">3</span>建议对该买家推荐相关商品，提升复购率</li>
+              </ol>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-end gap-3 mt-6 pt-4 border-t border-outline-variant/50">
+            <button id="btn-cancel-suggest" class="bg-surface-container text-on-surface px-4 py-2 rounded-md text-sm font-medium hover:bg-surface-container-high active:scale-[0.98] transition-all">取消</button>
+            <button id="btn-confirm-suggest" class="bg-primary text-on-primary px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all inline-flex items-center gap-2">
+              <i data-lucide="check" class="w-3.5 h-3.5"></i>确认执行
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 退款确认弹窗 -->
+    <div id="refund-confirm-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 hidden">
+      <div class="bg-surface rounded-xl shadow-dialog max-w-md w-full">
+        <div class="p-6">
+          <div class="flex items-center gap-2 mb-4">
+            <div class="w-8 h-8 bg-error/10 rounded-lg flex items-center justify-center">
+              <i data-lucide="alert-triangle" class="w-4 h-4 text-error"></i>
+            </div>
+            <h3 class="text-base font-bold text-on-surface">确认退款</h3>
+          </div>
+          <div class="bg-surface-container rounded-lg p-4 mb-4 space-y-2">
+            <div class="flex justify-between text-sm">
+              <span class="text-on-surface-variant">订单号</span>
+              <span class="font-medium text-on-surface">#E-87312</span>
+            </div>
+            <div class="flex justify-between text-sm">
+              <span class="text-on-surface-variant">退款金额</span>
+              <span class="font-semibold text-error">$42.90</span>
+            </div>
+            <div class="flex justify-between text-sm">
+              <span class="text-on-surface-variant">退款原因</span>
+              <span class="font-medium text-on-surface">商品与描述不符</span>
+            </div>
+          </div>
+          <p class="text-sm text-on-surface-variant mb-5">确认退款后，将通过 CDP 在 eBay 平台执行退款操作，此操作需审批通过后执行。</p>
+          <div class="flex items-center justify-end gap-3">
+            <button id="btn-cancel-refund" class="bg-surface-container text-on-surface px-4 py-2 rounded-md text-sm font-medium hover:bg-surface-container-high active:scale-[0.98] transition-all">取消</button>
+            <button id="btn-confirm-refund" class="bg-error text-white px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all inline-flex items-center gap-2">
+              <i data-lucide="check" class="w-3.5 h-3.5"></i>确认提交审批
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast 通知 -->
+    <div id="toast" class="fixed top-20 right-6 z-50 hidden">
+      <div class="bg-surface rounded-lg shadow-float border border-outline-variant/30 px-4 py-3 flex items-center gap-3">
+        <i data-lucide="check-circle" class="w-4 h-4 text-success"></i>
+        <span id="toast-message" class="text-sm font-medium text-on-surface">操作成功</span>
+      </div>
+    </div>
+
+    <!-- @main-content:end -->
+  </main>
+  </div>
+
+  <script>
+    $(function() {
+      // === 筛选交互 ===
+
+      // 平台筛选 - 变更时刷新表格（模拟筛选效果）
+      $('#filter-platform').on('change', function() {
+        var val = $(this).val();
+        console.log('平台筛选:', val);
+        // TODO: 实际筛选逻辑 - 根据平台值过滤表格行
+        // 1. 遍历 #order-table-body 中的每一行
+        // 2. 检查行的 data-platform 属性
+        // 3. 如果 val === 'all' 或 data-platform 与 val 匹配则显示，否则隐藏
+      });
+
+      // 状态筛选
+      $('#filter-status').on('change', function() {
+        var val = $(this).val();
+        console.log('状态筛选:', val);
+        // TODO: 实际筛选逻辑 - 根据状态值过滤表格行
+      });
+
+      // 优先级筛选
+      $('#filter-priority').on('change', function() {
+        var val = $(this).val();
+        console.log('优先级筛选:', val);
+        // TODO: 实际筛选逻辑 - 根据优先级值过滤表格行
+      });
+
+      // 搜索框 - 防抖300ms模糊搜索
+      var searchTimer = null;
+      $('#filter-search').on('input', function() {
+        var keyword = $(this).val().trim();
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(function() {
+          console.log('搜索关键词:', keyword);
+          // TODO: 实际搜索逻辑
+          // 1. 遍历 #order-table-body 中的每一行
+          // 2. 检查行的 data-order-id 是否包含 keyword
+          // 3. keyword 为空时显示所有行
+          // 4. 否则只显示 data-order-id 包含 keyword 的行
+        }, 300);
+      });
+
+      // 刷新按钮
+      $('#btn-refresh').on('click', function() {
+        console.log('刷新订单列表');
+        // TODO: 重新拉取订单数据
+        showToast('订单数据已刷新');
+      });
+
+      // === 指标卡点击 ===
+      $('#metric-today-orders').on('click', function() {
+        // 今日订单 - 清空所有筛选
+        $('#filter-platform').val('all');
+        $('#filter-status').val('all');
+        $('#filter-priority').val('all');
+        $('#filter-search').val('');
+        console.log('跳转查看今日订单');
+      });
+
+      $('#metric-abnormal-orders').on('click', function() {
+        // 异常订单 - 筛选异常状态
+        $('#filter-status').val('logistics_timeout');
+        console.log('筛选异常订单');
+      });
+
+      $('#metric-pending-ship').on('click', function() {
+        // 待发货 - 筛选待发货状态
+        $('#filter-status').val('pending_shipment');
+        console.log('筛选待发货订单');
+      });
+
+      $('#metric-refund-requests').on('click', function() {
+        // 退款请求 - 筛选退款状态
+        $('#filter-status').val('refund');
+        console.log('筛选退款订单');
+      });
+
+      // === AI 处理建议弹窗 ===
+
+      // 处理按钮 - 点击后显示AI处理建议
+      $('#order-table-body').on('click', '.btn-process', function() {
+        var orderId = $(this).data('order-id');
+        console.log('AI 处理订单:', orderId);
+
+        // 更新弹窗中的订单号
+        $('#ai-suggest-order-id').text('#' + orderId);
+
+        // 隐藏所有建议内容，显示对应的建议
+        $('.suggest-content').addClass('hidden');
+        $('#suggest-content-' + orderId).removeClass('hidden');
+
+        // 显示弹窗
+        $('#ai-suggest-modal').removeClass('hidden');
+      });
+
+      // 关闭弹窗
+      $('#btn-close-modal').on('click', function() {
+        $('#ai-suggest-modal').addClass('hidden');
+      });
+
+      // 取消按钮
+      $('#btn-cancel-suggest').on('click', function() {
+        $('#ai-suggest-modal').addClass('hidden');
+      });
+
+      // 确认执行按钮 - 对于退款订单弹出退款确认弹窗
+      $('#btn-confirm-suggest').on('click', function() {
+        var orderId = $('#ai-suggest-order-id').text().replace('#', '');
+        console.log('确认执行AI建议, 订单:', orderId);
+
+        // 关闭AI建议弹窗
+        $('#ai-suggest-modal').addClass('hidden');
+
+        // 如果是退款订单，弹出退款确认弹窗
+        if (orderId === 'E-87312') {
+          $('#refund-confirm-modal').removeClass('hidden');
+        } else {
+          // 其他订单直接提示提交成功
+          showToast('AI 处理建议已提交，将通过 CDP 在平台执行');
+        }
+      });
+
+      // === 退款确认弹窗 ===
+      $('#btn-cancel-refund').on('click', function() {
+        $('#refund-confirm-modal').addClass('hidden');
+      });
+
+      $('#btn-confirm-refund').on('click', function() {
+        console.log('确认退款, 提交审批');
+        $('#refund-confirm-modal').addClass('hidden');
+        showToast('退款申请已提交审批，审批通过后将通过 CDP 执行');
+      });
+
+      // === 批量处理 ===
+      $('#btn-batch-process').on('click', function() {
+        // TODO: 批量处理交互
+        // 1. 在表格每行前显示复选框
+        // 2. 用户勾选多个订单后点击批量处理
+        // 3. 弹出批量操作确认弹窗，显示选中订单列表
+        // 4. 确认后批量执行AI处理建议
+        console.log('批量处理订单 - 应实现复选框选择和批量操作确认');
+        showToast('请先选择需要批量处理的订单');
+      });
+
+      // === 点击弹窗外部区域关闭 ===
+      $('#ai-suggest-modal').on('click', function(e) {
+        if ($(e.target).is('#ai-suggest-modal')) {
+          $('#ai-suggest-modal').addClass('hidden');
+        }
+      });
+
+      $('#refund-confirm-modal').on('click', function(e) {
+        if ($(e.target).is('#refund-confirm-modal')) {
+          $('#refund-confirm-modal').addClass('hidden');
+        }
+      });
+
+      // === Toast 通知函数 ===
+      function showToast(message) {
+        $('#toast-message').text(message);
+        $('#toast').removeClass('hidden');
+        setTimeout(function() {
+          $('#toast').addClass('hidden');
+        }, 3000);
+      }
+    });
+  </script>
+
+  <script>lucide.createIcons();</script>
+</body>
+
+</html>

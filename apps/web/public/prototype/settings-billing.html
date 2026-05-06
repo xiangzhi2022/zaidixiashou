@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/jquery/jquery-3.7.1.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/lucide/lucide-1.11.0.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/tailwindcss/tailwindcss-browser-4.2.4.min.js"></script>
+
+  <style type="text/tailwindcss">
+    @theme {
+      /* === 品牌色 === */
+      --color-primary:              #2F6BFF;
+      --color-primary-container:    #DBE8FF;
+      --color-on-primary:           #ffffff;
+      /* === 背景 / 表面 === */
+      --color-background:                 #F6F8FB;
+      --color-surface-container-lowest:   #EDF0F5;
+      --color-surface:                    #FFFFFF;
+      --color-surface-container:          #EDF0F5;
+      --color-surface-container-high:     #E1E6EF;
+      --color-surface-container-highest:  #D5DBE8;
+      /* === 文字 === */
+      --color-on-surface:           #152033;
+      --color-on-surface-variant:   #637089;
+      /* === 功能色 === */
+      --color-success:  #16A37B;
+      --color-error:    #E5484D;
+      --color-warning:  #E5A000;
+      /* === 边框 === */
+      --color-outline:          #C4CDD9;
+      --color-outline-variant:  #E6EAF2;
+      /* === 圆角 === */
+      --radius-sm:   0.25rem;
+      --radius-md:   0.375rem;
+      --radius-lg:   0.5rem;
+      --radius-xl:   0.75rem;
+      --radius-2xl:  1rem;
+      --radius-full: 9999px;
+      /* === 阴影 === */
+      --shadow-card:   0 2px 8px rgba(0,0,0,0.08);
+      --shadow-float:  0 10px 25px rgba(0,0,0,0.1);
+      --shadow-dialog: 0 25px 50px rgba(0,0,0,0.15);
+      /* === 字体 === */
+      --font-sans: "Inter", "Noto Sans SC", system-ui, sans-serif;
+    }
+  </style>
+
+  <link href="https://lf-code-agent.coze.cn/obj/x-ai-cn/fonts/google/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+
+  <!-- 图片兜底 -->
+  <script>
+    document.addEventListener('error', function (e) {
+      const img = e.target;
+      if (img.tagName !== 'IMG' || img.dataset.fallback) return;
+      img.dataset.fallback = '1';
+      const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const cat = img.getAttribute('data-category') || '其他';
+      const alt = img.getAttribute('alt') || '';
+      const label = esc(alt.length > 8 ? alt.slice(0, 8) + '…' : alt);
+      const icons = { '人物': '👤', '自然风景': '🏞', '动物': '🐾', '建筑城市': '🏙', '运动体育': '⚽', '交通工具': '🚗', '食物': '🍽', '服饰时尚': '👗', '商业科技': '💼', '游戏娱乐': '🎮', '艺术': '🎨', '其他': '🖼' };
+      const icon = icons[cat] || '🖼';
+      const w = img.width || 400, h = img.height || 300;
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><rect width="100%" height="100%" fill="%23f3f4f6"/><text x="50%" y="45%" text-anchor="middle" font-size="${Math.min(w, h) * 0.18}" dominant-baseline="central">${icon}</text><text x="50%" y="68%" text-anchor="middle" font-size="${Math.min(w, h) * 0.07}" fill="%239ca3af" font-family="system-ui,sans-serif" dominant-baseline="central">${label}</text></svg>`;
+      img.src = 'data:image/svg+xml,' + svg;
+    }, true);
+  </script>
+</head>
+
+<body class="bg-background text-on-surface font-sans">
+
+  <!-- @nav:start -->
+  <header class="bg-surface sticky top-0 z-40 h-14 flex items-center justify-between px-5 border-b border-outline-variant/20">
+    <div class="flex items-center gap-2.5">
+      <i data-lucide="zap" class="w-5 h-5 text-primary"></i>
+      <span class="font-bold text-base text-on-surface">AI Commerce Ops</span>
+    </div>
+    <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2 bg-surface-container rounded-md px-3 py-1.5 text-sm text-on-surface-variant">
+        <i data-lucide="terminal" class="w-4 h-4"></i>
+        <span>输入运营目标，AI 帮你执行</span>
+      </div>
+      <button class="relative p-2 rounded-md hover:bg-surface-container transition-colors">
+        <i data-lucide="bell" class="w-4 h-4 text-on-surface-variant"></i>
+        <span class="absolute top-1 right-1 w-2 h-2 bg-error rounded-full"></span>
+      </button>
+      <div class="w-8 h-8 bg-primary/10 text-primary rounded-full flex items-center justify-center text-sm font-medium">初</div>
+    </div>
+  </header>
+
+  <div class="flex" style="height: calc(100vh - 3.5rem)">
+    <aside class="w-56 shrink-0 bg-surface border-r border-outline-variant/20 overflow-y-auto">
+      <div class="p-3 space-y-0.5">
+        <p class="px-3 py-1 text-xs font-medium text-on-surface-variant/60 uppercase tracking-wider">电商运营</p>
+        <a href="home.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="layout-dashboard" class="w-4 h-4"></i>总览
+        </a>
+        <a href="orders.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="shopping-bag" class="w-4 h-4"></i>订单
+        </a>
+        <a href="products.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="package-search" class="w-4 h-4"></i>商品
+        </a>
+        <a href="messages.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors relative">
+          <i data-lucide="messages-square" class="w-4 h-4"></i>消息
+          <span class="ml-auto bg-error text-white text-xs rounded-full px-1.5 py-0.5 leading-none">64</span>
+        </a>
+
+        <p class="px-3 py-1 mt-2 text-xs font-medium text-on-surface-variant/60 uppercase tracking-wider">获客</p>
+        <a href="acquisition.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="user-plus" class="w-4 h-4"></i>获客中心
+        </a>
+
+        <p class="px-3 py-1 mt-2 text-xs font-medium text-on-surface-variant/60 uppercase tracking-wider">媒体运营</p>
+        <a href="media.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors relative">
+          <i data-lucide="megaphone" class="w-4 h-4"></i>运营中心
+          <span class="ml-auto bg-warning text-on-surface text-xs rounded-full px-1.5 py-0.5 leading-none">4</span>
+        </a>
+        <a href="media-creative.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="clapperboard" class="w-4 h-4"></i>图像视频生成
+        </a>
+        <a href="media-drafts.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors relative">
+          <i data-lucide="file-check" class="w-4 h-4"></i>草稿审核发布
+          <span class="ml-auto bg-warning text-on-surface text-xs rounded-full px-1.5 py-0.5 leading-none">4</span>
+        </a>
+        <a href="automation.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="workflow" class="w-4 h-4"></i>自动化
+        </a>
+
+        <p class="px-3 py-1 mt-2 text-xs font-medium text-on-surface-variant/60 uppercase tracking-wider">系统设置</p>
+        <a href="settings-accounts.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors relative">
+          <i data-lucide="key-round" class="w-4 h-4"></i>平台账号管理
+          <span class="ml-auto bg-warning text-on-surface text-xs rounded-full px-1.5 py-0.5 leading-none">3</span>
+        </a>
+        <a href="settings-ai-models.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="brain-circuit" class="w-4 h-4"></i>AI 模型设置
+        </a>
+        <a href="settings-billing.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md bg-primary/10 text-primary text-sm font-medium transition-colors" aria-current="page">
+          <i data-lucide="credit-card" class="w-4 h-4"></i>订阅与账单
+        </a>
+        <a href="settings-autopilot.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="bot" class="w-4 h-4"></i>自动托管
+        </a>
+        <a href="settings-approval.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="shield-check" class="w-4 h-4"></i>审批
+        </a>
+      </div>
+    </aside>
+  <!-- @nav:end -->
+
+  <main class="flex-1 min-w-0 overflow-y-auto bg-background p-6">
+    <!-- @main-content:start -->
+
+    <!-- 页面标题 -->
+    <div class="mb-8">
+      <h1 class="text-2xl font-bold text-on-surface">订阅与账单</h1>
+      <p class="text-sm text-on-surface-variant mt-1">管理您的 SaaS 订阅套餐、查看账单和支付记录</p>
+    </div>
+
+    <!-- 当前套餐卡片 -->
+    <div id="current-plan-card" class="bg-surface rounded-lg shadow-card p-5 mb-8 flex items-center justify-between">
+      <div class="flex items-center gap-4">
+        <div class="w-12 h-12 bg-primary-container rounded-xl flex items-center justify-center">
+          <i data-lucide="gift" class="w-6 h-6 text-primary"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-surface-container-high text-on-surface-variant">免费版</span>
+            <span class="text-lg font-semibold text-on-surface">免费版</span>
+          </div>
+          <p class="text-sm text-on-surface-variant mt-0.5">永久免费 · 到期时间：无限期</p>
+        </div>
+      </div>
+      <button id="btn-upgrade-top" class="bg-primary text-on-primary px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all inline-flex items-center gap-2">
+        <i data-lucide="arrow-up-circle" class="w-3.5 h-3.5"></i>升级套餐
+      </button>
+    </div>
+
+    <!-- 套餐对比区 -->
+    <div class="mb-10">
+      <h2 class="text-base font-semibold text-on-surface mb-4">套餐对比</h2>
+      <div class="grid grid-cols-4 gap-4">
+
+        <!-- 套餐卡片-免费版（当前，蓝色边框高亮） -->
+        <div id="plan-free" class="bg-surface rounded-lg shadow-card p-5 border-2 border-primary relative flex flex-col">
+          <div class="mb-4">
+            <span class="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-primary/15 text-primary">当前套餐</span>
+          </div>
+          <h3 class="text-base font-semibold text-on-surface mb-1">免费版</h3>
+          <div class="flex items-baseline gap-1 mb-4">
+            <span class="text-2xl font-bold text-on-surface">¥0</span>
+            <span class="text-xs text-on-surface-variant">/月</span>
+          </div>
+          <div class="space-y-3 flex-1">
+            <div class="flex items-start gap-2">
+              <i data-lucide="sparkles" class="w-4 h-4 text-on-surface-variant mt-0.5 shrink-0"></i>
+              <div>
+                <p class="text-sm text-on-surface font-medium">AI 额度</p>
+                <p class="text-xs text-on-surface-variant">自带 Key 限额 50次/天</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-2">
+              <i data-lucide="monitor" class="w-4 h-4 text-on-surface-variant mt-0.5 shrink-0"></i>
+              <div>
+                <p class="text-sm text-on-surface font-medium">CDP 并发</p>
+                <p class="text-xs text-on-surface-variant">1 连接</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-2">
+              <i data-lucide="target" class="w-4 h-4 text-on-surface-variant mt-0.5 shrink-0"></i>
+              <div>
+                <p class="text-sm text-on-surface font-medium">获客任务</p>
+                <p class="text-xs text-on-surface-variant">1 任务/月</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-2">
+              <i data-lucide="code" class="w-4 h-4 text-on-surface-variant mt-0.5 shrink-0"></i>
+              <div>
+                <p class="text-sm text-on-surface font-medium">平台 API</p>
+                <p class="text-xs text-on-surface-variant">不包含</p>
+              </div>
+            </div>
+          </div>
+          <div class="mt-5">
+            <button class="w-full bg-surface-container text-on-surface-variant px-4 py-2 rounded-md text-sm font-medium cursor-default" disabled>当前套餐</button>
+          </div>
+        </div>
+
+        <!-- 套餐卡片-基础版 -->
+        <div id="plan-basic" class="bg-surface rounded-lg shadow-card p-5 border-2 border-transparent relative flex flex-col hover:border-outline/20 transition-colors">
+          <div class="mb-4 h-5"></div>
+          <h3 class="text-base font-semibold text-on-surface mb-1">基础版</h3>
+          <div class="flex items-baseline gap-1 mb-4">
+            <span class="text-2xl font-bold text-on-surface">¥99</span>
+            <span class="text-xs text-on-surface-variant">/月</span>
+          </div>
+          <div class="space-y-3 flex-1">
+            <div class="flex items-start gap-2">
+              <i data-lucide="sparkles" class="w-4 h-4 text-on-surface-variant mt-0.5 shrink-0"></i>
+              <div>
+                <p class="text-sm text-on-surface font-medium">AI 额度</p>
+                <p class="text-xs text-on-surface-variant">平台 API 500次/天</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-2">
+              <i data-lucide="monitor" class="w-4 h-4 text-on-surface-variant mt-0.5 shrink-0"></i>
+              <div>
+                <p class="text-sm text-on-surface font-medium">CDP 并发</p>
+                <p class="text-xs text-on-surface-variant">2 连接</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-2">
+              <i data-lucide="target" class="w-4 h-4 text-on-surface-variant mt-0.5 shrink-0"></i>
+              <div>
+                <p class="text-sm text-on-surface font-medium">获客任务</p>
+                <p class="text-xs text-on-surface-variant">10 任务/月</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-2">
+              <i data-lucide="code" class="w-4 h-4 text-on-surface-variant mt-0.5 shrink-0"></i>
+              <div>
+                <p class="text-sm text-on-surface font-medium">平台 API</p>
+                <p class="text-xs text-on-surface-variant">包含</p>
+              </div>
+            </div>
+          </div>
+          <div class="mt-5">
+            <button id="btn-upgrade-basic" class="w-full bg-primary text-on-primary px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all">升级</button>
+          </div>
+        </div>
+
+        <!-- 套餐卡片-专业版（推荐标签） -->
+        <div id="plan-pro" class="bg-surface rounded-lg shadow-card p-5 border-2 border-transparent relative flex flex-col hover:border-outline/20 transition-colors">
+          <div class="mb-4">
+            <span class="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-primary text-on-primary">推荐</span>
+          </div>
+          <h3 class="text-base font-semibold text-on-surface mb-1">专业版</h3>
+          <div class="flex items-baseline gap-1 mb-4">
+            <span class="text-2xl font-bold text-on-surface">¥299</span>
+            <span class="text-xs text-on-surface-variant">/月</span>
+          </div>
+          <div class="space-y-3 flex-1">
+            <div class="flex items-start gap-2">
+              <i data-lucide="sparkles" class="w-4 h-4 text-on-surface-variant mt-0.5 shrink-0"></i>
+              <div>
+                <p class="text-sm text-on-surface font-medium">AI 额度</p>
+                <p class="text-xs text-on-surface-variant">平台 API 2,000次/天</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-2">
+              <i data-lucide="monitor" class="w-4 h-4 text-on-surface-variant mt-0.5 shrink-0"></i>
+              <div>
+                <p class="text-sm text-on-surface font-medium">CDP 并发</p>
+                <p class="text-xs text-on-surface-variant">5 连接</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-2">
+              <i data-lucide="target" class="w-4 h-4 text-on-surface-variant mt-0.5 shrink-0"></i>
+              <div>
+                <p class="text-sm text-on-surface font-medium">获客任务</p>
+                <p class="text-xs text-on-surface-variant">不限</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-2">
+              <i data-lucide="code" class="w-4 h-4 text-on-surface-variant mt-0.5 shrink-0"></i>
+              <div>
+                <p class="text-sm text-on-surface font-medium">平台 API</p>
+                <p class="text-xs text-on-surface-variant">包含</p>
+              </div>
+            </div>
+          </div>
+          <div class="mt-5">
+            <button id="btn-upgrade-pro" class="w-full bg-primary text-on-primary px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all">升级</button>
+          </div>
+        </div>
+
+        <!-- 套餐卡片-企业版 -->
+        <div id="plan-enterprise" class="bg-surface rounded-lg shadow-card p-5 border-2 border-transparent relative flex flex-col hover:border-outline/20 transition-colors">
+          <div class="mb-4 h-5"></div>
+          <h3 class="text-base font-semibold text-on-surface mb-1">企业版</h3>
+          <div class="flex items-baseline gap-1 mb-4">
+            <span class="text-2xl font-bold text-on-surface">¥799</span>
+            <span class="text-xs text-on-surface-variant">/月</span>
+          </div>
+          <div class="space-y-3 flex-1">
+            <div class="flex items-start gap-2">
+              <i data-lucide="sparkles" class="w-4 h-4 text-on-surface-variant mt-0.5 shrink-0"></i>
+              <div>
+                <p class="text-sm text-on-surface font-medium">AI 额度</p>
+                <p class="text-xs text-on-surface-variant">平台 API 不限</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-2">
+              <i data-lucide="monitor" class="w-4 h-4 text-on-surface-variant mt-0.5 shrink-0"></i>
+              <div>
+                <p class="text-sm text-on-surface font-medium">CDP 并发</p>
+                <p class="text-xs text-on-surface-variant">不限</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-2">
+              <i data-lucide="target" class="w-4 h-4 text-on-surface-variant mt-0.5 shrink-0"></i>
+              <div>
+                <p class="text-sm text-on-surface font-medium">获客任务</p>
+                <p class="text-xs text-on-surface-variant">不限</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-2">
+              <i data-lucide="code" class="w-4 h-4 text-on-surface-variant mt-0.5 shrink-0"></i>
+              <div>
+                <p class="text-sm text-on-surface font-medium">平台 API</p>
+                <p class="text-xs text-on-surface-variant">包含</p>
+              </div>
+            </div>
+          </div>
+          <div class="mt-5">
+            <button id="btn-upgrade-enterprise" class="w-full bg-primary text-on-primary px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all">升级</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- 账单历史 -->
+    <div>
+      <h2 class="text-base font-semibold text-on-surface mb-4">账单历史</h2>
+      <div class="bg-surface rounded-lg shadow-card overflow-hidden">
+        <!-- 表头 -->
+        <div class="grid grid-cols-5 px-5 py-3 bg-surface-container text-xs font-semibold text-on-surface-variant uppercase tracking-wide">
+          <span>日期</span><span>套餐</span><span>金额</span><span>支付方式</span><span>状态</span>
+        </div>
+        <div class="divide-y divide-outline-variant/50">
+
+          <!-- 列表-账单1 -->
+          <div class="grid grid-cols-5 px-5 py-3.5 hover:bg-surface-container/50 transition-colors items-center">
+            <span class="text-sm text-on-surface">2025-06-01</span>
+            <span class="text-sm font-medium text-on-surface">专业版</span>
+            <span class="text-sm font-semibold text-on-surface">¥299.00</span>
+            <span class="inline-flex items-center gap-1.5">
+              <svg class="w-4 h-4 text-success" viewBox="0 0 24 24" fill="currentColor"><path d="M8.691 2.188C3.891 2.188 0 5.476 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 01.213.665l-.39 1.48c-.019.07-.048.141-.048.213 0 .163.13.295.29.295a.326.326 0 00.167-.054l1.903-1.114a.864.864 0 01.717-.098 10.16 10.16 0 002.837.403c.276 0 .543-.027.811-.05-.857-2.578.157-4.972 1.932-6.446 1.703-1.415 3.882-1.98 5.853-1.838-.576-3.583-4.196-6.348-8.596-6.348zM5.785 5.991c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 01-1.162 1.178A1.17 1.17 0 014.623 7.17c0-.651.52-1.18 1.162-1.18zm5.813 0c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 01-1.162 1.178 1.17 1.17 0 01-1.162-1.178c0-.651.52-1.18 1.162-1.18zm5.34 2.867c-1.797-.052-3.746.512-5.28 1.786-1.72 1.428-2.687 3.72-1.78 6.22.942 2.453 3.666 4.229 6.884 4.229.826 0 1.622-.12 2.361-.336a.722.722 0 01.598.082l1.584.926a.272.272 0 00.14.047c.134 0 .24-.111.24-.247 0-.06-.023-.12-.038-.177l-.327-1.233a.582.582 0 01-.023-.156.49.49 0 01.201-.398C23.024 18.48 24 16.82 24 14.98c0-3.21-2.931-5.837-7.062-6.122zm-2.18 2.96c.537 0 .972.442.972.988a.98.98 0 01-.972.988.98.98 0 01-.973-.988c0-.546.436-.988.973-.988zm4.844 0c.537 0 .973.442.973.988a.98.98 0 01-.973.988.98.98 0 01-.972-.988c0-.546.435-.988.972-.988z"/></svg>
+              <span class="text-sm text-on-surface">微信支付</span>
+            </span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-success/15 text-success">已支付</span>
+          </div>
+
+          <!-- 列表-账单2 -->
+          <div class="grid grid-cols-5 px-5 py-3.5 hover:bg-surface-container/50 transition-colors items-center">
+            <span class="text-sm text-on-surface">2025-05-01</span>
+            <span class="text-sm font-medium text-on-surface">专业版</span>
+            <span class="text-sm font-semibold text-on-surface">¥299.00</span>
+            <span class="inline-flex items-center gap-1.5">
+              <svg class="w-4 h-4 text-primary" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.755 17.334H6.245a1.29 1.29 0 01-1.286-1.286V7.952a1.29 1.29 0 011.286-1.286h11.51a1.29 1.29 0 011.286 1.286v8.096a1.29 1.29 0 01-1.286 1.286zM6.245 7.666a.287.287 0 00-.286.286v8.096c0 .158.128.286.286.286h11.51a.287.287 0 00.286-.286V7.952a.287.287 0 00-.286-.286H6.245zm3.893 5.715l-1.862 1.398a.498.498 0 01-.605-.014.5.5 0 01-.072-.706l1.396-1.662-1.396-1.662a.5.5 0 11.677-.72l1.862 1.398a.5.5 0 010 .768zm4.724 1.868h-2.724a.5.5 0 010-1h2.724a.5.5 0 010 1z"/></svg>
+              <span class="text-sm text-on-surface">支付宝</span>
+            </span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-success/15 text-success">已支付</span>
+          </div>
+
+          <!-- 列表-账单3 -->
+          <div class="grid grid-cols-5 px-5 py-3.5 hover:bg-surface-container/50 transition-colors items-center">
+            <span class="text-sm text-on-surface">2025-04-01</span>
+            <span class="text-sm font-medium text-on-surface">基础版</span>
+            <span class="text-sm font-semibold text-on-surface">¥99.00</span>
+            <span class="inline-flex items-center gap-1.5">
+              <svg class="w-4 h-4 text-success" viewBox="0 0 24 24" fill="currentColor"><path d="M8.691 2.188C3.891 2.188 0 5.476 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 01.213.665l-.39 1.48c-.019.07-.048.141-.048.213 0 .163.13.295.29.295a.326.326 0 00.167-.054l1.903-1.114a.864.864 0 01.717-.098 10.16 10.16 0 002.837.403c.276 0 .543-.027.811-.05-.857-2.578.157-4.972 1.932-6.446 1.703-1.415 3.882-1.98 5.853-1.838-.576-3.583-4.196-6.348-8.596-6.348zM5.785 5.991c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 01-1.162 1.178A1.17 1.17 0 014.623 7.17c0-.651.52-1.18 1.162-1.18zm5.813 0c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 01-1.162 1.178 1.17 1.17 0 01-1.162-1.178c0-.651.52-1.18 1.162-1.18zm5.34 2.867c-1.797-.052-3.746.512-5.28 1.786-1.72 1.428-2.687 3.72-1.78 6.22.942 2.453 3.666 4.229 6.884 4.229.826 0 1.622-.12 2.361-.336a.722.722 0 01.598.082l1.584.926a.272.272 0 00.14.047c.134 0 .24-.111.24-.247 0-.06-.023-.12-.038-.177l-.327-1.233a.582.582 0 01-.023-.156.49.49 0 01.201-.398C23.024 18.48 24 16.82 24 14.98c0-3.21-2.931-5.837-7.062-6.122zm-2.18 2.96c.537 0 .972.442.972.988a.98.98 0 01-.972.988.98.98 0 01-.973-.988c0-.546.436-.988.973-.988zm4.844 0c.537 0 .973.442.973.988a.98.98 0 01-.973.988.98.98 0 01-.972-.988c0-.546.435-.988.972-.988z"/></svg>
+              <span class="text-sm text-on-surface">微信支付</span>
+            </span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-success/15 text-success">已支付</span>
+          </div>
+
+          <!-- 列表-账单4 -->
+          <div class="grid grid-cols-5 px-5 py-3.5 hover:bg-surface-container/50 transition-colors items-center">
+            <span class="text-sm text-on-surface">2025-03-15</span>
+            <span class="text-sm font-medium text-on-surface">基础版</span>
+            <span class="text-sm font-semibold text-on-surface">¥99.00</span>
+            <span class="inline-flex items-center gap-1.5">
+              <svg class="w-4 h-4 text-primary" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.755 17.334H6.245a1.29 1.29 0 01-1.286-1.286V7.952a1.29 1.29 0 011.286-1.286h11.51a1.29 1.29 0 011.286 1.286v8.096a1.29 1.29 0 01-1.286 1.286zM6.245 7.666a.287.287 0 00-.286.286v8.096c0 .158.128.286.286.286h11.51a.287.287 0 00.286-.286V7.952a.287.287 0 00-.286-.286H6.245zm3.893 5.715l-1.862 1.398a.498.498 0 01-.605-.014.5.5 0 01-.072-.706l1.396-1.662-1.396-1.662a.5.5 0 11.677-.72l1.862 1.398a.5.5 0 010 .768zm4.724 1.868h-2.724a.5.5 0 010-1h2.724a.5.5 0 010 1z"/></svg>
+              <span class="text-sm text-on-surface">支付宝</span>
+            </span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-warning/15 text-warning">待支付</span>
+          </div>
+
+          <!-- 列表-账单5 -->
+          <div class="grid grid-cols-5 px-5 py-3.5 hover:bg-surface-container/50 transition-colors items-center">
+            <span class="text-sm text-on-surface">2025-02-01</span>
+            <span class="text-sm font-medium text-on-surface">免费版</span>
+            <span class="text-sm font-semibold text-on-surface">¥0.00</span>
+            <span class="inline-flex items-center gap-1.5">
+              <span class="text-sm text-on-surface-variant">—</span>
+            </span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-surface-container-high text-on-surface-variant">无需支付</span>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- 支付弹窗 -->
+    <div id="payment-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 hidden">
+      <div class="bg-surface rounded-xl shadow-dialog max-w-md w-full max-h-[90vh] overflow-y-auto">
+        <!-- 弹窗头部 -->
+        <div class="flex items-center justify-between p-6 pb-4">
+          <h3 id="modal-title" class="text-lg font-semibold text-on-surface">确认升级</h3>
+          <button id="btn-modal-close" class="p-1 rounded-md hover:bg-surface-container transition-colors">
+            <i data-lucide="x" class="w-5 h-5 text-on-surface-variant"></i>
+          </button>
+        </div>
+
+        <!-- 弹窗内容 -->
+        <div class="px-6 pb-6">
+          <!-- 套餐确认信息 -->
+          <div id="modal-plan-info" class="bg-surface-container rounded-lg p-4 mb-5">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-sm text-on-surface-variant">当前套餐</span>
+              <span class="text-sm font-medium text-on-surface">免费版</span>
+            </div>
+            <div class="flex items-center justify-center my-2">
+              <i data-lucide="arrow-down" class="w-4 h-4 text-primary"></i>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-sm text-on-surface-variant">升级到</span>
+              <span id="modal-target-plan" class="text-sm font-semibold text-primary">专业版</span>
+            </div>
+            <div class="mt-3 pt-3 border-t border-outline-variant/20 flex items-center justify-between">
+              <span class="text-sm text-on-surface-variant">应付金额</span>
+              <span id="modal-price" class="text-xl font-bold text-on-surface">¥299.00</span>
+            </div>
+          </div>
+
+          <!-- 支付方式选择 -->
+          <div class="mb-5">
+            <p class="text-sm font-medium text-on-surface mb-3">选择支付方式</p>
+            <div class="space-y-2.5">
+              <!-- 微信支付 -->
+              <label id="pay-wechat" class="flex items-center gap-3 bg-surface-container rounded-lg px-4 py-3 cursor-pointer border-2 border-primary transition-colors">
+                <input type="radio" name="payment-channel" value="wechat" checked class="accent-primary w-4 h-4">
+                <svg class="w-5 h-5 text-success" viewBox="0 0 24 24" fill="currentColor"><path d="M8.691 2.188C3.891 2.188 0 5.476 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 01.213.665l-.39 1.48c-.019.07-.048.141-.048.213 0 .163.13.295.29.295a.326.326 0 00.167-.054l1.903-1.114a.864.864 0 01.717-.098 10.16 10.16 0 002.837.403c.276 0 .543-.027.811-.05-.857-2.578.157-4.972 1.932-6.446 1.703-1.415 3.882-1.98 5.853-1.838-.576-3.583-4.196-6.348-8.596-6.348zM5.785 5.991c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 01-1.162 1.178A1.17 1.17 0 014.623 7.17c0-.651.52-1.18 1.162-1.18zm5.813 0c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 01-1.162 1.178 1.17 1.17 0 01-1.162-1.178c0-.651.52-1.18 1.162-1.18zm5.34 2.867c-1.797-.052-3.746.512-5.28 1.786-1.72 1.428-2.687 3.72-1.78 6.22.942 2.453 3.666 4.229 6.884 4.229.826 0 1.622-.12 2.361-.336a.722.722 0 01.598.082l1.584.926a.272.272 0 00.14.047c.134 0 .24-.111.24-.247 0-.06-.023-.12-.038-.177l-.327-1.233a.582.582 0 01-.023-.156.49.49 0 01.201-.398C23.024 18.48 24 16.82 24 14.98c0-3.21-2.931-5.837-7.062-6.122zm-2.18 2.96c.537 0 .972.442.972.988a.98.98 0 01-.972.988.98.98 0 01-.973-.988c0-.546.436-.988.973-.988zm4.844 0c.537 0 .973.442.973.988a.98.98 0 01-.973.988.98.98 0 01-.972-.988c0-.546.435-.988.972-.988z"/></svg>
+                <span class="text-sm font-medium text-on-surface">微信支付</span>
+              </label>
+              <!-- 支付宝 -->
+              <label id="pay-alipay" class="flex items-center gap-3 bg-surface-container rounded-lg px-4 py-3 cursor-pointer border-2 border-transparent hover:border-outline/20 transition-colors">
+                <input type="radio" name="payment-channel" value="alipay" class="accent-primary w-4 h-4">
+                <svg class="w-5 h-5 text-primary" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.755 17.334H6.245a1.29 1.29 0 01-1.286-1.286V7.952a1.29 1.29 0 011.286-1.286h11.51a1.29 1.29 0 011.286 1.286v8.096a1.29 1.29 0 01-1.286 1.286zM6.245 7.666a.287.287 0 00-.286.286v8.096c0 .158.128.286.286.286h11.51a.287.287 0 00.286-.286V7.952a.287.287 0 00-.286-.286H6.245zm3.893 5.715l-1.862 1.398a.498.498 0 01-.605-.014.5.5 0 01-.072-.706l1.396-1.662-1.396-1.662a.5.5 0 11.677-.72l1.862 1.398a.5.5 0 010 .768zm4.724 1.868h-2.724a.5.5 0 010-1h2.724a.5.5 0 010 1z"/></svg>
+                <span class="text-sm font-medium text-on-surface">支付宝</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- 二维码区域 -->
+          <div id="qrcode-section" class="hidden">
+            <div class="bg-surface-container rounded-lg p-6 text-center mb-4">
+              <!-- 模拟二维码 -->
+              <div id="qrcode-placeholder" class="w-44 h-44 mx-auto bg-surface rounded-lg border border-outline-variant/20 flex items-center justify-center mb-3">
+                <div class="text-center">
+                  <i data-lucide="qr-code" class="w-16 h-16 text-on-surface-variant/30 mx-auto"></i>
+                </div>
+              </div>
+              <p id="qrcode-hint" class="text-sm text-on-surface-variant">请使用微信扫描二维码支付</p>
+            </div>
+            <!-- 轮询状态提示 -->
+            <div id="polling-status" class="flex items-center justify-center gap-2 text-sm text-on-surface-variant">
+              <svg class="animate-spin w-4 h-4 text-primary" viewBox="0 0 24 24" fill="none">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <span>正在等待支付结果，每 3 秒自动查询...</span>
+            </div>
+          </div>
+
+          <!-- 操作按钮 -->
+          <div class="flex gap-3 mt-5">
+            <button id="btn-pay-cancel" class="flex-1 bg-surface-container text-on-surface px-4 py-2.5 rounded-md text-sm font-medium hover:bg-surface-container-high active:scale-[0.98] transition-all">取消</button>
+            <button id="btn-pay-confirm" class="flex-1 bg-primary text-on-primary px-4 py-2.5 rounded-md text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all inline-flex items-center justify-center gap-2">
+              <i data-lucide="lock" class="w-3.5 h-3.5"></i>立即支付
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- @main-content:end -->
+  </main>
+  </div>
+
+  <script>
+    $(function () {
+      // 套餐数据映射
+      var planData = {
+        basic:     { name: '基础版', price: '¥99.00' },
+        pro:       { name: '专业版', price: '¥299.00' },
+        enterprise:{ name: '企业版', price: '¥799.00' }
+      };
+
+      var currentTargetPlan = '';
+      var pollingTimer = null;
+
+      // 打开支付弹窗
+      function openPaymentModal(planKey) {
+        var plan = planData[planKey];
+        if (!plan) return;
+        currentTargetPlan = planKey;
+        $('#modal-target-plan').text(plan.name);
+        $('#modal-price').text(plan.price);
+        $('#modal-title').text('确认升级到' + plan.name);
+        // 重置弹窗状态
+        $('#qrcode-section').addClass('hidden');
+        $('#btn-pay-confirm').removeClass('hidden');
+        $('input[name="payment-channel"][value="wechat"]').prop('checked', true);
+        updatePaymentChannelUI();
+        $('#payment-modal').removeClass('hidden');
+        lucide.createIcons();
+      }
+
+      // 关闭支付弹窗
+      function closePaymentModal() {
+        $('#payment-modal').addClass('hidden');
+        if (pollingTimer) {
+          clearInterval(pollingTimer);
+          pollingTimer = null;
+        }
+      }
+
+      // 支付方式切换时更新 UI
+      function updatePaymentChannelUI() {
+        var selected = $('input[name="payment-channel"]:checked').val();
+        if (selected === 'wechat') {
+          $('#pay-wechat').removeClass('border-transparent hover:border-outline/20').addClass('border-primary');
+          $('#pay-alipay').removeClass('border-primary').addClass('border-transparent hover:border-outline/20');
+          $('#qrcode-hint').text('请使用微信扫描二维码支付');
+        } else {
+          $('#pay-alipay').removeClass('border-transparent hover:border-outline/20').addClass('border-primary');
+          $('#pay-wechat').removeClass('border-primary').addClass('border-transparent hover:border-outline/20');
+          $('#qrcode-hint').text('请使用支付宝扫描二维码支付');
+        }
+      }
+
+      // 升级按钮 - 顶部
+      $('#btn-upgrade-top').on('click', function () {
+        // 默认推荐专业版
+        openPaymentModal('pro');
+      });
+
+      // 升级按钮 - 各套餐卡片
+      $('#btn-upgrade-basic').on('click', function () { openPaymentModal('basic'); });
+      $('#btn-upgrade-pro').on('click', function () { openPaymentModal('pro'); });
+      $('#btn-upgrade-enterprise').on('click', function () { openPaymentModal('enterprise'); });
+
+      // 关闭弹窗
+      $('#btn-modal-close').on('click', closePaymentModal);
+      $('#btn-pay-cancel').on('click', closePaymentModal);
+
+      // 点击遮罩关闭弹窗
+      $('#payment-modal').on('click', function (e) {
+        if ($(e.target).is('#payment-modal')) {
+          closePaymentModal();
+        }
+      });
+
+      // 支付方式切换
+      $('input[name="payment-channel"]').on('change', updatePaymentChannelUI);
+
+      // 立即支付 - 显示二维码并开始轮询
+      $('#btn-pay-confirm').on('click', function () {
+        // 显示二维码区域
+        $('#qrcode-section').removeClass('hidden');
+        $('#btn-pay-confirm').addClass('hidden');
+
+        // 重新渲染图标
+        lucide.createIcons();
+
+        // 模拟 3 秒轮询支付状态
+        // 完整实现应：
+        // 1. 调用后端接口创建支付订单，获取二维码 URL 并渲染
+        // 2. 每 3 秒调用后端接口查询支付状态
+        // 3. 支付成功后关闭弹窗、刷新页面套餐信息
+        // 4. 支付超时（如 5 分钟）后提示二维码过期，需重新生成
+        var pollCount = 0;
+        if (pollingTimer) clearInterval(pollingTimer);
+        pollingTimer = setInterval(function () {
+          pollCount++;
+          console.log('轮询支付状态，第 ' + pollCount + ' 次，目标套餐：' + currentTargetPlan);
+          // 模拟第 5 次轮询时支付成功
+          if (pollCount >= 5) {
+            clearInterval(pollingTimer);
+            pollingTimer = null;
+            closePaymentModal();
+            // 实际场景应刷新页面或更新套餐信息
+            alert('支付成功！已升级到' + planData[currentTargetPlan].name);
+          }
+        }, 3000);
+      });
+    });
+  </script>
+
+  <script>lucide.createIcons();</script>
+</body>
+
+</html>

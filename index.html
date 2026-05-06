@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AI Commerce Ops Dashboard</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="主导航">
+        <div class="brand">
+          <div class="brand-mark">AI</div>
+          <div>
+            <strong>Commerce Ops</strong>
+            <span>跨境电商中控台</span>
+          </div>
+        </div>
+
+        <section class="user-card" aria-label="用户登录">
+          <div class="user-avatar" id="userAvatar">未</div>
+          <div class="user-info">
+            <strong id="userName">未登录</strong>
+            <span>登录后同步账号、审批和自动化</span>
+          </div>
+          <button class="login-button" id="loginBtn">登录</button>
+        </section>
+
+        <nav class="nav-list" id="navList">
+          <section class="nav-section">
+            <p class="nav-title">电商运营</p>
+            <button class="nav-item active" data-page="overview"><i data-lucide="layout-dashboard"></i><span>总览</span></button>
+            <button class="nav-item" data-page="orders"><i data-lucide="shopping-bag"></i><span>订单</span></button>
+            <button class="nav-item" data-page="products"><i data-lucide="package-search"></i><span>商品</span></button>
+            <button class="nav-item" data-page="messages"><i data-lucide="messages-square"></i><span>消息</span><strong class="nav-bubble">64</strong></button>
+          </section>
+
+          <section class="nav-section">
+            <p class="nav-title">媒体运营</p>
+            <button class="nav-item nav-featured" data-page="media"><i data-lucide="megaphone"></i><span>运营中心</span><strong class="nav-bubble hot">126</strong></button>
+            <button class="nav-item" data-page="mediaCreative"><i data-lucide="clapperboard"></i><span>图像视频生成</span></button>
+            <button class="nav-item" data-page="mediaDrafts"><i data-lucide="file-check-2"></i><span>草稿审核发布</span><strong class="nav-bubble warn-bubble">4</strong></button>
+            <button class="nav-item" data-page="automation"><i data-lucide="workflow"></i><span>自动化</span></button>
+          </section>
+
+          <section class="nav-section">
+            <p class="nav-title">系统设置</p>
+            <button class="nav-item" data-page="accounts"><i data-lucide="key-round"></i><span>平台账号管理</span><strong class="nav-bubble warn-bubble">3</strong></button>
+            <button class="nav-item nav-danger" data-page="autopilot"><i data-lucide="bot"></i><span>自动托管模式</span><em>高风险</em></button>
+            <button class="nav-item" data-page="approval"><i data-lucide="shield-check"></i><span>审批</span></button>
+          </section>
+        </nav>
+
+        <section class="sidebar-status" aria-label="系统状态">
+          <div class="status-row"><span class="dot ok"></span><span>AI 调度层在线</span></div>
+          <div class="status-row"><span class="dot warn"></span><span>3 个平台待授权</span></div>
+        </section>
+      </aside>
+
+      <main class="main">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow" id="pageEyebrow">今日运营中心</p>
+            <h1 id="pageTitle">统一管理电商平台、媒体运营和系统设置</h1>
+          </div>
+          <div class="topbar-actions">
+            <button class="icon-button" title="刷新数据" id="refreshBtn"><i data-lucide="refresh-cw"></i></button>
+            <button class="icon-button" title="通知"><i data-lucide="bell"></i><span class="badge">8</span></button>
+            <button class="primary-button" data-page-shortcut="automation"><i data-lucide="plus"></i><span>新建自动化</span></button>
+          </div>
+        </header>
+
+        <section class="command-center" aria-label="AI 自然语言指挥台">
+          <div class="command-copy">
+            <div class="section-title"><i data-lucide="sparkles"></i><span>AI 指挥台</span></div>
+            <p id="commandHint">输入运营目标或平台操作，AI 会先分析，再把高风险动作放入审批队列。</p>
+          </div>
+          <div class="command-box">
+            <input id="commandInput" value="帮我汇总今天电商订单、媒体互动和待审核发布内容" aria-label="自然语言命令" />
+            <button class="primary-button" id="runCommandBtn"><i data-lucide="send"></i><span>执行</span></button>
+          </div>
+        </section>
+
+        <section id="pageContent" class="page-content"></section>
+      </main>
+    </div>
+
+    <!-- 登录弹窗 -->
+    <div class="login-modal" id="loginModal">
+      <div class="login-overlay" id="loginOverlay"></div>
+      <div class="login-container">
+        <button class="login-close" id="loginClose"><i data-lucide="x"></i></button>
+        <div class="login-header">
+          <div class="brand-mark" style="width:48px;height:48px;background:#f59e0b;color:#111827;font-size:20px;font-weight:800;border-radius:10px;display:grid;place-items:center;">AI</div>
+          <h2>欢迎登录</h2>
+          <p>AI Commerce Ops Dashboard</p>
+        </div>
+        
+        <!-- 登录方式切换 -->
+        <div class="login-tabs">
+          <button class="login-tab active" data-tab="sms">短信登录</button>
+          <button class="login-tab" data-tab="email">邮箱登录</button>
+          <button class="login-tab" data-tab="qrcode">扫码登录</button>
+        </div>
+        
+        <!-- 短信登录 -->
+        <div class="login-panel active" id="panel-sms">
+          <div class="form-group">
+            <input type="tel" class="input" id="smsPhone" placeholder="请输入手机号" maxlength="11">
+          </div>
+          <div class="form-group captcha-group">
+            <input type="text" class="input" id="smsCode" placeholder="请输入验证码" maxlength="6">
+            <button class="captcha-btn" id="sendSmsBtn">获取验证码</button>
+          </div>
+          <button class="primary-button full-width" id="smsLoginBtn">登录</button>
+          <p class="login-hint">登录即表示同意<a href="#">《用户协议》</a>和<a href="#">《隐私政策》</a></p>
+        </div>
+        
+        <!-- 邮箱登录 -->
+        <div class="login-panel" id="panel-email">
+          <div class="form-group">
+            <input type="email" class="input" id="emailInput" placeholder="请输入邮箱">
+          </div>
+          <div class="form-group">
+            <input type="password" class="input" id="emailPassword" placeholder="请输入密码">
+          </div>
+          <div class="form-row">
+            <a href="#" class="forgot-link">忘记密码？</a>
+          </div>
+          <button class="primary-button full-width" id="emailLoginBtn">登录</button>
+          <div class="divider"><span>或</span></div>
+          <button class="outline-button full-width" id="emailRegisterBtn">注册新账号</button>
+        </div>
+        
+        <!-- 扫码登录 -->
+        <div class="login-panel" id="panel-qrcode">
+          <div class="qrcode-tabs">
+            <button class="qrcode-tab active" data-qrtype="WECHAT">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M8.5 11a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm5 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z" fill="#07C160"/><path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2.588 20.7A1 1 0 0 0 4 22l3.532-.85A9.959 9.959 0 0 0 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2z" fill="#07C160"/></svg>
+              <span>微信</span>
+            </button>
+            <button class="qrcode-tab" data-qrtype="ALIPAY">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#1677FF"/><path d="M9.5 8.5c0-1.5 1.5-2.5 3-2.5s3 1 3 2.5c0 2-3 2.5-3 4.5h3v-2H9.5c0-2.5 3-3 3-5.5 0-2-1.5-3.5-4.5-3.5S6.5 5.5 6.5 8c0 2.5 3 3 3 5.5H6.5v2h6.5v2H12v-6.5c1.5 0 2.5-1 2.5-2.5z" fill="#FFF"/></svg>
+              <span>支付宝</span>
+            </button>
+          </div>
+          <div class="qrcode-box" id="qrcodeBox">
+            <div class="qrcode-placeholder">
+              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="3" height="3"/><rect x="18" y="14" width="3" height="3"/><rect x="14" y="18" width="3" height="3"/><rect x="18" y="18" width="3" height="3"/></svg>
+              <p>正在生成二维码...</p>
+            </div>
+          </div>
+          <div class="qrcode-status" id="qrcodeStatus">
+            <span class="dot warn"></span>
+            <span>打开<span id="scanPlatform">微信</span>扫一扫</span>
+          </div>
+          <p class="login-hint">登录后即可同步电商平台账号和媒体运营数据</p>
+        </div>
+        
+        <!-- 注册弹窗 -->
+        <div class="register-panel" id="registerPanel" style="display:none;">
+          <h3>注册新账号</h3>
+          <div class="form-group">
+            <input type="email" class="input" id="regEmail" placeholder="请输入邮箱">
+          </div>
+          <div class="form-group">
+            <input type="password" class="input" id="regPassword" placeholder="请输入密码（至少6位）">
+          </div>
+          <div class="form-group">
+            <input type="password" class="input" id="regPassword2" placeholder="请确认密码">
+          </div>
+          <button class="primary-button full-width" id="doRegisterBtn">注册</button>
+          <button class="ghost-button full-width" id="backToLoginBtn">返回登录</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="./app.js"></script>
+  </body>
+</html>

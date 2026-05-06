@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/jquery/jquery-3.7.1.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/lucide/lucide-1.11.0.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/tailwindcss/tailwindcss-browser-4.2.4.min.js"></script>
+
+  <style type="text/tailwindcss">
+    @theme {
+      /* === 品牌色 === */
+      --color-primary:              #2F6BFF;
+      --color-primary-container:    #DBE8FF;
+      --color-on-primary:           #ffffff;
+      /* === 背景 / 表面 === */
+      --color-background:                 #F6F8FB;
+      --color-surface-container-lowest:   #EDF0F5;
+      --color-surface:                    #FFFFFF;
+      --color-surface-container:          #EDF0F5;
+      --color-surface-container-high:     #E1E6EF;
+      --color-surface-container-highest:  #D5DBE8;
+      /* === 文字 === */
+      --color-on-surface:           #152033;
+      --color-on-surface-variant:   #637089;
+      /* === 功能色 === */
+      --color-success:  #16A37B;
+      --color-error:    #E5484D;
+      --color-warning:  #E5A000;
+      /* === 边框 === */
+      --color-outline:          #C4CDD9;
+      --color-outline-variant:  #E6EAF2;
+      /* === 圆角 === */
+      --radius-sm:   0.25rem;
+      --radius-md:   0.375rem;
+      --radius-lg:   0.5rem;
+      --radius-xl:   0.75rem;
+      --radius-2xl:  1rem;
+      --radius-full: 9999px;
+      /* === 阴影 === */
+      --shadow-card:   0 2px 8px rgba(0,0,0,0.08);
+      --shadow-float:  0 10px 25px rgba(0,0,0,0.1);
+      --shadow-dialog: 0 25px 50px rgba(0,0,0,0.15);
+      /* === 字体 === */
+      --font-sans: "Inter", "Noto Sans SC", system-ui, sans-serif;
+    }
+  </style>
+
+  <link href="https://lf-code-agent.coze.cn/obj/x-ai-cn/fonts/google/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+
+  <script>
+    document.addEventListener('error', function (e) {
+      const img = e.target;
+      if (img.tagName !== 'IMG' || img.dataset.fallback) return;
+      img.dataset.fallback = '1';
+      const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const cat = img.getAttribute('data-category') || '其他';
+      const alt = img.getAttribute('alt') || '';
+      const label = esc(alt.length > 8 ? alt.slice(0, 8) + '…' : alt);
+      const icons = { '人物': '👤', '自然风景': '🏞', '动物': '🐾', '建筑城市': '🏙', '运动体育': '⚽', '交通工具': '🚗', '食物': '🍽', '服饰时尚': '👗', '商业科技': '💼', '游戏娱乐': '🎮', '艺术': '🎨', '其他': '🖼' };
+      const icon = icons[cat] || '🖼';
+      const w = img.width || 400, h = img.height || 300;
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><rect width="100%" height="100%" fill="%23f3f4f6"/><text x="50%" y="45%" text-anchor="middle" font-size="${Math.min(w, h) * 0.18}" dominant-baseline="central">${icon}</text><text x="50%" y="68%" text-anchor="middle" font-size="${Math.min(w, h) * 0.07}" fill="%239ca3af" font-family="system-ui,sans-serif" dominant-baseline="central">${label}</text></svg>`;
+      img.src = 'data:image/svg+xml,' + svg;
+    }, true);
+  </script>
+</head>
+
+<body class="bg-background text-on-surface font-sans">
+
+  <!-- @nav:start -->
+  <header class="bg-surface sticky top-0 z-40 h-14 flex items-center justify-between px-5 border-b border-outline-variant/20">
+    <div class="flex items-center gap-2.5">
+      <i data-lucide="zap" class="w-5 h-5 text-primary"></i>
+      <span class="font-bold text-base text-on-surface">AI Commerce Ops</span>
+    </div>
+    <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2 bg-surface-container rounded-md px-3 py-1.5 text-sm text-on-surface-variant">
+        <i data-lucide="terminal" class="w-4 h-4"></i>
+        <span>输入运营目标，AI 帮你执行</span>
+      </div>
+      <button class="relative p-2 rounded-md hover:bg-surface-container transition-colors">
+        <i data-lucide="bell" class="w-4 h-4 text-on-surface-variant"></i>
+        <span class="absolute top-1 right-1 w-2 h-2 bg-error rounded-full"></span>
+      </button>
+      <div class="w-8 h-8 bg-primary/10 text-primary rounded-full flex items-center justify-center text-sm font-medium">初</div>
+    </div>
+  </header>
+
+  <div class="flex" style="height: calc(100vh - 3.5rem)">
+    <aside class="w-56 shrink-0 bg-surface border-r border-outline-variant/20 overflow-y-auto">
+      <div class="p-3 space-y-0.5">
+        <p class="px-3 py-1 text-xs font-medium text-on-surface-variant/60 uppercase tracking-wider">电商运营</p>
+        <a href="home.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="layout-dashboard" class="w-4 h-4"></i>总览
+        </a>
+        <a href="orders.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="shopping-bag" class="w-4 h-4"></i>订单
+        </a>
+        <a href="products.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="package-search" class="w-4 h-4"></i>商品
+        </a>
+        <a href="messages.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors relative">
+          <i data-lucide="messages-square" class="w-4 h-4"></i>消息
+          <span class="ml-auto bg-error text-white text-xs rounded-full px-1.5 py-0.5 leading-none">64</span>
+        </a>
+
+        <p class="px-3 py-1 mt-2 text-xs font-medium text-on-surface-variant/60 uppercase tracking-wider">获客</p>
+        <a href="acquisition.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md bg-primary/10 text-primary text-sm font-medium transition-colors" aria-current="page">
+          <i data-lucide="user-plus" class="w-4 h-4"></i>获客中心
+        </a>
+
+        <p class="px-3 py-1 mt-2 text-xs font-medium text-on-surface-variant/60 uppercase tracking-wider">媒体运营</p>
+        <a href="media.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors relative">
+          <i data-lucide="megaphone" class="w-4 h-4"></i>运营中心
+          <span class="ml-auto bg-warning text-on-surface text-xs rounded-full px-1.5 py-0.5 leading-none">4</span>
+        </a>
+        <a href="media-creative.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="clapperboard" class="w-4 h-4"></i>图像视频生成
+        </a>
+        <a href="media-drafts.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors relative">
+          <i data-lucide="file-check" class="w-4 h-4"></i>草稿审核发布
+          <span class="ml-auto bg-warning text-on-surface text-xs rounded-full px-1.5 py-0.5 leading-none">4</span>
+        </a>
+        <a href="automation.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="workflow" class="w-4 h-4"></i>自动化
+        </a>
+
+        <p class="px-3 py-1 mt-2 text-xs font-medium text-on-surface-variant/60 uppercase tracking-wider">系统设置</p>
+        <a href="settings-accounts.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors relative">
+          <i data-lucide="key-round" class="w-4 h-4"></i>平台账号管理
+          <span class="ml-auto bg-warning text-on-surface text-xs rounded-full px-1.5 py-0.5 leading-none">3</span>
+        </a>
+        <a href="settings-ai-models.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="brain-circuit" class="w-4 h-4"></i>AI 模型设置
+        </a>
+        <a href="settings-autopilot.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="bot" class="w-4 h-4"></i>自动托管
+        </a>
+        <a href="settings-approval.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="shield-check" class="w-4 h-4"></i>审批
+        </a>
+      </div>
+    </aside>
+  <!-- @nav:end -->
+
+  <main class="flex-1 min-w-0 overflow-y-auto bg-background p-6">
+    <!-- @main-content:start -->
+
+    <!-- 页面标题 -->
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h1 class="text-2xl font-bold text-on-surface">获客中心</h1>
+        <p class="text-sm text-on-surface-variant mt-1">跨平台潜客发现、AI 意向评分、触达活动管理</p>
+      </div>
+    </div>
+
+    <!-- 顶部4指标卡 -->
+    <div class="grid grid-cols-4 gap-4 mb-6">
+      <!-- 指标卡-新增潜客 -->
+      <div id="metric-new-prospects" class="bg-surface rounded-lg shadow-card p-5 cursor-pointer hover:shadow-float transition-shadow">
+        <div class="flex items-center gap-2 mb-3">
+          <div class="w-8 h-8 bg-primary/10 rounded-md flex items-center justify-center">
+            <i data-lucide="user-plus" class="w-4 h-4 text-primary"></i>
+          </div>
+          <span class="text-sm text-on-surface-variant">新增潜客</span>
+        </div>
+        <div class="text-2xl font-bold text-on-surface">326</div>
+        <div class="text-xs text-success mt-1">↑ 12.5% 较昨日</div>
+      </div>
+      <!-- 指标卡-已触达 -->
+      <div id="metric-reached" class="bg-surface rounded-lg shadow-card p-5 cursor-pointer hover:shadow-float transition-shadow">
+        <div class="flex items-center gap-2 mb-3">
+          <div class="w-8 h-8 bg-success/10 rounded-md flex items-center justify-center">
+            <i data-lucide="send" class="w-4 h-4 text-success"></i>
+          </div>
+          <span class="text-sm text-on-surface-variant">已触达</span>
+        </div>
+        <div class="text-2xl font-bold text-on-surface">89</div>
+        <div class="text-xs text-success mt-1">↑ 8.2% 较昨日</div>
+      </div>
+      <!-- 指标卡-触达转化率 -->
+      <div id="metric-conversion" class="bg-surface rounded-lg shadow-card p-5 cursor-pointer hover:shadow-float transition-shadow">
+        <div class="flex items-center gap-2 mb-3">
+          <div class="w-8 h-8 bg-warning/10 rounded-md flex items-center justify-center">
+            <i data-lucide="trending-up" class="w-4 h-4 text-warning"></i>
+          </div>
+          <span class="text-sm text-on-surface-variant">触达转化率</span>
+        </div>
+        <div class="text-2xl font-bold text-on-surface">12.3%</div>
+        <div class="text-xs text-on-surface-variant mt-1">目标 15%</div>
+      </div>
+      <!-- 指标卡-进行中任务 -->
+      <div id="metric-active-tasks" class="bg-surface rounded-lg shadow-card p-5 cursor-pointer hover:shadow-float transition-shadow">
+        <div class="flex items-center gap-2 mb-3">
+          <div class="w-8 h-8 bg-primary/10 rounded-md flex items-center justify-center">
+            <i data-lucide="loader" class="w-4 h-4 text-primary"></i>
+          </div>
+          <span class="text-sm text-on-surface-variant">进行中任务</span>
+        </div>
+        <div class="text-2xl font-bold text-on-surface">3</div>
+        <div class="text-xs text-on-surface-variant mt-1">2 个待启动</div>
+      </div>
+    </div>
+
+    <!-- Tab 切换 -->
+    <div class="flex items-center gap-1 bg-surface-container rounded-md p-1 w-fit mb-5">
+      <button id="tab-tasks" class="tab-btn px-4 py-1.5 rounded-md text-sm font-medium bg-surface text-on-surface shadow-sm transition-all" data-tab="tasks">任务管理</button>
+      <button id="tab-prospects" class="tab-btn px-4 py-1.5 rounded-md text-sm font-medium text-on-surface-variant hover:text-on-surface transition-all" data-tab="prospects">潜客库</button>
+      <button id="tab-campaigns" class="tab-btn px-4 py-1.5 rounded-md text-sm font-medium text-on-surface-variant hover:text-on-surface transition-all" data-tab="campaigns">触达活动</button>
+    </div>
+
+    <!-- Tab 内容：任务管理 -->
+    <div id="panel-tasks" class="tab-panel">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-2">
+          <span class="text-sm text-on-surface-variant">共 5 个任务</span>
+        </div>
+        <button id="btn-create-task" class="bg-primary text-on-primary px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all inline-flex items-center gap-2">
+          <i data-lucide="plus" class="w-3.5 h-3.5"></i>创建任务
+        </button>
+      </div>
+      <div class="bg-surface rounded-lg shadow-card overflow-hidden">
+        <!-- 表头 -->
+        <div class="grid grid-cols-6 px-4 py-3 bg-surface-container text-xs font-semibold text-on-surface-variant uppercase tracking-wide">
+          <span>任务名</span><span>平台</span><span>状态</span><span>潜客数</span><span>创建时间</span><span>操作</span>
+        </div>
+        <div class="divide-y divide-outline-variant/50">
+          <!-- 列表-任务1 -->
+          <div id="task-row-1" class="grid grid-cols-6 px-4 py-3 hover:bg-surface-container/50 transition-colors items-center">
+            <span class="text-sm font-medium text-on-surface">小红书旅行收纳话题抓取</span>
+            <span class="text-sm text-on-surface-variant">小红书</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-primary/15 text-primary w-fit">运行中</span>
+            <span class="text-sm text-on-surface font-semibold">128人</span>
+            <span class="text-sm text-on-surface-variant">2025-01-15 14:30</span>
+            <div class="flex gap-3">
+              <button id="task-view-1" class="text-primary text-sm font-medium hover:underline">查看结果</button>
+              <button id="task-stop-1" class="text-error text-sm font-medium hover:underline">停止</button>
+            </div>
+          </div>
+          <!-- 列表-任务2 -->
+          <div id="task-row-2" class="grid grid-cols-6 px-4 py-3 hover:bg-surface-container/50 transition-colors items-center">
+            <span class="text-sm font-medium text-on-surface">Instagram收纳Reels评论抓取</span>
+            <span class="text-sm text-on-surface-variant">Instagram</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-success/15 text-success w-fit">已完成</span>
+            <span class="text-sm text-on-surface font-semibold">89人</span>
+            <span class="text-sm text-on-surface-variant">2025-01-14 09:15</span>
+            <div class="flex gap-3">
+              <button id="task-view-2" class="text-primary text-sm font-medium hover:underline">查看结果</button>
+              <button id="task-restart-2" class="text-primary text-sm font-medium hover:underline">重新运行</button>
+            </div>
+          </div>
+          <!-- 列表-任务3 -->
+          <div id="task-row-3" class="grid grid-cols-6 px-4 py-3 hover:bg-surface-container/50 transition-colors items-center">
+            <span class="text-sm font-medium text-on-surface">TikTok家居好物评论采集</span>
+            <span class="text-sm text-on-surface-variant">TikTok</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-warning/15 text-warning w-fit">待启动</span>
+            <span class="text-sm text-on-surface-variant">—</span>
+            <span class="text-sm text-on-surface-variant">2025-01-15 16:00</span>
+            <div class="flex gap-3">
+              <button id="task-start-3" class="text-primary text-sm font-medium hover:underline">启动</button>
+              <button id="task-delete-3" class="text-error text-sm font-medium hover:underline">删除</button>
+            </div>
+          </div>
+          <!-- 列表-任务4 -->
+          <div id="task-row-4" class="grid grid-cols-6 px-4 py-3 hover:bg-surface-container/50 transition-colors items-center">
+            <span class="text-sm font-medium text-on-surface">LinkedIn跨境电商从业者搜索</span>
+            <span class="text-sm text-on-surface-variant">LinkedIn</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-primary/15 text-primary w-fit">运行中</span>
+            <span class="text-sm text-on-surface font-semibold">56人</span>
+            <span class="text-sm text-on-surface-variant">2025-01-15 11:20</span>
+            <div class="flex gap-3">
+              <button id="task-view-4" class="text-primary text-sm font-medium hover:underline">查看结果</button>
+              <button id="task-stop-4" class="text-error text-sm font-medium hover:underline">停止</button>
+            </div>
+          </div>
+          <!-- 列表-任务5 -->
+          <div id="task-row-5" class="grid grid-cols-6 px-4 py-3 hover:bg-surface-container/50 transition-colors items-center">
+            <span class="text-sm font-medium text-on-surface">抖音收纳达人粉丝抓取</span>
+            <span class="text-sm text-on-surface-variant">抖音</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-error/15 text-error w-fit">已失败</span>
+            <span class="text-sm text-on-surface-variant">23人</span>
+            <span class="text-sm text-on-surface-variant">2025-01-13 20:45</span>
+            <div class="flex gap-3">
+              <button id="task-retry-5" class="text-primary text-sm font-medium hover:underline">重试</button>
+              <button id="task-delete-5" class="text-error text-sm font-medium hover:underline">删除</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 内容：潜客库 -->
+    <div id="panel-prospects" class="tab-panel hidden">
+      <!-- 筛选条 -->
+      <div class="flex items-center gap-3 mb-4">
+        <select id="filter-platform" class="bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors">
+          <option value="">全部平台</option>
+          <option value="xiaohongshu">小红书</option>
+          <option value="instagram">Instagram</option>
+          <option value="tiktok">TikTok</option>
+          <option value="linkedin">LinkedIn</option>
+          <option value="douyin">抖音</option>
+        </select>
+        <select id="filter-intent" class="bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors">
+          <option value="">全部意向等级</option>
+          <option value="hot">高意向</option>
+          <option value="warm">中意向</option>
+          <option value="cold">低意向</option>
+        </select>
+        <select id="filter-status" class="bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors">
+          <option value="">全部状态</option>
+          <option value="new">新潜客</option>
+          <option value="scored">已评分</option>
+          <option value="contacted">已触达</option>
+          <option value="excluded">已排除</option>
+        </select>
+        <div class="ml-auto">
+          <button id="btn-export-prospects" class="bg-surface-container text-on-surface px-4 py-2 rounded-md text-sm font-medium hover:bg-surface-container-high active:scale-[0.98] transition-all inline-flex items-center gap-2">
+            <i data-lucide="download" class="w-3.5 h-3.5"></i>导出
+          </button>
+        </div>
+      </div>
+      <div class="bg-surface rounded-lg shadow-card overflow-hidden">
+        <!-- 表头 -->
+        <div class="grid grid-cols-6 px-4 py-3 bg-surface-container text-xs font-semibold text-on-surface-variant uppercase tracking-wide">
+          <span>用户名</span><span>平台</span><span>互动类型</span><span>意向评分</span><span>状态</span><span>操作</span>
+        </div>
+        <div class="divide-y divide-outline-variant/50">
+          <!-- 列表-潜客1 -->
+          <div id="prospect-row-1" class="grid grid-cols-6 px-4 py-3 hover:bg-surface-container/50 transition-colors items-center">
+            <span class="text-sm font-medium text-on-surface">@旅行小确幸</span>
+            <span class="text-sm text-on-surface-variant">小红书</span>
+            <span class="text-sm text-on-surface-variant">评论互动</span>
+            <div class="flex items-center gap-2">
+              <div class="w-24 h-2 bg-surface-container-high rounded-full overflow-hidden">
+                <div class="h-full bg-success rounded-full" style="width: 92%"></div>
+              </div>
+              <span class="text-sm font-semibold text-success">92</span>
+            </div>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-success/15 text-success w-fit">已评分</span>
+            <div class="flex gap-3">
+              <button id="prospect-detail-1" class="text-primary text-sm font-medium hover:underline">详情</button>
+              <button id="prospect-outreach-1" class="text-primary text-sm font-medium hover:underline">加入触达</button>
+            </div>
+          </div>
+          <!-- 列表-潜客2 -->
+          <div id="prospect-row-2" class="grid grid-cols-6 px-4 py-3 hover:bg-surface-container/50 transition-colors items-center">
+            <span class="text-sm font-medium text-on-surface">@OrganizeQueen</span>
+            <span class="text-sm text-on-surface-variant">Instagram</span>
+            <span class="text-sm text-on-surface-variant">点赞收藏</span>
+            <div class="flex items-center gap-2">
+              <div class="w-24 h-2 bg-surface-container-high rounded-full overflow-hidden">
+                <div class="h-full bg-primary rounded-full" style="width: 75%"></div>
+              </div>
+              <span class="text-sm font-semibold text-primary">75</span>
+            </div>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-success/15 text-success w-fit">已评分</span>
+            <div class="flex gap-3">
+              <button id="prospect-detail-2" class="text-primary text-sm font-medium hover:underline">详情</button>
+              <button id="prospect-outreach-2" class="text-primary text-sm font-medium hover:underline">加入触达</button>
+            </div>
+          </div>
+          <!-- 列表-潜客3 -->
+          <div id="prospect-row-3" class="grid grid-cols-6 px-4 py-3 hover:bg-surface-container/50 transition-colors items-center">
+            <span class="text-sm font-medium text-on-surface">@收纳控小王</span>
+            <span class="text-sm text-on-surface-variant">小红书</span>
+            <span class="text-sm text-on-surface-variant">关注转发</span>
+            <div class="flex items-center gap-2">
+              <div class="w-24 h-2 bg-surface-container-high rounded-full overflow-hidden">
+                <div class="h-full bg-warning rounded-full" style="width: 58%"></div>
+              </div>
+              <span class="text-sm font-semibold text-warning">58</span>
+            </div>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-primary/15 text-primary w-fit">新潜客</span>
+            <div class="flex gap-3">
+              <button id="prospect-detail-3" class="text-primary text-sm font-medium hover:underline">详情</button>
+              <button id="prospect-outreach-3" class="text-primary text-sm font-medium hover:underline">加入触达</button>
+            </div>
+          </div>
+          <!-- 列表-潜客4 -->
+          <div id="prospect-row-4" class="grid grid-cols-6 px-4 py-3 hover:bg-surface-container/50 transition-colors items-center">
+            <span class="text-sm font-medium text-on-surface">@traveler_jay</span>
+            <span class="text-sm text-on-surface-variant">TikTok</span>
+            <span class="text-sm text-on-surface-variant">评论互动</span>
+            <div class="flex items-center gap-2">
+              <div class="w-24 h-2 bg-surface-container-high rounded-full overflow-hidden">
+                <div class="h-full bg-error rounded-full" style="width: 35%"></div>
+              </div>
+              <span class="text-sm font-semibold text-error">35</span>
+            </div>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-surface-container-high text-on-surface-variant w-fit">已排除</span>
+            <div class="flex gap-3">
+              <button id="prospect-detail-4" class="text-primary text-sm font-medium hover:underline">详情</button>
+              <button id="prospect-restore-4" class="text-primary text-sm font-medium hover:underline">恢复</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 内容：触达活动 -->
+    <div id="panel-campaigns" class="tab-panel hidden">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-2">
+          <span class="text-sm text-on-surface-variant">共 2 个活动</span>
+        </div>
+        <button id="btn-create-campaign" class="bg-primary text-on-primary px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all inline-flex items-center gap-2">
+          <i data-lucide="plus" class="w-3.5 h-3.5"></i>创建触达
+        </button>
+      </div>
+      <div class="bg-surface rounded-lg shadow-card overflow-hidden">
+        <!-- 表头 -->
+        <div class="grid grid-cols-5 px-4 py-3 bg-surface-container text-xs font-semibold text-on-surface-variant uppercase tracking-wide">
+          <span>活动名</span><span>平台</span><span>状态</span><span>发送数</span><span>操作</span>
+        </div>
+        <div class="divide-y divide-outline-variant/50">
+          <!-- 列表-触达活动1 -->
+          <div id="campaign-row-1" class="grid grid-cols-5 px-4 py-3 hover:bg-surface-container/50 transition-colors items-center">
+            <span class="text-sm font-medium text-on-surface">旅行收纳新品体验邀请</span>
+            <span class="text-sm text-on-surface-variant">小红书</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-warning/15 text-warning w-fit">待审批</span>
+            <span class="text-sm text-on-surface font-semibold">0/45</span>
+            <div class="flex gap-3">
+              <button id="campaign-edit-1" class="text-primary text-sm font-medium hover:underline">编辑模板</button>
+              <button id="campaign-approve-1" class="text-primary text-sm font-medium hover:underline">提交审批</button>
+            </div>
+          </div>
+          <!-- 列表-触达活动2 -->
+          <div id="campaign-row-2" class="grid grid-cols-5 px-4 py-3 hover:bg-surface-container/50 transition-colors items-center">
+            <span class="text-sm font-medium text-on-surface">Instagram收纳达人合作邀请</span>
+            <span class="text-sm text-on-surface-variant">Instagram</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-success/15 text-success w-fit">进行中</span>
+            <span class="text-sm text-on-surface font-semibold">32/89</span>
+            <div class="flex gap-3">
+              <button id="campaign-edit-2" class="text-primary text-sm font-medium hover:underline">编辑模板</button>
+              <button id="campaign-pause-2" class="text-error text-sm font-medium hover:underline">暂停</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 创建任务弹窗 -->
+    <div id="modal-create-task" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 hidden">
+      <div class="bg-surface rounded-xl shadow-dialog max-w-md w-full max-h-[90vh] overflow-y-auto p-6">
+        <div class="flex items-center justify-between mb-5">
+          <h2 class="text-lg font-semibold text-on-surface">创建获客任务</h2>
+          <button id="modal-create-task-close" class="p-1 rounded-md hover:bg-surface-container transition-colors">
+            <i data-lucide="x" class="w-4 h-4 text-on-surface-variant"></i>
+          </button>
+        </div>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-on-surface mb-1.5">目标平台</label>
+            <select id="task-platform" class="w-full bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors">
+              <option value="xiaohongshu">小红书</option>
+              <option value="douyin">抖音</option>
+              <option value="tiktok">TikTok</option>
+              <option value="instagram">Instagram</option>
+              <option value="linkedin">LinkedIn</option>
+              <option value="twitter">Twitter</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-on-surface mb-1.5">搜索关键词</label>
+            <input id="task-keyword" type="text" class="w-full bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors" placeholder="输入搜索关键词，如：旅行收纳"/>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-on-surface mb-1.5">抓取类型</label>
+            <select id="task-type" class="w-full bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors">
+              <option value="users">搜索用户</option>
+              <option value="comments">搜索帖子评论</option>
+              <option value="topics">搜索话题</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-on-surface mb-1.5">预估数量</label>
+            <input id="task-estimate" type="number" value="100" class="w-full bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors" placeholder="预估抓取数量"/>
+          </div>
+        </div>
+        <div class="flex justify-end gap-3 mt-6">
+          <button id="modal-create-task-cancel" class="bg-surface-container text-on-surface px-4 py-2 rounded-md text-sm font-medium hover:bg-surface-container-high active:scale-[0.98] transition-all">取消</button>
+          <button id="modal-create-task-confirm" class="bg-primary text-on-primary px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all">确认创建</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 创建触达活动弹窗 -->
+    <div id="modal-create-campaign" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 hidden">
+      <div class="bg-surface rounded-xl shadow-dialog max-w-md w-full max-h-[90vh] overflow-y-auto p-6">
+        <div class="flex items-center justify-between mb-5">
+          <h2 class="text-lg font-semibold text-on-surface">创建触达活动</h2>
+          <button id="modal-create-campaign-close" class="p-1 rounded-md hover:bg-surface-container transition-colors">
+            <i data-lucide="x" class="w-4 h-4 text-on-surface-variant"></i>
+          </button>
+        </div>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-on-surface mb-1.5">活动名称</label>
+            <input id="campaign-name" type="text" class="w-full bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors" placeholder="输入活动名称"/>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-on-surface mb-1.5">目标平台</label>
+            <select id="campaign-platform" class="w-full bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors">
+              <option value="xiaohongshu">小红书</option>
+              <option value="douyin">抖音</option>
+              <option value="tiktok">TikTok</option>
+              <option value="instagram">Instagram</option>
+              <option value="linkedin">LinkedIn</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-on-surface mb-1.5">消息模板</label>
+            <textarea id="campaign-template" rows="4" class="w-full bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors resize-none" placeholder="输入消息模板，支持 {{name}} 等变量，AI 将自动个性化改写"></textarea>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-on-surface mb-1.5">选择潜客范围</label>
+            <select id="campaign-scope" class="w-full bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors">
+              <option value="high">高意向潜客 (评分 ≥ 70)</option>
+              <option value="medium">中意向以上 (评分 ≥ 50)</option>
+              <option value="all">全部已评分潜客</option>
+              <option value="custom">自定义选择</option>
+            </select>
+          </div>
+        </div>
+        <div class="flex justify-end gap-3 mt-6">
+          <button id="modal-create-campaign-cancel" class="bg-surface-container text-on-surface px-4 py-2 rounded-md text-sm font-medium hover:bg-surface-container-high active:scale-[0.98] transition-all">取消</button>
+          <button id="modal-create-campaign-confirm" class="bg-primary text-on-primary px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all">创建草稿</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 导出确认弹窗 -->
+    <div id="modal-export" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 hidden">
+      <div class="bg-surface rounded-xl shadow-dialog max-w-md w-full max-h-[90vh] overflow-y-auto p-6">
+        <div class="flex items-center justify-between mb-5">
+          <h2 class="text-lg font-semibold text-on-surface">导出潜客数据</h2>
+          <button id="modal-export-close" class="p-1 rounded-md hover:bg-surface-container transition-colors">
+            <i data-lucide="x" class="w-4 h-4 text-on-surface-variant"></i>
+          </button>
+        </div>
+        <div class="space-y-4">
+          <p class="text-sm text-on-surface-variant">将导出当前筛选条件下的潜客数据，共 <span class="font-semibold text-on-surface">326</span> 条记录。</p>
+          <div>
+            <label class="block text-sm font-medium text-on-surface mb-1.5">导出字段</label>
+            <div class="flex flex-wrap gap-2">
+              <label class="inline-flex items-center gap-1.5 bg-surface-container px-3 py-1.5 rounded-md text-sm text-on-surface cursor-pointer">
+                <input type="checkbox" checked class="accent-primary"/> 用户名
+              </label>
+              <label class="inline-flex items-center gap-1.5 bg-surface-container px-3 py-1.5 rounded-md text-sm text-on-surface cursor-pointer">
+                <input type="checkbox" checked class="accent-primary"/> 平台
+              </label>
+              <label class="inline-flex items-center gap-1.5 bg-surface-container px-3 py-1.5 rounded-md text-sm text-on-surface cursor-pointer">
+                <input type="checkbox" checked class="accent-primary"/> 意向评分
+              </label>
+              <label class="inline-flex items-center gap-1.5 bg-surface-container px-3 py-1.5 rounded-md text-sm text-on-surface cursor-pointer">
+                <input type="checkbox" class="accent-primary"/> 互动类型
+              </label>
+              <label class="inline-flex items-center gap-1.5 bg-surface-container px-3 py-1.5 rounded-md text-sm text-on-surface cursor-pointer">
+                <input type="checkbox" class="accent-primary"/> 状态
+              </label>
+            </div>
+          </div>
+          <p class="text-xs text-warning">⚠ 超过 100 条导出需提交审批</p>
+        </div>
+        <div class="flex justify-end gap-3 mt-6">
+          <button id="modal-export-cancel" class="bg-surface-container text-on-surface px-4 py-2 rounded-md text-sm font-medium hover:bg-surface-container-high active:scale-[0.98] transition-all">取消</button>
+          <button id="modal-export-confirm" class="bg-primary text-on-primary px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all">确认导出</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- @main-content:end -->
+  </main>
+  </div>
+
+  <script>
+    $(function() {
+      // 初始化 Lucide 图标
+      lucide.createIcons();
+
+      // === Tab 切换 ===
+      $('.tab-btn').on('click', function() {
+        var tab = $(this).data('tab');
+        // 切换按钮样式
+        $('.tab-btn').removeClass('bg-surface text-on-surface shadow-sm').addClass('text-on-surface-variant');
+        $(this).removeClass('text-on-surface-variant').addClass('bg-surface text-on-surface shadow-sm');
+        // 切换面板
+        $('.tab-panel').addClass('hidden');
+        $('#panel-' + tab).removeClass('hidden');
+      });
+
+      // === 创建任务弹窗 ===
+      $('#btn-create-task').on('click', function() {
+        $('#modal-create-task').removeClass('hidden');
+      });
+      $('#modal-create-task-close, #modal-create-task-cancel').on('click', function() {
+        $('#modal-create-task').addClass('hidden');
+      });
+      $('#modal-create-task-confirm').on('click', function() {
+        // 创建任务 - 应实现：
+        // 1. 验证表单字段（平台、关键词必填）
+        // 2. 调用后端 API 创建获客任务
+        // 3. 任务创建后自动进入待启动状态
+        // 4. 刷新任务列表
+        // 5. 关闭弹窗并显示成功提示
+        console.log('创建获客任务：', {
+          platform: $('#task-platform').val(),
+          keyword: $('#task-keyword').val(),
+          type: $('#task-type').val(),
+          estimate: $('#task-estimate').val()
+        });
+        $('#modal-create-task').addClass('hidden');
+      });
+
+      // === 创建触达活动弹窗 ===
+      $('#btn-create-campaign').on('click', function() {
+        $('#modal-create-campaign').removeClass('hidden');
+      });
+      $('#modal-create-campaign-close, #modal-create-campaign-cancel').on('click', function() {
+        $('#modal-create-campaign').addClass('hidden');
+      });
+      $('#modal-create-campaign-confirm').on('click', function() {
+        // 创建触达活动 - 应实现：
+        // 1. 验证表单字段（名称、模板必填）
+        // 2. 调用后端 API 创建触达活动草稿
+        // 3. 根据潜客范围选项筛选对应潜客
+        // 4. 刷新触达活动列表
+        // 5. 关闭弹窗并显示成功提示
+        console.log('创建触达活动：', {
+          name: $('#campaign-name').val(),
+          platform: $('#campaign-platform').val(),
+          template: $('#campaign-template').val(),
+          scope: $('#campaign-scope').val()
+        });
+        $('#modal-create-campaign').addClass('hidden');
+      });
+
+      // === 导出弹窗 ===
+      $('#btn-export-prospects').on('click', function() {
+        $('#modal-export').removeClass('hidden');
+      });
+      $('#modal-export-close, #modal-export-cancel').on('click', function() {
+        $('#modal-export').addClass('hidden');
+      });
+      $('#modal-export-confirm').on('click', function() {
+        // 导出潜客 - 应实现：
+        // 1. 收集选中的导出字段
+        // 2. 若超过100条，提交审批后导出
+        // 3. 若100条以内，直接生成CSV下载
+        console.log('导出潜客数据');
+        $('#modal-export').addClass('hidden');
+      });
+
+      // === 任务管理操作 ===
+      // 查看结果 - 切换到潜客库 Tab 并筛选该任务
+      $('#task-view-1, #task-view-2, #task-view-4').on('click', function() {
+        var taskId = $(this).closest('[id^="task-row"]').attr('id');
+        // 切换到潜客库 Tab
+        $('#tab-prospects').trigger('click');
+        console.log('查看任务结果，切换到潜客库，任务ID：', taskId);
+      });
+
+      // 停止任务 - 应实现：
+      // 1. 确认弹窗 "确认停止该任务？已抓取的数据将保留"
+      // 2. 调用后端 API 停止 CDP 抓取
+      // 3. 更新任务状态为"已停止"
+      $('#task-stop-1, #task-stop-4').on('click', function() {
+        var taskId = $(this).closest('[id^="task-row"]').attr('id');
+        console.log('停止任务：', taskId);
+      });
+
+      // 启动任务 - 应实现：
+      // 1. 检查浏览器是否已连接（CDP 连接状态）
+      // 2. 若未连接，提示跳转到平台账号管理页连接浏览器
+      // 3. 若已连接，调用后端 API 启动 CDP 抓取
+      // 4. 更新任务状态为"运行中"
+      $('#task-start-3').on('click', function() {
+        console.log('启动任务：task-row-3，需检查浏览器连接');
+      });
+
+      // 重新运行任务
+      $('#task-restart-2').on('click', function() {
+        console.log('重新运行任务：task-row-2');
+      });
+
+      // 重试失败任务
+      $('#task-retry-5').on('click', function() {
+        console.log('重试任务：task-row-5');
+      });
+
+      // 删除任务 - 应实现：
+      // 1. 确认弹窗 "确认删除该任务？关联的潜客数据不会被删除"
+      // 2. 调用后端 API 删除任务
+      // 3. 从列表中移除该行
+      $('#task-delete-3, #task-delete-5').on('click', function() {
+        var taskId = $(this).closest('[id^="task-row"]').attr('id');
+        console.log('删除任务：', taskId);
+      });
+
+      // === 潜客库操作 ===
+      // 潜客详情 - 应实现：
+      // 1. 打开潜客详情抽屉
+      // 2. 显示 AI 评分理由（意向分析依据）
+      // 3. 显示互动记录列表
+      // 4. 提供加入触达活动入口
+      $('#prospect-detail-1, #prospect-detail-2, #prospect-detail-3, #prospect-detail-4').on('click', function() {
+        var prospectId = $(this).closest('[id^="prospect-row"]').attr('id');
+        console.log('打开潜客详情：', prospectId);
+      });
+
+      // 加入触达 - 应实现：
+      // 1. 弹出触达活动选择器（已有活动列表 + 新建活动入口）
+      // 2. 选择后将该潜客加入对应触达活动
+      // 3. 更新潜客状态
+      $('#prospect-outreach-1, #prospect-outreach-2, #prospect-outreach-3').on('click', function() {
+        var prospectId = $(this).closest('[id^="prospect-row"]').attr('id');
+        console.log('加入触达活动：', prospectId);
+      });
+
+      // 恢复已排除潜客
+      $('#prospect-restore-4').on('click', function() {
+        console.log('恢复潜客：prospect-row-4');
+      });
+
+      // === 触达活动操作 ===
+      // 编辑模板 - 应实现：
+      // 1. 打开消息模板编辑器
+      // 2. 支持变量插入（{{name}}、{{platform}} 等）
+      // 3. AI 个性化改写预览
+      // 4. 保存模板修改
+      $('#campaign-edit-1, #campaign-edit-2').on('click', function() {
+        var campaignId = $(this).closest('[id^="campaign-row"]').attr('id');
+        console.log('编辑触达模板：', campaignId);
+      });
+
+      // 提交审批 - 应实现：
+      // 1. 调用后端 API 提交审批
+      // 2. 审批通过后通过 CDP 执行批量发私信
+      // 3. 批量发私信必须经过审批流程
+      // 4. 更新活动状态为"待审批"
+      $('#campaign-approve-1').on('click', function() {
+        console.log('提交审批：campaign-row-1');
+      });
+
+      // 暂停触达活动
+      $('#campaign-pause-2').on('click', function() {
+        console.log('暂停触达活动：campaign-row-2');
+      });
+
+      // === 指标卡点击 ===
+      $('#metric-new-prospects').on('click', function() {
+        // 跳转到潜客库 Tab
+        $('#tab-prospects').trigger('click');
+      });
+      $('#metric-reached').on('click', function() {
+        // 跳转到触达活动 Tab
+        $('#tab-campaigns').trigger('click');
+      });
+      $('#metric-conversion').on('click', function() {
+        // 跳转到触达活动 Tab
+        $('#tab-campaigns').trigger('click');
+      });
+      $('#metric-active-tasks').on('click', function() {
+        // 跳转到任务管理 Tab
+        $('#tab-tasks').trigger('click');
+      });
+
+      // === 点击弹窗背景关闭 ===
+      $('#modal-create-task, #modal-create-campaign, #modal-export').on('click', function(e) {
+        if ($(e.target).hasClass('fixed')) {
+          $(this).addClass('hidden');
+        }
+      });
+    });
+  </script>
+
+  <script>lucide.createIcons();</script>
+</body>
+
+</html>

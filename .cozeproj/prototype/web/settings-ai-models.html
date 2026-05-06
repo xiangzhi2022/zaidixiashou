@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/jquery/jquery-3.7.1.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/lucide/lucide-1.11.0.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/tailwindcss/tailwindcss-browser-4.2.4.min.js"></script>
+
+  <style type="text/tailwindcss">
+    @theme {
+      /* === 品牌色 === */
+      --color-primary:              #2F6BFF;
+      --color-primary-container:    #DBE8FF;
+      --color-on-primary:           #ffffff;
+      /* === 背景 / 表面 === */
+      --color-background:                 #F6F8FB;
+      --color-surface-container-lowest:   #EDF0F5;
+      --color-surface:                    #FFFFFF;
+      --color-surface-container:          #EDF0F5;
+      --color-surface-container-high:     #E1E6EF;
+      --color-surface-container-highest:  #D5DBE8;
+      /* === 文字 === */
+      --color-on-surface:           #152033;
+      --color-on-surface-variant:   #637089;
+      /* === 功能色 === */
+      --color-success:  #16A37B;
+      --color-error:    #E5484D;
+      --color-warning:  #E5A000;
+      /* === 边框 === */
+      --color-outline:          #C4CDD9;
+      --color-outline-variant:  #E6EAF2;
+      /* === 圆角 === */
+      --radius-sm:   0.25rem;
+      --radius-md:   0.375rem;
+      --radius-lg:   0.5rem;
+      --radius-xl:   0.75rem;
+      --radius-2xl:  1rem;
+      --radius-full: 9999px;
+      /* === 阴影 === */
+      --shadow-card:   0 2px 8px rgba(0,0,0,0.08);
+      --shadow-float:  0 10px 25px rgba(0,0,0,0.1);
+      --shadow-dialog: 0 25px 50px rgba(0,0,0,0.15);
+      /* === 字体 === */
+      --font-sans: "Inter", "Noto Sans SC", system-ui, sans-serif;
+    }
+  </style>
+
+  <link href="https://lf-code-agent.coze.cn/obj/x-ai-cn/fonts/google/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+
+  <!-- 图片兜底 -->
+  <script>
+    document.addEventListener('error', function (e) {
+      const img = e.target;
+      if (img.tagName !== 'IMG' || img.dataset.fallback) return;
+      img.dataset.fallback = '1';
+      const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const cat = img.getAttribute('data-category') || '其他';
+      const alt = img.getAttribute('alt') || '';
+      const label = esc(alt.length > 8 ? alt.slice(0, 8) + '…' : alt);
+      const icons = { '人物': '👤', '自然风景': '🏞', '动物': '🐾', '建筑城市': '🏙', '运动体育': '⚽', '交通工具': '🚗', '食物': '🍽', '服饰时尚': '👗', '商业科技': '💼', '游戏娱乐': '🎮', '艺术': '🎨', '其他': '🖼' };
+      const icon = icons[cat] || '🖼';
+      const w = img.width || 400, h = img.height || 300;
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><rect width="100%" height="100%" fill="%23f3f4f6"/><text x="50%" y="45%" text-anchor="middle" font-size="${Math.min(w, h) * 0.18}" dominant-baseline="central">${icon}</text><text x="50%" y="68%" text-anchor="middle" font-size="${Math.min(w, h) * 0.07}" fill="%239ca3af" font-family="system-ui,sans-serif" dominant-baseline="central">${label}</text></svg>`;
+      img.src = 'data:image/svg+xml,' + svg;
+    }, true);
+  </script>
+</head>
+
+<body class="bg-background text-on-surface font-sans">
+
+  <!-- @nav:start -->
+  <header class="bg-surface sticky top-0 z-40 h-14 flex items-center justify-between px-5 border-b border-outline-variant/20">
+    <div class="flex items-center gap-2.5">
+      <i data-lucide="zap" class="w-5 h-5 text-primary"></i>
+      <span class="font-bold text-base text-on-surface">AI Commerce Ops</span>
+    </div>
+    <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2 bg-surface-container rounded-md px-3 py-1.5 text-sm text-on-surface-variant">
+        <i data-lucide="terminal" class="w-4 h-4"></i>
+        <span>输入运营目标，AI 帮你执行</span>
+      </div>
+      <button class="relative p-2 rounded-md hover:bg-surface-container transition-colors">
+        <i data-lucide="bell" class="w-4 h-4 text-on-surface-variant"></i>
+        <span class="absolute top-1 right-1 w-2 h-2 bg-error rounded-full"></span>
+      </button>
+      <div class="w-8 h-8 bg-primary/10 text-primary rounded-full flex items-center justify-center text-sm font-medium">初</div>
+    </div>
+  </header>
+
+  <div class="flex" style="height: calc(100vh - 3.5rem)">
+    <aside class="w-56 shrink-0 bg-surface border-r border-outline-variant/20 overflow-y-auto">
+      <div class="p-3 space-y-0.5">
+        <p class="px-3 py-1 text-xs font-medium text-on-surface-variant/60 uppercase tracking-wider">电商运营</p>
+        <a href="home.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="layout-dashboard" class="w-4 h-4"></i>总览
+        </a>
+        <a href="orders.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="shopping-bag" class="w-4 h-4"></i>订单
+        </a>
+        <a href="products.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="package-search" class="w-4 h-4"></i>商品
+        </a>
+        <a href="messages.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors relative">
+          <i data-lucide="messages-square" class="w-4 h-4"></i>消息
+          <span class="ml-auto bg-error text-white text-xs rounded-full px-1.5 py-0.5 leading-none">64</span>
+        </a>
+
+        <p class="px-3 py-1 mt-2 text-xs font-medium text-on-surface-variant/60 uppercase tracking-wider">获客</p>
+        <a href="acquisition.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="user-plus" class="w-4 h-4"></i>获客中心
+        </a>
+
+        <p class="px-3 py-1 mt-2 text-xs font-medium text-on-surface-variant/60 uppercase tracking-wider">媒体运营</p>
+        <a href="media.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors relative">
+          <i data-lucide="megaphone" class="w-4 h-4"></i>运营中心
+          <span class="ml-auto bg-warning text-on-surface text-xs rounded-full px-1.5 py-0.5 leading-none">4</span>
+        </a>
+        <a href="media-creative.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="clapperboard" class="w-4 h-4"></i>图像视频生成
+        </a>
+        <a href="media-drafts.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors relative">
+          <i data-lucide="file-check" class="w-4 h-4"></i>草稿审核发布
+          <span class="ml-auto bg-warning text-on-surface text-xs rounded-full px-1.5 py-0.5 leading-none">4</span>
+        </a>
+        <a href="automation.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="workflow" class="w-4 h-4"></i>自动化
+        </a>
+
+        <p class="px-3 py-1 mt-2 text-xs font-medium text-on-surface-variant/60 uppercase tracking-wider">系统设置</p>
+        <a href="settings-accounts.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors relative">
+          <i data-lucide="key-round" class="w-4 h-4"></i>平台账号管理
+          <span class="ml-auto bg-warning text-on-surface text-xs rounded-full px-1.5 py-0.5 leading-none">3</span>
+        </a>
+        <a href="settings-ai-models.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md bg-primary/10 text-primary text-sm font-medium transition-colors" aria-current="page">
+          <i data-lucide="brain-circuit" class="w-4 h-4"></i>AI 模型设置
+        </a>
+        <a href="settings-autopilot.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="bot" class="w-4 h-4"></i>自动托管
+        </a>
+        <a href="settings-approval.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="shield-check" class="w-4 h-4"></i>审批
+        </a>
+      </div>
+    </aside>
+  <!-- @nav:end -->
+
+  <main class="flex-1 min-w-0 overflow-y-auto bg-background p-6">
+    <!-- @main-content:start -->
+
+    <!-- 页面标题 -->
+    <div class="mb-6">
+      <h1 class="text-2xl font-bold text-on-surface">AI 模型设置</h1>
+      <p class="text-sm text-on-surface-variant mt-1">配置 AI 模型接入方式，支持平台 API 或自带 Key 双模式</p>
+    </div>
+
+    <!-- 说明卡片 -->
+    <div class="bg-primary/5 border border-primary/15 rounded-lg p-4 mb-6 flex items-start gap-3">
+      <i data-lucide="info" class="w-5 h-5 text-primary shrink-0 mt-0.5"></i>
+      <div>
+        <p class="text-sm font-medium text-on-surface">选择 AI 调用方式</p>
+        <p class="text-xs text-on-surface-variant mt-1">使用平台 API 可享受订阅额度，无需自行管理密钥；自带 Key 则不计入平台配额，适合有自有 API 资源的用户。各功能模块可随时切换调用方式。</p>
+      </div>
+    </div>
+
+    <!-- API 来源选择区 -->
+    <div class="mb-8">
+      <h2 class="text-base font-semibold text-on-surface mb-3">API 来源</h2>
+      <div class="grid grid-cols-2 gap-4">
+        <!-- 平台API选项卡 -->
+        <button id="tab-platform-api" class="api-source-tab relative bg-surface rounded-lg shadow-card p-5 text-left transition-all border-2 border-primary cursor-pointer" data-source="platform">
+          <div class="flex items-center gap-3 mb-2">
+            <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+              <i data-lucide="cloud" class="w-5 h-5 text-primary"></i>
+            </div>
+            <div>
+              <p class="text-sm font-semibold text-on-surface">平台 API</p>
+              <p class="text-xs text-on-surface-variant">使用平台提供的 AI 额度</p>
+            </div>
+          </div>
+          <p class="text-xs text-on-surface-variant">无需配置密钥，按订阅套餐享受对应额度</p>
+          <div class="absolute top-4 right-4 w-5 h-5 rounded-full border-2 border-primary flex items-center justify-center">
+            <div class="w-2.5 h-2.5 rounded-full bg-primary"></div>
+          </div>
+        </button>
+
+        <!-- 自带Key选项卡 -->
+        <button id="tab-own-key" class="api-source-tab relative bg-surface rounded-lg shadow-card p-5 text-left transition-all border-2 border-transparent hover:border-outline-variant/30 cursor-pointer" data-source="ownkey">
+          <div class="flex items-center gap-3 mb-2">
+            <div class="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center">
+              <i data-lucide="key-round" class="w-5 h-5 text-on-surface-variant"></i>
+            </div>
+            <div>
+              <p class="text-sm font-semibold text-on-surface">自带 Key</p>
+              <p class="text-xs text-on-surface-variant">使用自己的 API 密钥</p>
+            </div>
+          </div>
+          <p class="text-xs text-on-surface-variant">填入自己的 API Key，不计入平台配额</p>
+          <div class="absolute top-4 right-4 w-5 h-5 rounded-full border-2 border-outline-variant/40 flex items-center justify-center">
+          </div>
+        </button>
+      </div>
+    </div>
+
+    <!-- 平台API模式内容 -->
+    <div id="panel-platform-api">
+      <!-- 额度使用进度 -->
+      <div class="bg-surface rounded-lg shadow-card p-5 mb-6">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-base font-semibold text-on-surface">AI 额度使用</h3>
+          <span class="text-xs text-on-surface-variant">当前套餐：基础版</span>
+        </div>
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-sm text-on-surface">今日已用 <span class="font-semibold text-on-surface">320</span> 次 / 500 次</span>
+          <span class="text-sm font-semibold text-warning">64%</span>
+        </div>
+        <div class="w-full h-2.5 bg-surface-container rounded-full overflow-hidden">
+          <div class="h-full bg-warning rounded-full transition-all" style="width: 64%"></div>
+        </div>
+        <div class="flex items-center justify-between mt-3">
+          <span class="text-xs text-on-surface-variant">剩余 180 次 · 每日额度将于 00:00 重置</span>
+          <a href="settings-billing.html" class="text-xs text-primary font-medium hover:underline">升级套餐</a>
+        </div>
+      </div>
+
+      <!-- 额度不足提示 -->
+      <div class="bg-warning/8 border border-warning/20 rounded-lg p-4 flex items-start gap-3">
+        <i data-lucide="alert-triangle" class="w-5 h-5 text-warning shrink-0 mt-0.5"></i>
+        <div>
+          <p class="text-sm font-medium text-on-surface">额度即将用尽</p>
+          <p class="text-xs text-on-surface-variant mt-1">今日 AI 额度已使用 64%，建议升级套餐或切换为自带 Key 模式以避免服务中断。</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 自带Key模式内容 -->
+    <div id="panel-own-key" class="hidden">
+      <!-- Key列表卡片区域 -->
+      <div class="bg-surface rounded-lg shadow-card p-5 mb-6">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-base font-semibold text-on-surface">已保存的 Key</h3>
+          <button id="btn-add-key" class="bg-primary text-on-primary px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all inline-flex items-center gap-2">
+            <i data-lucide="plus" class="w-3.5 h-3.5"></i>添加 Key
+          </button>
+        </div>
+
+        <div id="key-list" class="space-y-3">
+          <!-- 列表-Key1: OpenAI GPT-4o -->
+          <div class="key-card bg-surface-container/60 rounded-lg p-4 flex items-center justify-between" data-key-id="key-1">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-md bg-success/10 flex items-center justify-center">
+                <i data-lucide="brain" class="w-4 h-4 text-success"></i>
+              </div>
+              <div>
+                <div class="flex items-center gap-2">
+                  <p class="text-sm font-semibold text-on-surface">OpenAI GPT-4o</p>
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-success/15 text-success">默认</span>
+                </div>
+                <p class="text-xs text-on-surface-variant mt-0.5">sk-...4f2a · 上次测试：2 分钟前</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <button class="key-btn-test bg-surface-container-high text-on-surface-variant px-3 py-1.5 rounded-md text-xs font-medium hover:bg-surface-container-highest transition-colors" data-key-id="key-1">测试</button>
+              <button class="key-btn-default bg-surface-container-high text-on-surface-variant px-3 py-1.5 rounded-md text-xs font-medium hover:bg-surface-container-highest transition-colors opacity-50 cursor-not-allowed" data-key-id="key-1">设为默认</button>
+              <button class="key-btn-delete text-error/70 hover:text-error px-3 py-1.5 rounded-md text-xs font-medium hover:bg-error/5 transition-colors" data-key-id="key-1">删除</button>
+            </div>
+          </div>
+
+          <!-- 列表-Key2: Anthropic Claude -->
+          <div class="key-card bg-surface-container/60 rounded-lg p-4 flex items-center justify-between" data-key-id="key-2">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-md bg-surface-container flex items-center justify-center">
+                <i data-lucide="sparkles" class="w-4 h-4 text-on-surface-variant"></i>
+              </div>
+              <div>
+                <div class="flex items-center gap-2">
+                  <p class="text-sm font-semibold text-on-surface">Anthropic Claude</p>
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-surface-container-high text-on-surface-variant">待测试</span>
+                </div>
+                <p class="text-xs text-on-surface-variant mt-0.5">sk-ant-...8d3e · 尚未测试</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <button class="key-btn-test bg-surface-container-high text-on-surface-variant px-3 py-1.5 rounded-md text-xs font-medium hover:bg-surface-container-highest transition-colors" data-key-id="key-2">测试</button>
+              <button class="key-btn-default bg-surface-container-high text-on-surface-variant px-3 py-1.5 rounded-md text-xs font-medium hover:bg-surface-container-highest transition-colors" data-key-id="key-2">设为默认</button>
+              <button class="key-btn-delete text-error/70 hover:text-error px-3 py-1.5 rounded-md text-xs font-medium hover:bg-error/5 transition-colors" data-key-id="key-2">删除</button>
+            </div>
+          </div>
+
+          <!-- 列表-Key3: 自定义端点 -->
+          <div class="key-card bg-surface-container/60 rounded-lg p-4 flex items-center justify-between" data-key-id="key-3">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-md bg-error/10 flex items-center justify-center">
+                <i data-lucide="globe" class="w-4 h-4 text-error"></i>
+              </div>
+              <div>
+                <div class="flex items-center gap-2">
+                  <p class="text-sm font-semibold text-on-surface">自定义端点</p>
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-error/15 text-error">测试失败</span>
+                </div>
+                <p class="text-xs text-on-surface-variant mt-0.5">https://api.custom...com · 上次测试：1 小时前</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <button class="key-btn-test bg-surface-container-high text-on-surface-variant px-3 py-1.5 rounded-md text-xs font-medium hover:bg-surface-container-highest transition-colors" data-key-id="key-3">测试</button>
+              <button class="key-btn-default bg-surface-container-high text-on-surface-variant px-3 py-1.5 rounded-md text-xs font-medium hover:bg-surface-container-highest transition-colors" data-key-id="key-3">设为默认</button>
+              <button class="key-btn-delete text-error/70 hover:text-error px-3 py-1.5 rounded-md text-xs font-medium hover:bg-error/5 transition-colors" data-key-id="key-3">删除</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 底部模型配置区 -->
+    <div id="model-config-section" class="bg-surface rounded-lg shadow-card p-5 hidden">
+      <h3 class="text-base font-semibold text-on-surface mb-4">模型配置</h3>
+
+      <div class="space-y-4">
+        <!-- 使用Key选择 -->
+        <div>
+          <label class="block text-sm font-medium text-on-surface mb-1.5">使用 Key</label>
+          <select id="select-key" class="w-full bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors appearance-none cursor-pointer">
+            <option value="key-1" selected>OpenAI GPT-4o（默认）</option>
+            <option value="key-2">Anthropic Claude</option>
+            <option value="key-3">自定义端点</option>
+          </select>
+        </div>
+
+        <!-- 默认模型 -->
+        <div>
+          <label class="block text-sm font-medium text-on-surface mb-1.5">默认模型</label>
+          <input id="input-default-model" type="text" value="gpt-4o-mini" class="w-full bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors" placeholder="例如 gpt-4o-mini"/>
+        </div>
+
+        <!-- 高级模型 -->
+        <div>
+          <label class="block text-sm font-medium text-on-surface mb-1.5">高级模型</label>
+          <input id="input-advanced-model" type="text" value="gpt-4o" class="w-full bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors" placeholder="例如 gpt-4o"/>
+        </div>
+
+        <!-- 嵌入模型 -->
+        <div>
+          <label class="block text-sm font-medium text-on-surface mb-1.5">嵌入模型</label>
+          <input id="input-embedding-model" type="text" value="text-embedding-3-small" class="w-full bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors" placeholder="例如 text-embedding-3-small"/>
+        </div>
+
+        <!-- 测试连接结果区 -->
+        <div id="test-result-area" class="hidden rounded-md p-3 text-sm">
+        </div>
+
+        <!-- 操作按钮 -->
+        <div class="flex items-center gap-3 pt-2">
+          <button id="btn-test-connection" class="bg-surface-container text-on-surface border-none px-4 py-2 rounded-md text-sm font-medium hover:bg-surface-container-high active:scale-[0.98] transition-all inline-flex items-center gap-2">
+            <i data-lucide="plug" class="w-3.5 h-3.5"></i>测试连接
+          </button>
+          <button id="btn-save-config" class="bg-primary text-on-primary px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all inline-flex items-center gap-2">
+            <i data-lucide="check" class="w-3.5 h-3.5"></i>保存配置
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- @main-content:end -->
+  </main>
+  </div>
+
+  <!-- 添加Key弹窗 -->
+  <div id="modal-add-key" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-surface rounded-xl shadow-dialog max-w-lg w-full max-h-[90vh] overflow-y-auto p-6">
+      <div class="flex items-center justify-between mb-5">
+        <h3 class="text-lg font-semibold text-on-surface">添加 API Key</h3>
+        <button id="btn-close-modal" class="p-1 rounded-md hover:bg-surface-container transition-colors">
+          <i data-lucide="x" class="w-5 h-5 text-on-surface-variant"></i>
+        </button>
+      </div>
+
+      <div class="space-y-4">
+        <!-- 提供商选择 -->
+        <div>
+          <label class="block text-sm font-medium text-on-surface mb-2">提供商</label>
+          <div class="flex items-center gap-4">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="radio" name="provider" value="openai" checked class="w-4 h-4 text-primary accent-primary"/>
+              <span class="text-sm text-on-surface">OpenAI 兼容</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="radio" name="provider" value="anthropic" class="w-4 h-4 text-primary accent-primary"/>
+              <span class="text-sm text-on-surface">Anthropic</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="radio" name="provider" value="custom" class="w-4 h-4 text-primary accent-primary"/>
+              <span class="text-sm text-on-surface">自定义</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- API端点 -->
+        <div>
+          <label class="block text-sm font-medium text-on-surface mb-1.5">API 端点</label>
+          <input id="input-endpoint" type="text" value="https://api.openai.com/v1" class="w-full bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors" placeholder="输入 API 端点地址"/>
+        </div>
+
+        <!-- API密钥 -->
+        <div>
+          <label class="block text-sm font-medium text-on-surface mb-1.5">API 密钥</label>
+          <div class="relative">
+            <input id="input-api-key" type="password" class="w-full bg-surface-container border-none rounded-md px-3 py-2 pr-10 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors" placeholder="输入 API 密钥"/>
+            <button id="btn-toggle-key-visibility" class="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-surface-container-high transition-colors">
+              <i data-lucide="eye" class="w-4 h-4 text-on-surface-variant"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- 默认模型 -->
+        <div>
+          <label class="block text-sm font-medium text-on-surface mb-1.5">默认模型</label>
+          <input id="input-modal-default-model" type="text" class="w-full bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors" placeholder="例如 gpt-4o-mini"/>
+        </div>
+
+        <!-- 高级模型 -->
+        <div>
+          <label class="block text-sm font-medium text-on-surface mb-1.5">高级模型</label>
+          <input id="input-modal-advanced-model" type="text" class="w-full bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors" placeholder="例如 gpt-4o"/>
+        </div>
+
+        <!-- 标签 -->
+        <div>
+          <label class="block text-sm font-medium text-on-surface mb-1.5">标签</label>
+          <input id="input-key-label" type="text" class="w-full bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors" placeholder="为此 Key 设置一个标签名"/>
+        </div>
+
+        <!-- 保存按钮 -->
+        <div class="flex items-center justify-end gap-3 pt-2">
+          <button id="btn-cancel-modal" class="bg-surface-container text-on-surface border-none px-4 py-2 rounded-md text-sm font-medium hover:bg-surface-container-high active:scale-[0.98] transition-all">取消</button>
+          <button id="btn-save-key" class="bg-primary text-on-primary px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all">保存</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 删除确认弹窗 -->
+  <div id="modal-delete-confirm" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-surface rounded-xl shadow-dialog max-w-sm w-full p-6">
+      <div class="flex items-center gap-3 mb-3">
+        <div class="w-10 h-10 rounded-full bg-error/10 flex items-center justify-center">
+          <i data-lucide="trash-2" class="w-5 h-5 text-error"></i>
+        </div>
+        <h3 class="text-base font-semibold text-on-surface">确认删除</h3>
+      </div>
+      <p class="text-sm text-on-surface-variant mb-5">确定要删除此 API Key 吗？删除后将无法恢复，使用该 Key 的功能模块将回退到平台 API。</p>
+      <div class="flex items-center justify-end gap-3">
+        <button id="btn-cancel-delete" class="bg-surface-container text-on-surface border-none px-4 py-2 rounded-md text-sm font-medium hover:bg-surface-container-high active:scale-[0.98] transition-all">取消</button>
+        <button id="btn-confirm-delete" class="bg-error text-white px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all">确认删除</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    $(function() {
+      // === API来源切换 ===
+      $('#tab-platform-api, #tab-own-key').on('click', function() {
+        var source = $(this).data('source');
+
+        // 更新选项卡样式
+        $('.api-source-tab').removeClass('border-primary').addClass('border-transparent');
+        $(this).removeClass('border-transparent').addClass('border-primary');
+
+        // 更新单选圆点
+        $('.api-source-tab .absolute.top-4.right-4').html('');
+        if (source === 'platform') {
+          $(this).find('.absolute.top-4.right-4').html('<div class="w-2.5 h-2.5 rounded-full bg-primary"></div>');
+          $('#tab-own-key .absolute.top-4.right-4').html('');
+          // 更新图标颜色
+          $(this).find('.w-10').removeClass('bg-surface-container').addClass('bg-primary/10');
+          $(this).find('.w-10 i').removeClass('text-on-surface-variant').addClass('text-primary');
+          $('#tab-own-key .w-10').removeClass('bg-primary/10').addClass('bg-surface-container');
+          $('#tab-own-key .w-10 i').removeClass('text-primary').addClass('text-on-surface-variant');
+        } else {
+          $(this).find('.absolute.top-4.right-4').html('<div class="w-2.5 h-2.5 rounded-full bg-primary"></div>');
+          $('#tab-platform-api .absolute.top-4.right-4').html('');
+          $(this).find('.w-10').removeClass('bg-surface-container').addClass('bg-primary/10');
+          $(this).find('.w-10 i').removeClass('text-on-surface-variant').addClass('text-primary');
+          $('#tab-platform-api .w-10').removeClass('bg-primary/10').addClass('bg-surface-container');
+          $('#tab-platform-api .w-10 i').removeClass('text-primary').addClass('text-on-surface-variant');
+        }
+
+        // 切换面板
+        if (source === 'platform') {
+          $('#panel-platform-api').removeClass('hidden');
+          $('#panel-own-key').addClass('hidden');
+          $('#model-config-section').addClass('hidden');
+        } else {
+          $('#panel-platform-api').addClass('hidden');
+          $('#panel-own-key').removeClass('hidden');
+          $('#model-config-section').removeClass('hidden');
+        }
+      });
+
+      // === 添加Key弹窗 ===
+      $('#btn-add-key').on('click', function() {
+        $('#modal-add-key').removeClass('hidden');
+      });
+
+      $('#btn-close-modal, #btn-cancel-modal').on('click', function() {
+        $('#modal-add-key').addClass('hidden');
+      });
+
+      // 点击弹窗背景关闭
+      $('#modal-add-key').on('click', function(e) {
+        if (e.target === this) {
+          $(this).addClass('hidden');
+        }
+      });
+
+      // === 提供商切换更新端点 ===
+      $('input[name="provider"]').on('change', function() {
+        var provider = $(this).val();
+        if (provider === 'openai') {
+          $('#input-endpoint').val('https://api.openai.com/v1');
+        } else if (provider === 'anthropic') {
+          $('#input-endpoint').val('https://api.anthropic.com/v1');
+        } else {
+          $('#input-endpoint').val('');
+          $('#input-endpoint').attr('placeholder', '输入自定义 API 端点地址');
+        }
+      });
+
+      // === API密钥可见性切换 ===
+      var keyVisible = false;
+      $('#btn-toggle-key-visibility').on('click', function() {
+        keyVisible = !keyVisible;
+        if (keyVisible) {
+          $('#input-api-key').attr('type', 'text');
+          $(this).find('i').attr('data-lucide', 'eye-off');
+        } else {
+          $('#input-api-key').attr('type', 'password');
+          $(this).find('i').attr('data-lucide', 'eye');
+        }
+        lucide.createIcons();
+      });
+
+      // === 保存Key ===
+      // 保存按钮 - 点击后应实现：
+      // 1. 校验所有必填字段（端点、密钥、标签）
+      // 2. 对密钥进行 AES-256 加密后存储
+      // 3. 在 Key 列表中新增一行卡片
+      // 4. 关闭弹窗并清空表单
+      // 5. 显示保存成功提示
+      $('#btn-save-key').on('click', function() {
+        console.log('保存 Key: provider=' + $('input[name="provider"]:checked').val() +
+          ', endpoint=' + $('#input-endpoint').val() +
+          ', label=' + $('#input-key-label').val());
+        $('#modal-add-key').addClass('hidden');
+      });
+
+      // === Key列表按钮 ===
+      // 测试按钮 - 点击后应实现：
+      // 1. 向对应 API 端点发送轻量测试请求（如 models 列表）
+      // 2. 显示加载状态（按钮文字变为"测试中..."）
+      // 3. 成功：更新 Key 状态 pill 为"可用"（绿色）
+      // 4. 失败：更新 Key 状态 pill 为"测试失败"（红色）
+      // 5. 更新"上次测试"时间
+      $('#key-list').on('click', '.key-btn-test', function() {
+        var keyId = $(this).data('key-id');
+        console.log('测试 Key 连通性: ' + keyId);
+      });
+
+      // 设为默认按钮 - 点击后应实现：
+      // 1. 将该 Key 设为默认（isDefault = true）
+      // 2. 取消其他 Key 的默认状态
+      // 3. 更新 pill 样式：默认 Key 显示绿色"默认"pill，其他移除该 pill
+      // 4. 更新底部模型配置区的 Key 下拉选择
+      $('#key-list').on('click', '.key-btn-default', function() {
+        var keyId = $(this).data('key-id');
+        console.log('设为默认 Key: ' + keyId);
+      });
+
+      // 删除按钮 - 点击后应实现：
+      // 1. 弹出删除确认弹窗
+      // 2. 确认后从列表中移除该 Key 卡片
+      // 3. 如果删除的是默认 Key，自动将第一个可用 Key 设为默认
+      // 4. 更新底部模型配置区的 Key 下拉选择
+      var deletingKeyId = null;
+      $('#key-list').on('click', '.key-btn-delete', function() {
+        deletingKeyId = $(this).data('key-id');
+        $('#modal-delete-confirm').removeClass('hidden');
+      });
+
+      $('#btn-cancel-delete').on('click', function() {
+        $('#modal-delete-confirm').addClass('hidden');
+        deletingKeyId = null;
+      });
+
+      $('#modal-delete-confirm').on('click', function(e) {
+        if (e.target === this) {
+          $(this).addClass('hidden');
+          deletingKeyId = null;
+        }
+      });
+
+      $('#btn-confirm-delete').on('click', function() {
+        if (deletingKeyId) {
+          console.log('确认删除 Key: ' + deletingKeyId);
+          // 从 DOM 中移除该 Key 卡片
+          $('.key-card[data-key-id="' + deletingKeyId + '"]').fadeOut(300, function() {
+            $(this).remove();
+          });
+          $('#modal-delete-confirm').addClass('hidden');
+          deletingKeyId = null;
+        }
+      });
+
+      // === 底部模型配置区 ===
+      // 测试连接按钮 - 点击后应实现：
+      // 1. 获取当前选择的 Key、默认模型等配置
+      // 2. 发送测试请求到对应 API 端点
+      // 3. 按钮显示加载状态
+      // 4. 成功：在 test-result-area 显示绿色成功提示
+      // 5. 失败：在 test-result-area 显示红色失败提示及错误信息
+      $('#btn-test-connection').on('click', function() {
+        var selectedKey = $('#select-key').val();
+        var defaultModel = $('#input-default-model').val();
+        console.log('测试连接: key=' + selectedKey + ', model=' + defaultModel);
+
+        // 显示测试结果
+        $('#test-result-area').removeClass('hidden bg-success/10 text-success bg-error/10 text-error');
+        $('#test-result-area').addClass('bg-success/10 text-success');
+        $('#test-result-area').html('<div class="flex items-center gap-2"><i data-lucide="check-circle" class="w-4 h-4"></i><span>连接成功！模型 ' + defaultModel + ' 可正常使用。</span></div>');
+        lucide.createIcons();
+      });
+
+      // 保存配置按钮 - 点击后应实现：
+      // 1. 收集所有模型配置字段
+      // 2. 校验必填字段
+      // 3. 保存到后端
+      // 4. 显示保存成功提示
+      $('#btn-save-config').on('click', function() {
+        var config = {
+          key: $('#select-key').val(),
+          defaultModel: $('#input-default-model').val(),
+          advancedModel: $('#input-advanced-model').val(),
+          embeddingModel: $('#input-embedding-model').val()
+        };
+        console.log('保存模型配置:', config);
+      });
+    });
+  </script>
+
+  <script>lucide.createIcons();</script>
+</body>
+
+</html>

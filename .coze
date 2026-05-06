@@ -1,0 +1,31 @@
+[project]
+# 项目名称与仓库地址
+name = "zaidixiashou"
+repository = "https://github.com/xiangzhi2022/zaidixiashou"
+requires = ["nodejs-24"]
+
+[dev]
+# 开发环境：Coze 沙箱一键启动
+# 同时启动前端(5000) + API后端(3001)
+build = ["pnpm", "install"]
+run = ["bash", "/workspace/projects/zaidixiashou/start-sandbox.sh"]
+
+[deploy]
+# 部署环境：多模块并行构建并启动全栈服务
+build = ["bash", "-c", "pnpm install && pnpm --filter @ai-commerce-ops/shared --filter @ai-commerce-ops/connectors --filter api --filter web build"]
+run = ["bash", "-c", "cd /workspace/projects/zaidixiashou/apps/api && node dist/main.js & cd /workspace/projects/zaidixiashou && pnpm --filter web dev"]
+
+[tasks]
+# ⬇️ 代码管理
+# 一键双向同步：先拉取防冲突，再暂存、提交并推送
+sync = ["bash", "-c", "cd /workspace/projects/zaidixiashou && git pull && git add . && git commit -m 'chore: 自动同步最新代码' && git push"]
+
+# 单独拉取远端最新更新
+pull = ["bash", "-c", "cd /workspace/projects/zaidixiashou && git pull"]
+
+# ⬇️ 数据库操作 (Prisma)
+# 常用：一键完成数据库结构推送 + 客户端代码重新生成
+db-sync = ["bash", "-c", "cd /workspace/projects/zaidixiashou && npx prisma db push && npx prisma generate"]
+
+# 单独：仅将 Schema 修改同步到物理数据库
+db-push = ["bash", "-c", "cd /workspace/projects/zaidixiashou && npx prisma db push"]

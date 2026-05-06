@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/jquery/jquery-3.7.1.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/lucide/lucide-1.11.0.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/tailwindcss/tailwindcss-browser-4.2.4.min.js"></script>
+
+  <style type="text/tailwindcss">
+    @theme {
+      /* === 品牌色 === */
+      --color-primary:              #2F6BFF;
+      --color-primary-container:    #DBE8FF;
+      --color-on-primary:           #ffffff;
+      /* === 背景 / 表面 === */
+      --color-background:                 #F6F8FB;
+      --color-surface-container-lowest:   #EDF0F5;
+      --color-surface:                    #FFFFFF;
+      --color-surface-container:          #EDF0F5;
+      --color-surface-container-high:     #E1E6EF;
+      --color-surface-container-highest:  #D5DBE8;
+      /* === 文字 === */
+      --color-on-surface:           #152033;
+      --color-on-surface-variant:   #637089;
+      /* === 功能色 === */
+      --color-success:  #16A37B;
+      --color-error:    #E5484D;
+      --color-warning:  #E5A000;
+      /* === 边框 === */
+      --color-outline:          #C4CDD9;
+      --color-outline-variant:  #E6EAF2;
+      /* === 圆角 === */
+      --radius-sm:   0.25rem;
+      --radius-md:   0.375rem;
+      --radius-lg:   0.5rem;
+      --radius-xl:   0.75rem;
+      --radius-2xl:  1rem;
+      --radius-full: 9999px;
+      /* === 阴影 === */
+      --shadow-card:   0 2px 8px rgba(0,0,0,0.08);
+      --shadow-float:  0 10px 25px rgba(0,0,0,0.1);
+      --shadow-dialog: 0 25px 50px rgba(0,0,0,0.15);
+      /* === 字体 === */
+      --font-sans: "Inter", "Noto Sans SC", system-ui, sans-serif;
+    }
+  </style>
+
+  <link href="https://lf-code-agent.coze.cn/obj/x-ai-cn/fonts/google/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+</head>
+
+<body class="bg-background text-on-surface font-sans min-h-screen flex items-center justify-center p-4">
+
+  <!-- @main-content:start -->
+  <main class="w-full max-w-[920px]">
+    <!-- 登录卡片：左侧品牌 + 右侧表单 -->
+    <div class="bg-surface rounded-2xl shadow-dialog overflow-hidden flex" style="min-height: 520px;">
+
+      <!-- 左侧品牌区域 -->
+      <div class="w-[400px] shrink-0 bg-primary flex flex-col items-center justify-center px-10 relative overflow-hidden">
+        <!-- 装饰背景 -->
+        <div class="absolute inset-0 opacity-10">
+          <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                <path d="M 40 0 L 0 0 0 40" fill="none" stroke="white" stroke-width="0.5"/>
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#grid)"/>
+          </svg>
+        </div>
+        <div class="absolute top-[-80px] right-[-80px] w-[200px] h-[200px] bg-white/10 rounded-full"></div>
+        <div class="absolute bottom-[-60px] left-[-60px] w-[160px] h-[160px] bg-white/10 rounded-full"></div>
+
+        <!-- 品牌内容 -->
+        <div class="relative z-10 flex flex-col items-center text-center">
+          <!-- Logo 图标 -->
+          <div class="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mb-6 backdrop-blur-sm">
+            <i data-lucide="zap" class="w-8 h-8 text-white"></i>
+          </div>
+          <h1 class="text-2xl font-bold text-white mb-2">AI Commerce Ops</h1>
+          <p class="text-white/70 text-sm leading-relaxed">跨境电商 AI 运营中控台</p>
+        </div>
+      </div>
+
+      <!-- 右侧登录表单区域 -->
+      <div class="flex-1 flex flex-col px-10 py-10">
+
+        <!-- Tab 切换 -->
+        <div class="flex mb-8 bg-surface-container rounded-lg p-1" id="login-tabs">
+          <button id="tab-wechat" class="flex-1 py-2.5 text-sm font-medium rounded-md transition-all bg-surface shadow-sm text-on-surface" aria-current="page">微信扫码登录</button>
+          <button id="tab-sms" class="flex-1 py-2.5 text-sm font-medium rounded-md transition-all text-on-surface-variant hover:text-on-surface">短信验证码登录</button>
+        </div>
+
+        <!-- 微信扫码面板 -->
+        <div id="panel-wechat" class="flex-1 flex flex-col items-center justify-center">
+          <!-- 模拟微信二维码 SVG -->
+          <div class="w-[200px] h-[200px] bg-surface-container rounded-xl p-4 mb-5 flex items-center justify-center relative">
+            <svg width="168" height="168" viewBox="0 0 168 168" xmlns="http://www.w3.org/2000/svg" id="qr-code-svg">
+              <!-- 二维码定位标记 - 左上 -->
+              <rect x="8" y="8" width="40" height="40" fill="none" stroke="#152033" stroke-width="4" rx="2"/>
+              <rect x="16" y="16" width="24" height="24" fill="#152033" rx="1"/>
+              <!-- 二维码定位标记 - 右上 -->
+              <rect x="120" y="8" width="40" height="40" fill="none" stroke="#152033" stroke-width="4" rx="2"/>
+              <rect x="128" y="16" width="24" height="24" fill="#152033" rx="1"/>
+              <!-- 二维码定位标记 - 左下 -->
+              <rect x="8" y="120" width="40" height="40" fill="none" stroke="#152033" stroke-width="4" rx="2"/>
+              <rect x="16" y="128" width="24" height="24" fill="#152033" rx="1"/>
+              <!-- 数据区域模拟 - 水平线 -->
+              <rect x="56" y="12" width="8" height="4" fill="#152033"/>
+              <rect x="72" y="12" width="4" height="4" fill="#152033"/>
+              <rect x="84" y="12" width="12" height="4" fill="#152033"/>
+              <rect x="104" y="12" width="8" height="4" fill="#152033"/>
+              <rect x="56" y="20" width="12" height="4" fill="#152033"/>
+              <rect x="76" y="20" width="4" height="4" fill="#152033"/>
+              <rect x="88" y="20" width="8" height="4" fill="#152033"/>
+              <rect x="100" y="20" width="12" height="4" fill="#152033"/>
+              <rect x="56" y="28" width="4" height="4" fill="#152033"/>
+              <rect x="68" y="28" width="8" height="4" fill="#152033"/>
+              <rect x="84" y="28" width="4" height="4" fill="#152033"/>
+              <rect x="96" y="28" width="8" height="4" fill="#152033"/>
+              <rect x="112" y="28" width="4" height="4" fill="#152033"/>
+              <rect x="56" y="36" width="8" height="4" fill="#152033"/>
+              <rect x="72" y="36" width="12" height="4" fill="#152033"/>
+              <rect x="92" y="36" width="4" height="4" fill="#152033"/>
+              <rect x="104" y="36" width="8" height="4" fill="#152033"/>
+              <!-- 数据区域模拟 - 垂直区域 -->
+              <rect x="12" y="56" width="4" height="8" fill="#152033"/>
+              <rect x="20" y="56" width="8" height="4" fill="#152033"/>
+              <rect x="36" y="56" width="4" height="8" fill="#152033"/>
+              <rect x="12" y="68" width="8" height="4" fill="#152033"/>
+              <rect x="28" y="68" width="4" height="4" fill="#152033"/>
+              <rect x="40" y="68" width="4" height="8" fill="#152033"/>
+              <rect x="12" y="80" width="4" height="4" fill="#152033"/>
+              <rect x="24" y="80" width="8" height="4" fill="#152033"/>
+              <rect x="36" y="80" width="4" height="4" fill="#152033"/>
+              <rect x="12" y="92" width="8" height="4" fill="#152033"/>
+              <rect x="28" y="92" width="12" height="4" fill="#152033"/>
+              <rect x="12" y="104" width="4" height="8" fill="#152033"/>
+              <rect x="20" y="104" width="4" height="4" fill="#152033"/>
+              <rect x="32" y="104" width="8" height="4" fill="#152033"/>
+              <!-- 中部数据模拟 -->
+              <rect x="56" y="56" width="8" height="4" fill="#152033"/>
+              <rect x="72" y="56" width="4" height="8" fill="#152033"/>
+              <rect x="84" y="56" width="12" height="4" fill="#152033"/>
+              <rect x="104" y="56" width="4" height="4" fill="#152033"/>
+              <rect x="116" y="56" width="8" height="4" fill="#152033"/>
+              <rect x="132" y="56" width="4" height="8" fill="#152033"/>
+              <rect x="148" y="56" width="8" height="4" fill="#152033"/>
+              <rect x="56" y="68" width="4" height="4" fill="#152033"/>
+              <rect x="68" y="68" width="8" height="4" fill="#152033"/>
+              <rect x="84" y="68" width="4" height="8" fill="#152033"/>
+              <rect x="96" y="68" width="12" height="4" fill="#152033"/>
+              <rect x="116" y="68" width="4" height="4" fill="#152033"/>
+              <rect x="128" y="68" width="8" height="4" fill="#152033"/>
+              <rect x="144" y="68" width="4" height="4" fill="#152033"/>
+              <rect x="56" y="80" width="12" height="4" fill="#152033"/>
+              <rect x="76" y="80" width="4" height="4" fill="#152033"/>
+              <rect x="88" y="80" width="8" height="4" fill="#152033"/>
+              <rect x="104" y="80" width="4" height="8" fill="#152033"/>
+              <rect x="116" y="80" width="8" height="4" fill="#152033"/>
+              <rect x="132" y="80" width="4" height="4" fill="#152033"/>
+              <rect x="148" y="80" width="8" height="4" fill="#152033"/>
+              <rect x="56" y="92" width="4" height="4" fill="#152033"/>
+              <rect x="68" y="92" width="4" height="8" fill="#152033"/>
+              <rect x="80" y="92" width="12" height="4" fill="#152033"/>
+              <rect x="100" y="92" width="4" height="4" fill="#152033"/>
+              <rect x="112" y="92" width="8" height="4" fill="#152033"/>
+              <rect x="128" y="92" width="4" height="8" fill="#152033"/>
+              <rect x="144" y="92" width="8" height="4" fill="#152033"/>
+              <rect x="56" y="104" width="8" height="4" fill="#152033"/>
+              <rect x="72" y="104" width="4" height="4" fill="#152033"/>
+              <rect x="84" y="104" width="8" height="4" fill="#152033"/>
+              <rect x="100" y="104" width="12" height="4" fill="#152033"/>
+              <rect x="120" y="104" width="4" height="4" fill="#152033"/>
+              <rect x="132" y="104" width="8" height="4" fill="#152033"/>
+              <rect x="148" y="104" width="4" height="4" fill="#152033"/>
+              <!-- 右下数据模拟 -->
+              <rect x="120" y="120" width="8" height="4" fill="#152033"/>
+              <rect x="136" y="120" width="4" height="8" fill="#152033"/>
+              <rect x="148" y="120" width="8" height="4" fill="#152033"/>
+              <rect x="120" y="132" width="4" height="4" fill="#152033"/>
+              <rect x="132" y="132" width="12" height="4" fill="#152033"/>
+              <rect x="148" y="132" width="4" height="8" fill="#152033"/>
+              <rect x="120" y="144" width="8" height="4" fill="#152033"/>
+              <rect x="136" y="144" width="4" height="4" fill="#152033"/>
+              <rect x="148" y="148" width="8" height="4" fill="#152033"/>
+              <!-- 微信 logo 中心 -->
+              <rect x="72" y="72" width="24" height="24" fill="white" rx="3"/>
+              <svg x="76" y="76" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#07C160" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+              </svg>
+            </svg>
+            <!-- 二维码刷新按钮（扫码过期时显示） -->
+            <div id="qr-expired" class="absolute inset-0 bg-surface-container/90 rounded-xl flex-col items-center justify-center hidden">
+              <i data-lucide="refresh-cw" class="w-8 h-8 text-on-surface-variant mb-2"></i>
+              <span class="text-sm text-on-surface-variant">二维码已过期</span>
+              <button id="btn-refresh-qr" class="mt-2 text-primary text-sm font-medium hover:underline">点击刷新</button>
+            </div>
+          </div>
+
+          <p class="text-sm font-medium text-on-surface mb-1">请使用微信扫描二维码登录</p>
+          <p class="text-xs text-on-surface-variant flex items-center gap-1">
+            <i data-lucide="smartphone" class="w-3 h-3"></i>
+            打开微信 → 扫一扫
+          </p>
+        </div>
+
+        <!-- 短信验证码面板 -->
+        <div id="panel-sms" class="flex-1 flex-col justify-center hidden">
+          <form id="sms-form" class="space-y-5" onsubmit="return false;">
+            <!-- 手机号输入 -->
+            <div>
+              <label class="block text-sm font-medium text-on-surface mb-1.5">手机号</label>
+              <div class="flex">
+                <div class="shrink-0 bg-surface-container border-none rounded-l-md px-3 py-2 text-sm text-on-surface-variant flex items-center gap-1 border-r-0 select-none">
+                  +86
+                </div>
+                <input id="input-phone" type="tel" maxlength="11" placeholder="请输入手机号" class="w-full bg-surface-container border-none rounded-r-md px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"/>
+              </div>
+            </div>
+
+            <!-- 验证码输入 -->
+            <div>
+              <label class="block text-sm font-medium text-on-surface mb-1.5">验证码</label>
+              <div class="flex gap-3">
+                <input id="input-code" type="text" maxlength="6" placeholder="请输入6位验证码" class="w-full bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"/>
+                <button id="btn-send-code" type="button" class="shrink-0 bg-surface-container text-primary border-none px-4 py-2 rounded-md text-sm font-medium hover:bg-surface-container-high active:scale-[0.98] transition-all whitespace-nowrap">
+                  发送验证码
+                </button>
+              </div>
+            </div>
+
+            <!-- 登录按钮 -->
+            <button id="btn-login" type="submit" class="w-full bg-primary text-on-primary border-none px-4 py-2.5 rounded-md text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all mt-2">
+              登录
+            </button>
+          </form>
+        </div>
+
+        <!-- 底部协议 -->
+        <div class="mt-auto pt-6 text-center">
+          <p class="text-xs text-on-surface-variant">
+            登录即同意
+            <a href="#" class="text-primary hover:underline" id="link-terms">《服务条款》</a>
+            和
+            <a href="#" class="text-primary hover:underline" id="link-privacy">《隐私政策》</a>
+          </p>
+        </div>
+
+      </div>
+    </div>
+  </main>
+  <!-- @main-content:end -->
+
+  <script>
+    $(function() {
+      // Tab 切换
+      $('#tab-wechat').on('click', function() {
+        $(this).addClass('bg-surface shadow-sm text-on-surface').removeClass('text-on-surface-variant').attr('aria-current', 'page');
+        $('#tab-sms').removeClass('bg-surface shadow-sm text-on-surface').addClass('text-on-surface-variant').removeAttr('aria-current');
+        $('#panel-wechat').removeClass('hidden').addClass('flex');
+        $('#panel-sms').addClass('hidden').removeClass('flex');
+      });
+
+      $('#tab-sms').on('click', function() {
+        $(this).addClass('bg-surface shadow-sm text-on-surface').removeClass('text-on-surface-variant').attr('aria-current', 'page');
+        $('#tab-wechat').removeClass('bg-surface shadow-sm text-on-surface').addClass('text-on-surface-variant').removeAttr('aria-current');
+        $('#panel-sms').removeClass('hidden').addClass('flex');
+        $('#panel-wechat').addClass('hidden').removeClass('flex');
+      });
+
+      // 发送验证码 - 点击后 60s 倒计时
+      var countdownTimer = null;
+      $('#btn-send-code').on('click', function() {
+        var $btn = $(this);
+        if ($btn.hasClass('opacity-50')) return; // 倒计时中不可点击
+
+        var phone = $('#input-phone').val().trim();
+        if (!phone) {
+          $('#input-phone').focus();
+          return;
+        }
+
+        console.log('发送验证码到手机:', phone);
+
+        // 开始倒计时
+        var seconds = 60;
+        $btn.addClass('opacity-50 cursor-not-allowed').text(seconds + 's 后重发');
+
+        countdownTimer = setInterval(function() {
+          seconds--;
+          if (seconds <= 0) {
+            clearInterval(countdownTimer);
+            $btn.removeClass('opacity-50 cursor-not-allowed').text('发送验证码');
+          } else {
+            $btn.text(seconds + 's 后重发');
+          }
+        }, 1000);
+      });
+
+      // 登录按钮 - demo 不判断账密，直接跳转
+      $('#btn-login').on('click', function() {
+        window.location.href = 'home.html';
+      });
+
+      // 微信扫码成功模拟 - 点击二维码区域模拟扫码成功跳转
+      $('#qr-code-svg').on('click', function() {
+        window.location.href = 'home.html';
+      });
+
+      // 刷新二维码
+      $('#btn-refresh-qr').on('click', function(e) {
+        e.stopPropagation();
+        $('#qr-expired').addClass('hidden').removeClass('flex');
+        console.log('二维码已刷新');
+      });
+
+      // 服务条款和隐私政策链接
+      $('#link-terms').on('click', function(e) {
+        e.preventDefault();
+        console.log('打开服务条款页面');
+      });
+
+      $('#link-privacy').on('click', function(e) {
+        e.preventDefault();
+        console.log('打开隐私政策页面');
+      });
+    });
+  </script>
+
+  <script>lucide.createIcons();</script>
+</body>
+
+</html>
