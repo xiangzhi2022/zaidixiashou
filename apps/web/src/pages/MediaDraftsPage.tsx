@@ -14,6 +14,7 @@ import {
   Ban,
   Send,
   Clock,
+  CheckCircle,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -62,6 +63,9 @@ const checks = [
 
 export function MediaDraftsPage() {
   const [selectedDraft, setSelectedDraft] = useState('draft-1');
+  const [toast, setToast] = useState<string | null>(null);
+
+  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 2500); };
 
   return (
     <>
@@ -71,10 +75,10 @@ export function MediaDraftsPage() {
           <p className="text-sm text-on-surface-variant mt-1">预览草稿内容，审核检查后发布到各平台</p>
         </div>
         <div className="flex items-center gap-3">
-          <button className="bg-surface-container text-on-surface px-4 py-2 rounded-md text-sm font-medium hover:bg-surface-container-high active:scale-[0.98] transition-all inline-flex items-center gap-2">
+          <button onClick={() => showToast('已批量审核通过')} className="bg-surface-container text-on-surface px-4 py-2 rounded-md text-sm font-medium hover:bg-surface-container-high active:scale-[0.98] transition-all inline-flex items-center gap-2">
             <CheckCheck className="w-3.5 h-3.5" />批量审核通过
           </button>
-          <button className="bg-primary text-on-primary px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all inline-flex items-center gap-2">
+          <button onClick={() => showToast('草稿列表已刷新')} className="bg-primary text-on-primary px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all inline-flex items-center gap-2">
             <RefreshCw className="w-3.5 h-3.5" />刷新
           </button>
         </div>
@@ -105,8 +109,8 @@ export function MediaDraftsPage() {
               </div>
               <div className="flex items-center gap-3 shrink-0">
                 <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${d.statusBg} ${d.statusColor}`}>{d.status}</span>
-                <button className="text-primary text-sm font-medium hover:underline inline-flex items-center gap-1"><Eye className="w-3.5 h-3.5" />预览</button>
-                <button className="text-on-surface-variant text-sm font-medium hover:text-on-surface hover:underline inline-flex items-center gap-1"><Wrench className="w-3.5 h-3.5" />补素材</button>
+                <button onClick={() => showToast('预览功能开发中')} className="text-primary text-sm font-medium hover:underline inline-flex items-center gap-1"><Eye className="w-3.5 h-3.5" />预览</button>
+                <button onClick={() => showToast('正在补全素材...')} className="text-on-surface-variant text-sm font-medium hover:text-on-surface hover:underline inline-flex items-center gap-1"><Wrench className="w-3.5 h-3.5" />补素材</button>
               </div>
             </div>
           ))}
@@ -123,7 +127,7 @@ export function MediaDraftsPage() {
             </h2>
             <div className="flex items-center gap-2">
               <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">小红书</span>
-              <button className="text-primary text-sm font-medium hover:underline inline-flex items-center gap-1"><Pencil className="w-3.5 h-3.5" />编辑</button>
+              <button onClick={() => showToast('编辑功能开发中')} className="text-primary text-sm font-medium hover:underline inline-flex items-center gap-1"><Pencil className="w-3.5 h-3.5" />编辑</button>
             </div>
           </div>
           <div className="mb-3">
@@ -147,7 +151,7 @@ export function MediaDraftsPage() {
             <h2 className="text-base font-semibold text-on-surface inline-flex items-center gap-2">
               <ClipboardCheck className="w-4 h-4 text-primary" />审核清单
             </h2>
-            <button className="text-primary text-sm font-medium hover:underline inline-flex items-center gap-1"><RefreshCw className="w-3.5 h-3.5" />重新检查</button>
+            <button onClick={() => showToast('重新检查完成')} className="text-primary text-sm font-medium hover:underline inline-flex items-center gap-1"><RefreshCw className="w-3.5 h-3.5" />重新检查</button>
           </div>
           <div className="space-y-3">
             {checks.map((c) => {
@@ -165,7 +169,7 @@ export function MediaDraftsPage() {
                     <p className="text-xs text-on-surface-variant mt-0.5">{c.desc}</p>
                   </div>
                   {c.pass ? <CheckCircle2 className="w-5 h-5 text-success shrink-0" /> : (
-                    <button className="text-warning text-xs font-medium hover:underline inline-flex items-center gap-1 shrink-0"><Wrench className="w-3 h-3" />修复</button>
+                    <button onClick={() => showToast('正在自动修复图片尺寸...')} className="text-warning text-xs font-medium hover:underline inline-flex items-center gap-1 shrink-0"><Wrench className="w-3 h-3" />修复</button>
                   )}
                 </div>
               );
@@ -186,16 +190,24 @@ export function MediaDraftsPage() {
               ))}
             </div>
             <div className="flex gap-3">
-              <button className="flex-1 bg-surface-container text-on-surface px-4 py-2.5 rounded-md text-sm font-medium hover:bg-surface-container-high active:scale-[0.98] transition-all inline-flex items-center justify-center gap-1.5">
+              <button onClick={() => showToast('已设置定时发布')} className="flex-1 bg-surface-container text-on-surface px-4 py-2.5 rounded-md text-sm font-medium hover:bg-surface-container-high active:scale-[0.98] transition-all inline-flex items-center justify-center gap-1.5">
                 <Clock className="w-3.5 h-3.5" />定时发布
               </button>
-              <button className="flex-1 bg-primary text-on-primary px-4 py-2.5 rounded-md text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all inline-flex items-center justify-center gap-1.5">
+              <button onClick={() => showToast('已提交发布')} className="flex-1 bg-primary text-on-primary px-4 py-2.5 rounded-md text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all inline-flex items-center justify-center gap-1.5">
                 <Send className="w-3.5 h-3.5" />立即发布
               </button>
             </div>
           </div>
         </div>
       </div>
+
+      {toast && (
+        <div className="fixed top-20 right-6 z-50">
+          <div className="bg-surface rounded-lg shadow-float px-4 py-3 flex items-center gap-2 text-sm font-medium text-on-surface border border-outline-variant/20">
+            <CheckCircle className="w-4 h-4 text-success" /><span>{toast}</span>
+          </div>
+        </div>
+      )}
     </>
   );
 }

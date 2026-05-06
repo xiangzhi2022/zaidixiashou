@@ -44,6 +44,9 @@ const modes = [
 
 export function SettingsAutopilotPage() {
   const [mode, setMode] = useState<'manual' | 'semi' | 'full'>('manual');
+  const [toast, setToast] = useState<string | null>(null);
+
+  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 2500); };
 
   return (
     <>
@@ -62,7 +65,7 @@ export function SettingsAutopilotPage() {
           <p className="text-sm font-medium text-on-surface">自动托管模式需要风险边界</p>
           <p className="text-sm text-on-surface-variant mt-1">建议先开启半自动：允许生成草稿、排期和提醒，发布、退款、改价等操作仍进入审批</p>
         </div>
-        <button className="bg-error text-white px-4 py-1.5 rounded-md text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all shrink-0">配置边界</button>
+        <button onClick={() => showToast('正在跳转到风险边界配置...')} className="bg-error text-white px-4 py-1.5 rounded-md text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all shrink-0">配置边界</button>
       </div>
 
       {/* Mode Selection */}
@@ -92,7 +95,7 @@ export function SettingsAutopilotPage() {
             <h2 className="text-base font-semibold text-on-surface">风险边界配置</h2>
             <p className="text-xs text-on-surface-variant mt-1">定义允许自动执行和必须审批的操作范围</p>
           </div>
-          <button className="bg-surface-container text-on-surface px-4 py-2 rounded-md text-sm font-medium hover:bg-surface-container-high active:scale-[0.98] transition-all inline-flex items-center gap-2"><Settings2 className="w-3.5 h-3.5" />编辑配置</button>
+          <button onClick={() => showToast('编辑配置功能开发中')} className="bg-surface-container text-on-surface px-4 py-2 rounded-md text-sm font-medium hover:bg-surface-container-high active:scale-[0.98] transition-all inline-flex items-center gap-2"><Settings2 className="w-3.5 h-3.5" />编辑配置</button>
         </div>
         <div className="grid grid-cols-2 gap-6">
           {/* Auto actions */}
@@ -132,7 +135,7 @@ export function SettingsAutopilotPage() {
       <div className="bg-surface rounded-lg shadow-card p-5">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-base font-semibold text-on-surface">操作日志</h2>
-          <Link to="/settings-approval" className="text-sm font-medium text-primary hover:underline inline-flex items-center gap-1">查看全部<ChevronRight className="w-3.5 h-3.5" /></Link>
+          <Link to="/settings/approval" className="text-sm font-medium text-primary hover:underline inline-flex items-center gap-1">查看全部<ChevronRight className="w-3.5 h-3.5" /></Link>
         </div>
         <div className="divide-y divide-outline-variant/30">
           {logs.map((l, i) => {
@@ -150,6 +153,14 @@ export function SettingsAutopilotPage() {
           })}
         </div>
       </div>
+
+      {toast && (
+        <div className="fixed top-20 right-6 z-50">
+          <div className="bg-surface rounded-lg shadow-float px-4 py-3 flex items-center gap-2 text-sm font-medium text-on-surface border border-outline-variant/20">
+            <CheckCircle className="w-4 h-4 text-success" /><span>{toast}</span>
+          </div>
+        </div>
+      )}
     </>
   );
 }

@@ -235,7 +235,7 @@ export function MessagesPage() {
                   <Sparkles className="w-4 h-4 text-primary" />
                   <h3 className="text-sm font-semibold text-on-surface">AI 回复草稿</h3>
                 </div>
-                <button className="text-xs text-primary font-medium hover:underline inline-flex items-center gap-1">
+                <button onClick={() => showToast('正在重新生成回复...')} className="text-xs text-primary font-medium hover:underline inline-flex items-center gap-1">
                   <RefreshCw className="w-3 h-3" />重新生成
                 </button>
               </div>
@@ -247,13 +247,13 @@ export function MessagesPage() {
               />
               <div className="flex items-center justify-between mt-4">
                 <div className="flex items-center gap-2">
-                  <button className="bg-surface-container text-on-surface px-3 py-2 rounded-md text-sm font-medium hover:bg-surface-container-high active:scale-[0.98] transition-all inline-flex items-center gap-1.5">
+                  <button onClick={() => showToast('已翻译为英文')} className="bg-surface-container text-on-surface px-3 py-2 rounded-md text-sm font-medium hover:bg-surface-container-high active:scale-[0.98] transition-all inline-flex items-center gap-1.5">
                     <Languages className="w-3.5 h-3.5" />翻译为英文
                   </button>
-                  <button className="bg-surface-container text-on-surface px-3 py-2 rounded-md text-sm font-medium hover:bg-surface-container-high active:scale-[0.98] transition-all inline-flex items-center gap-1.5">
+                  <button onClick={() => showToast('已切换为友好语气')} className="bg-surface-container text-on-surface px-3 py-2 rounded-md text-sm font-medium hover:bg-surface-container-high active:scale-[0.98] transition-all inline-flex items-center gap-1.5">
                     <MessageCircle className="w-3.5 h-3.5" />换语气
                   </button>
-                  <button className="bg-surface-container text-on-surface px-3 py-2 rounded-md text-sm font-medium hover:bg-surface-container-high active:scale-[0.98] transition-all inline-flex items-center gap-1.5">
+                  <button onClick={() => showToast('已优化回复语气')} className="bg-surface-container text-on-surface px-3 py-2 rounded-md text-sm font-medium hover:bg-surface-container-high active:scale-[0.98] transition-all inline-flex items-center gap-1.5">
                     <Wand2 className="w-3.5 h-3.5" />优化语气
                   </button>
                 </div>

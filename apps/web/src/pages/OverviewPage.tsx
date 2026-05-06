@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { apiClient } from '../api/client';
 import { useAuth } from '../contexts/AuthContext';
 import {
@@ -208,10 +209,10 @@ export function OverviewPage() {
           {quickActions.map(action => {
             const Icon = action.icon;
             return (
-              <a key={action.path} href={action.path} className="quick-card">
+              <Link key={action.path} to={action.path} className="quick-card">
                 <Icon size={20} />
                 <span>{action.label}</span>
-              </a>
+              </Link>
             );
           })}
         </div>

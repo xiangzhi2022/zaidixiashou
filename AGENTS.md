@@ -33,7 +33,7 @@
 | 图像视频生成 | MediaCreativePage.tsx | /media/creative | AI生成创意内容 |
 | 草稿审核 | MediaDraftsPage.tsx | /media/drafts | 草稿审核、合规检查 |
 | 自动化 | AutomationPage.tsx | /media/automation | 自动化工作流管理 |
-| 账号管理 | SettingsAccountsPage.tsx | /settings/accounts | 平台账号连接管理 |
+| 账号配置 | SettingsAccountsPage.tsx | /settings/accounts | 双Tab：电商平台(OAuth)+普通用户(MCP扫码) |
 | AI模型设置 | SettingsAIModelsPage.tsx | /settings/ai-models | AI模型配置与测试 |
 | 自动托管 | SettingsAutopilotPage.tsx | /settings/autopilot | 自动托管模式配置 |
 | 审批 | SettingsApprovalPage.tsx | /settings/approval | 审批流程配置 |

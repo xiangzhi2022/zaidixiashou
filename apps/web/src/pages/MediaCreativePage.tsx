@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Cpu, Image, Video, Sparkles, Save, Send, FileImage } from 'lucide-react';
+import { ArrowLeft, Cpu, Image, Video, Sparkles, Save, Send, FileImage, CheckCircle } from 'lucide-react';
 import { useState } from 'react';
 
 export function MediaCreativePage() {
@@ -8,6 +8,10 @@ export function MediaCreativePage() {
   const [videoTopic, setVideoTopic] = useState('旅行收纳神器推荐');
   const [imageDirection, setImageDirection] = useState('旅行收纳好物分享，实用技巧为主，清新风格');
   const [videoScript, setVideoScript] = useState('30秒短视频，节奏紧凑，开头有钩子，结尾引导互动');
+  const [toast, setToast] = useState<string | null>(null);
+  const [generating, setGenerating] = useState<'image' | 'video' | null>(null);
+
+  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 2500); };
 
   return (
     <>
@@ -16,7 +20,7 @@ export function MediaCreativePage() {
           <h1 className="text-2xl font-bold text-on-surface">图像视频生成</h1>
           <p className="text-sm text-on-surface-variant mt-1">AI 驱动的图文配图与视频脚本创作工具</p>
         </div>
-        <Link to="/media" className="text-sm text-primary font-medium hover:underline inline-flex items-center gap-1">
+        <Link to="/media/center" className="text-sm text-primary font-medium hover:underline inline-flex items-center gap-1">
           <ArrowLeft className="w-3.5 h-3.5" />返回运营中心
         </Link>
       </div>
@@ -63,8 +67,8 @@ export function MediaCreativePage() {
               <label className="block text-sm font-medium text-on-surface mb-1.5">生成方向</label>
               <textarea rows={3} value={imageDirection} onChange={(e) => setImageDirection(e.target.value)} className="w-full bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors resize-none" placeholder="描述你希望生成的内容方向、风格、重点..." />
             </div>
-            <button className="w-full bg-primary text-on-primary px-4 py-2.5 rounded-md text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all inline-flex items-center justify-center gap-2">
-              <Sparkles className="w-4 h-4" />生成图文配图
+            <button onClick={() => { setGenerating('image'); setTimeout(() => { setGenerating(null); showToast('图文配图已生成'); }, 1500); }} disabled={generating === 'image'} className="w-full bg-primary text-on-primary px-4 py-2.5 rounded-md text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all inline-flex items-center justify-center gap-2 disabled:opacity-60">
+              <Sparkles className="w-4 h-4" />{generating === 'image' ? '生成中...' : '生成图文配图'}
             </button>
           </div>
         </div>
@@ -90,8 +94,8 @@ export function MediaCreativePage() {
               <label className="block text-sm font-medium text-on-surface mb-1.5">脚本要求</label>
               <textarea rows={3} value={videoScript} onChange={(e) => setVideoScript(e.target.value)} className="w-full bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors resize-none" placeholder="描述视频脚本风格、时长、节奏要求..." />
             </div>
-            <button className="w-full bg-primary text-on-primary px-4 py-2.5 rounded-md text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all inline-flex items-center justify-center gap-2">
-              <Sparkles className="w-4 h-4" />生成脚本分镜
+            <button onClick={() => { setGenerating('video'); setTimeout(() => { setGenerating(null); showToast('脚本分镜已生成'); }, 1500); }} disabled={generating === 'video'} className="w-full bg-primary text-on-primary px-4 py-2.5 rounded-md text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all inline-flex items-center justify-center gap-2 disabled:opacity-60">
+              <Sparkles className="w-4 h-4" />{generating === 'video' ? '生成中...' : '生成脚本分镜'}
             </button>
           </div>
         </div>
@@ -140,10 +144,10 @@ export function MediaCreativePage() {
               </div>
             </div>
             <div className="flex gap-3 pt-2">
-              <button className="bg-surface-container text-on-surface px-4 py-2 rounded-md text-sm font-medium hover:bg-surface-container-high active:scale-[0.98] transition-all inline-flex items-center gap-1.5">
+              <button onClick={() => showToast('草稿已保存')} className="bg-surface-container text-on-surface px-4 py-2 rounded-md text-sm font-medium hover:bg-surface-container-high active:scale-[0.98] transition-all inline-flex items-center gap-1.5">
                 <Save className="w-3.5 h-3.5" />保存草稿
               </button>
-              <button className="bg-primary text-on-primary px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all inline-flex items-center gap-1.5">
+              <button onClick={() => showToast('已提交审核')} className="bg-primary text-on-primary px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all inline-flex items-center gap-1.5">
                 <Send className="w-3.5 h-3.5" />提交审核
               </button>
             </div>
@@ -181,16 +185,24 @@ export function MediaCreativePage() {
               </div>
             </div>
             <div className="flex gap-3 pt-2">
-              <button className="bg-surface-container text-on-surface px-4 py-2 rounded-md text-sm font-medium hover:bg-surface-container-high active:scale-[0.98] transition-all inline-flex items-center gap-1.5">
+              <button onClick={() => showToast('草稿已保存')} className="bg-surface-container text-on-surface px-4 py-2 rounded-md text-sm font-medium hover:bg-surface-container-high active:scale-[0.98] transition-all inline-flex items-center gap-1.5">
                 <Save className="w-3.5 h-3.5" />保存草稿
               </button>
-              <button className="bg-primary text-on-primary px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all inline-flex items-center gap-1.5">
+              <button onClick={() => showToast('已提交审核')} className="bg-primary text-on-primary px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all inline-flex items-center gap-1.5">
                 <Send className="w-3.5 h-3.5" />提交审核
               </button>
             </div>
           </div>
         </div>
       </div>
+
+      {toast && (
+        <div className="fixed top-20 right-6 z-50">
+          <div className="bg-surface rounded-lg shadow-float px-4 py-3 flex items-center gap-2 text-sm font-medium text-on-surface border border-outline-variant/20">
+            <CheckCircle className="w-4 h-4 text-success" /><span>{toast}</span>
+          </div>
+        </div>
+      )}
     </>
   );
 }

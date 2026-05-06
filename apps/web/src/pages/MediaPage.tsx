@@ -17,8 +17,6 @@ import {
   Camera,
   Music2,
   Search,
-  Grid3X3,
-  List,
   Upload,
   X,
   ChevronLeft,
@@ -27,11 +25,8 @@ import {
   Video,
   Trash2,
   Edit3,
-  Eye,
-  Clock,
   CheckCircle2,
   AlertCircle,
-  MoreHorizontal,
   Sparkles,
   Filter,
   Tag,
@@ -534,7 +529,9 @@ export function MediaPage() {
   }, [calMonth.year, calMonth.month]);
 
   useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect */
     loadAll();
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, [loadAll]);
 
   // Platform connect
@@ -835,7 +832,7 @@ export function MediaPage() {
           </div>
           <ContentCalendar
             calendarData={calendarData}
-            onScheduleClick={(schedule) => {
+            onScheduleClick={(_schedule) => {
               // Scroll to schedule in overview
               setActiveTab('overview');
             }}

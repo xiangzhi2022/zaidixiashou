@@ -1,24 +1,9 @@
 import { useEffect, useState, useCallback } from 'react';
 import { apiClient } from '../api/client';
 import {
-  CreditCard, CheckCircle, ArrowUpCircle, Receipt,
+  CreditCard, ArrowUpCircle, Receipt,
   Package, Zap, Monitor, UserPlus, Shield
 } from 'lucide-react';
-
-interface Plan {
-  id: string;
-  name: string;
-  displayName: string;
-  price: number;
-  currency: string;
-  interval: string;
-  features: {
-    aiQuota: number;
-    cdpConcurrent: number;
-    acquisitionTasks: number;
-    platformApis: number;
-  };
-}
 
 interface CurrentSubscription {
   id: string;
@@ -69,7 +54,7 @@ export function SettingsBillingPage() {
   const [subscription, setSubscription] = useState<CurrentSubscription | null>(null);
   const [quota, setQuota] = useState<QuotaInfo | null>(null);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
   const [upgrading, setUpgrading] = useState(false);
 
   const fetchData = useCallback(async () => {
@@ -90,6 +75,7 @@ export function SettingsBillingPage() {
     }
   }, []);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const currentPlan = subscription?.plan ?? 'FREE';

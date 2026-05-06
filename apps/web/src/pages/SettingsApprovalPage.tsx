@@ -1,4 +1,4 @@
-import { AlertTriangle, Check, X, CheckCheck } from 'lucide-react';
+import { AlertTriangle, Check, X, CheckCheck, CheckCircle } from 'lucide-react';
 import { useState } from 'react';
 
 type TabType = 'pending' | 'history';
@@ -17,6 +17,9 @@ const historyItems = [
 
 export function SettingsApprovalPage() {
   const [tab, setTab] = useState<TabType>('pending');
+  const [toast, setToast] = useState<string | null>(null);
+
+  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 2500); };
 
   return (
     <>
@@ -63,8 +66,8 @@ export function SettingsApprovalPage() {
                   <div className="col-span-2"><span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${item.riskBg} ${item.riskColor}`}><AlertTriangle className="w-3 h-3 mr-1" />{item.risk}</span></div>
                   <div className="col-span-2"><span className="text-sm text-on-surface-variant">{item.time}</span></div>
                   <div className="col-span-2 flex items-center justify-end gap-2">
-                    <button className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium bg-success/10 text-success hover:bg-success/20 active:scale-[0.98] transition-all"><Check className="w-3.5 h-3.5" />批准</button>
-                    <button className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium bg-error/10 text-error hover:bg-error/20 active:scale-[0.98] transition-all"><X className="w-3.5 h-3.5" />驳回</button>
+                    <button onClick={() => showToast(`已批准: ${item.name}`)} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium bg-success/10 text-success hover:bg-success/20 active:scale-[0.98] transition-all"><Check className="w-3.5 h-3.5" />批准</button>
+                    <button onClick={() => showToast(`已驳回: ${item.name}`)} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium bg-error/10 text-error hover:bg-error/20 active:scale-[0.98] transition-all"><X className="w-3.5 h-3.5" />驳回</button>
                   </div>
                 </div>
               ))}
@@ -75,7 +78,7 @@ export function SettingsApprovalPage() {
               <input type="checkbox" className="w-4 h-4 rounded accent-primary cursor-pointer" />
               <span className="text-sm text-on-surface-variant">全选</span>
             </div>
-            <button className="inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium bg-success/10 text-success hover:bg-success/20 active:scale-[0.98] transition-all">
+            <button onClick={() => showToast('已批量批准所有待审批项')} className="inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium bg-success/10 text-success hover:bg-success/20 active:scale-[0.98] transition-all">
               <CheckCheck className="w-4 h-4" />批量批准
             </button>
           </div>
@@ -107,6 +110,13 @@ export function SettingsApprovalPage() {
               </div>
             ))}
           </div>
+        </div>
+      )}
+      {/* Toast */}
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 rounded-lg bg-on-surface text-on-primary shadow-lg animate-[fadeInUp_0.3s_ease]">
+          <CheckCircle className="w-4 h-4" />
+          <span className="text-sm font-medium">{toast}</span>
         </div>
       )}
     </>

@@ -19,7 +19,6 @@ function LoginPage() {
   const [isRegister, setIsRegister] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [_qrCodeScene, setQrCodeScene] = useState('');
   const [qrStatus, setQrStatus] = useState<'waiting' | 'scanned' | 'confirmed' | 'expired'>('waiting');
   
   const { login } = useAuth();
@@ -161,8 +160,6 @@ function LoginPage() {
         body: JSON.stringify({ type: qrType }),
       });
       
-      setQrCodeScene(result.scene);
-      
       // 轮询二维码状态
       const pollInterval = setInterval(async () => {
         try {
@@ -194,8 +191,11 @@ function LoginPage() {
   // 切换二维码类型时重新生成
   useEffect(() => {
     if (tab === 'qrcode') {
+      /* eslint-disable react-hooks/set-state-in-effect */
       generateQRCode();
+      /* eslint-enable react-hooks/set-state-in-effect */
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [qrType, tab]);
 
   // 开发模式快速登录

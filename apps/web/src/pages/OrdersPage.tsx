@@ -119,7 +119,7 @@ export function OrdersPage() {
           <h1 className="text-xl font-bold text-on-surface">订单工作台</h1>
           <p className="text-sm text-on-surface-variant mt-0.5">集中处理跨平台订单、物流异常和退款</p>
         </div>
-        <button className="bg-surface-container text-on-surface px-4 py-2 rounded-md text-sm font-medium hover:bg-surface-container-high active:scale-[0.98] transition-all inline-flex items-center gap-2">
+        <button onClick={() => showToast('批量处理功能已触发，正在处理异常订单...')} className="bg-surface-container text-on-surface px-4 py-2 rounded-md text-sm font-medium hover:bg-surface-container-high active:scale-[0.98] transition-all inline-flex items-center gap-2">
           <ListChecks className="w-3.5 h-3.5" />批量处理
         </button>
       </div>

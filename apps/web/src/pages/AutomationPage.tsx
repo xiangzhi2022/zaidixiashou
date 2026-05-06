@@ -107,9 +107,9 @@ export function AutomationPage() {
                     />
                     <div className="w-9 h-5 bg-surface-container-high rounded-full peer peer-checked:bg-primary transition-colors after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-4" />
                   </label>
-                  <button className="p-1.5 rounded-md hover:bg-surface-container transition-colors text-on-surface-variant hover:text-on-surface" title="执行日志"><ScrollText className="w-4 h-4" /></button>
-                  <button className="p-1.5 rounded-md hover:bg-surface-container transition-colors text-on-surface-variant hover:text-on-surface" title="编辑"><Pencil className="w-4 h-4" /></button>
-                  <button className="p-1.5 rounded-md hover:bg-surface-container transition-colors text-on-surface-variant hover:text-error" title="删除"><Trash2 className="w-4 h-4" /></button>
+                  <button onClick={() => showToast('执行日志功能开发中')} className="p-1.5 rounded-md hover:bg-surface-container transition-colors text-on-surface-variant hover:text-on-surface" title="执行日志"><ScrollText className="w-4 h-4" /></button>
+                  <button onClick={() => showToast('编辑功能开发中')} className="p-1.5 rounded-md hover:bg-surface-container transition-colors text-on-surface-variant hover:text-on-surface" title="编辑"><Pencil className="w-4 h-4" /></button>
+                  <button onClick={() => showToast('确认删除？请在实际版本中添加确认弹窗')} className="p-1.5 rounded-md hover:bg-surface-container transition-colors text-on-surface-variant hover:text-error" title="删除"><Trash2 className="w-4 h-4" /></button>
                 </div>
               </div>
             );

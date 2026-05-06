@@ -50,7 +50,7 @@ export function ProductsPage() {
           <h1 className="text-2xl font-bold text-on-surface">商品</h1>
           <p className="text-sm text-on-surface-variant mt-1">管理 Listing、库存和跨平台同步</p>
         </div>
-        <button className="bg-primary text-on-primary px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all inline-flex items-center gap-2">
+        <button onClick={() => showToast('添加商品功能开发中')} className="bg-primary text-on-primary px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all inline-flex items-center gap-2">
           <Plus className="w-3.5 h-3.5" />添加商品
         </button>
       </div>

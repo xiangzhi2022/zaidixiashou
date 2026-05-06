@@ -1,8 +1,8 @@
 import { useEffect, useState, useCallback } from 'react';
 import { apiClient } from '../api/client';
 import {
-  UserPlus, Plus, Play, Pause, Trash2, Send,
-  Search, Filter, TrendingUp, Users, Target, Mail
+  UserPlus, Plus, Play, Trash2, Send,
+  Search, TrendingUp, Users, Target, Mail
 } from 'lucide-react';
 
 type TabKey = 'tasks' | 'prospects' | 'campaigns';
@@ -112,6 +112,7 @@ export function AcquisitionPage() {
     }
   }, [tab]);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const handleCreateTask = async () => {
