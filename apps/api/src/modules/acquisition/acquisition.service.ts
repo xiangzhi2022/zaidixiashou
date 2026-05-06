@@ -1,7 +1,7 @@
 import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service.js';
 import { CreateAcquisitionTaskDto, UpdateAcquisitionTaskDto, CreateCampaignDto, UpdateCampaignDto } from './dto/acquisition.dto.js';
-import { AcquisitionTaskStatus, LeadStatus } from '@prisma/client';
+import { AcquisitionTaskStatus, LeadStatus, Platform } from '@prisma/client';
 
 @Injectable()
 export class AcquisitionService {
@@ -16,19 +16,17 @@ export class AcquisitionService {
       data: {
         teamId,
         name: dto.name,
-        platform: dto.platform,
-        type: dto.type,
-        keywords: dto.keywords,
-        url: dto.url,
-        maxResults: dto.maxResults || 100,
-        status: AcquisitionTaskStatus.PENDING,
-        foundCount: 0,
+        platform: dto.platform as Platform,
+        taskType: dto.type,
+        keywords: dto.keywords ? dto.keywords.split(',').map(k => k.trim()) : [],
+        maxResults: dto.maxResults ?? 100,
+        resultCount: 0,
       },
     });
   }
 
   async getTasks(teamId: string, status?: AcquisitionTaskStatus) {
-    const where: Record<string, unknown> = { teamId, deletedAt: null };
+    const where: Record<string, unknown> = { teamId };
     if (status) where.status = status;
     return this.prisma.acquisitionTask.findMany({
       where,
@@ -51,16 +49,15 @@ export class AcquisitionService {
     const task = await this.prisma.acquisitionTask.findFirst({ where: { id: taskId, teamId } });
     if (!task) throw new NotFoundException('任务不存在');
 
-    return this.prisma.acquisitionTask.update({
+    return this.prisma.acquisitionTask.delete({
       where: { id: taskId },
-      data: { deletedAt: new Date() },
     });
   }
 
   // ===== Prospects / Leads =====
 
   async getProspects(teamId: string, filters: { platform?: string; status?: LeadStatus; minScore?: number }) {
-    const where: Record<string, unknown> = { teamId, deletedAt: null };
+    const where: Record<string, unknown> = { teamId };
     if (filters.platform) where.platform = filters.platform;
     if (filters.status) where.status = filters.status;
     if (filters.minScore) where.intentScore = { gte: filters.minScore };
@@ -84,12 +81,12 @@ export class AcquisitionService {
 
   // ===== Outreach Campaigns =====
 
-  async createCampaign(teamId: string, userId: string, dto: CreateCampaignDto) {
+  async createCampaign(teamId: string, _userId: string, dto: CreateCampaignDto) {
     return this.prisma.outreachCampaign.create({
       data: {
         teamId,
         name: dto.name,
-        platform: dto.platform as any,
+        platform: dto.platform as Platform,
         messageTemplate: dto.messageTemplate,
         leadIds: [],
         status: AcquisitionTaskStatus.PENDING,
@@ -128,15 +125,16 @@ export class AcquisitionService {
       throw new BadRequestException('只有待处理状态的活动才能提交审批');
     }
 
-    const approval = await this.prisma.approval.create({
+    const approval = await this.prisma.approvalRequest.create({
       data: {
         teamId,
-        requestedById: userId,
         actionType: 'OUTREACH',
-        actionTitle: `发送触达活动: ${campaign.name}`,
-        actionDetail: `平台: ${campaign.platform}, 预计发送: ${campaign.sentCount}条`,
+        targetId: campaignId,
         riskLevel: (campaign.sentCount as number) > 100 ? 'HIGH' : 'MEDIUM',
         status: 'PENDING',
+        createdBy: userId,
+        reason: `发送触达活动: ${campaign.name}, 平台: ${campaign.platform}`,
+        payloadSnapshot: { campaignId, platform: campaign.platform, sentCount: campaign.sentCount },
       },
     });
 
@@ -152,9 +150,9 @@ export class AcquisitionService {
 
   async getStats(teamId: string) {
     const [totalProspects, contactedProspects, activeTasks, activeCampaigns] = await Promise.all([
-      this.prisma.lead.count({ where: { teamId, deletedAt: null } }),
-      this.prisma.lead.count({ where: { teamId, status: LeadStatus.CONTACTED, deletedAt: null } }),
-      this.prisma.acquisitionTask.count({ where: { teamId, status: AcquisitionTaskStatus.RUNNING, deletedAt: null } }),
+      this.prisma.lead.count({ where: { teamId } }),
+      this.prisma.lead.count({ where: { teamId, status: LeadStatus.CONTACTED } }),
+      this.prisma.acquisitionTask.count({ where: { teamId, status: AcquisitionTaskStatus.RUNNING } }),
       this.prisma.outreachCampaign.count({ where: { teamId, status: AcquisitionTaskStatus.RUNNING } }),
     ]);
 

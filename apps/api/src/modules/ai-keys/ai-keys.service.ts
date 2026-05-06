@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { PrismaService } from '../../infrastructure/prisma/prisma.service.js';
 import { CreateAiKeyDto, UpdateAiKeyDto, UpdateAiConfigDto, AiProvider } from './dto/ai-keys.dto.js';
 import { AiKeyStatus, Prisma } from '@prisma/client';
+import * as crypto from 'crypto';
 
 const PROVIDER_DEFAULTS: Record<string, { endpoint: string; defaultModel: string; advancedModel: string }> = {
   OPENAI: { endpoint: 'https://api.openai.com/v1', defaultModel: 'gpt-4o-mini', advancedModel: 'gpt-4o' },
@@ -9,27 +10,43 @@ const PROVIDER_DEFAULTS: Record<string, { endpoint: string; defaultModel: string
   CUSTOM: { endpoint: '', defaultModel: '', advancedModel: '' },
 };
 
+function encryptValue(plain: string): { encrypted: string; iv: string; authTag: string } {
+  const key = Buffer.from(process.env.CREDENTIAL_ENCRYPTION_KEY || '0'.repeat(64), 'hex').subarray(0, 32);
+  const iv = crypto.randomBytes(12);
+  const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
+  const encrypted = Buffer.concat([cipher.update(plain, 'utf8'), cipher.final()]);
+  const authTag = cipher.getAuthTag();
+  return {
+    encrypted: encrypted.toString('base64'),
+    iv: iv.toString('base64'),
+    authTag: authTag.toString('base64'),
+  };
+}
+
 @Injectable()
 export class AiKeysService {
   constructor(private readonly prisma: PrismaService) {}
 
   async listKeys(userId: string) {
     return this.prisma.aiKey.findMany({
-      where: { userId, status: { not: AiKeyStatus.DELETED } },
+      where: { userId, status: { not: AiKeyStatus.DISABLED } },
       orderBy: { createdAt: 'desc' },
     });
   }
 
   async createKey(userId: string, dto: CreateAiKeyDto) {
-    const defaults = PROVIDER_DEFAULTS[dto.provider] ?? PROVIDER_DEFAULTS.CUSTOM;
+    const defaults = PROVIDER_DEFAULTS[dto.provider] ?? PROVIDER_DEFAULTS['CUSTOM']!;
+    const encrypted = encryptValue(dto.apiKey);
     return this.prisma.aiKey.create({
       data: {
         userId,
-        provider: dto.provider,
-        endpoint: dto.endpoint || defaults.endpoint,
-        encryptedKey: dto.apiKey, // TODO: encrypt
-        defaultModel: dto.defaultModel || defaults.defaultModel,
-        advancedModel: dto.advancedModel || defaults.advancedModel,
+        provider: dto.provider as string as any,
+        endpoint: dto.endpoint || defaults!.endpoint,
+        encryptedKey: encrypted.encrypted,
+        iv: encrypted.iv,
+        authTag: encrypted.authTag,
+        defaultModel: dto.defaultModel || defaults!.defaultModel,
+        advancedModel: dto.advancedModel || defaults!.advancedModel,
         label: dto.label || `${dto.provider} Key`,
         status: AiKeyStatus.TESTING,
       },
@@ -42,7 +59,12 @@ export class AiKeysService {
 
     const data: Prisma.AiKeyUpdateInput = {};
     if (dto.endpoint !== undefined) data.endpoint = dto.endpoint;
-    if (dto.apiKey !== undefined) data.encryptedKey = dto.apiKey; // TODO: encrypt
+    if (dto.apiKey !== undefined) {
+      const encrypted = encryptValue(dto.apiKey);
+      data.encryptedKey = encrypted.encrypted;
+      data.iv = encrypted.iv;
+      data.authTag = encrypted.authTag;
+    }
     if (dto.defaultModel !== undefined) data.defaultModel = dto.defaultModel;
     if (dto.advancedModel !== undefined) data.advancedModel = dto.advancedModel;
     if (dto.label !== undefined) data.label = dto.label;
@@ -56,7 +78,7 @@ export class AiKeysService {
 
     return this.prisma.aiKey.update({
       where: { id: keyId },
-      data: { status: AiKeyStatus.DELETED },
+      data: { status: AiKeyStatus.DISABLED },
     });
   }
 
@@ -66,14 +88,13 @@ export class AiKeysService {
 
     // Update config to reference this key
     await this.prisma.aiConfig.upsert({
-      where: { id: `config-${userId}` },
+      where: { userId },
       update: { defaultKeyRef: keyId },
       create: {
-        id: `config-${userId}`,
         userId,
         defaultKeyRef: keyId,
         defaultModel: key.defaultModel,
-        advancedModel: key.advancedModel,
+        advancedModel: key.advancedModel ?? 'gpt-4o',
         embeddingModel: 'text-embedding-3-small',
         apiMode: 'CUSTOM_KEY',
         maxConcurrency: 5,
@@ -94,25 +115,24 @@ export class AiKeysService {
 
       await this.prisma.aiKey.update({
         where: { id: keyId },
-        data: { status: AiKeyStatus.ACTIVE },
+        data: { status: AiKeyStatus.ACTIVE, lastTestedAt: new Date(), lastTestResult: 'success' },
       });
 
       return { success: true, message: '连接成功', model: key.defaultModel, latency: '320ms' };
     } catch {
       await this.prisma.aiKey.update({
         where: { id: keyId },
-        data: { status: AiKeyStatus.FAILED },
+        data: { status: AiKeyStatus.FAILED, lastTestResult: 'failed' },
       });
       return { success: false, message: '连接失败，请检查 API Key 和端点' };
     }
   }
 
   async getConfig(userId: string) {
-    let config = await this.prisma.aiConfig.findUnique({ where: { id: `config-${userId}` } });
+    let config = await this.prisma.aiConfig.findUnique({ where: { userId } });
     if (!config) {
       config = await this.prisma.aiConfig.create({
         data: {
-          id: `config-${userId}`,
           userId,
           apiMode: 'PLATFORM',
           defaultModel: 'gpt-4o-mini',
@@ -137,10 +157,9 @@ export class AiKeysService {
     if (dto.timeoutMs !== undefined) data.timeoutMs = dto.timeoutMs;
 
     return this.prisma.aiConfig.upsert({
-      where: { id: `config-${userId}` },
+      where: { userId },
       update: data,
       create: {
-        id: `config-${userId}`,
         userId,
         apiMode: dto.apiMode ?? 'PLATFORM',
         defaultModel: dto.defaultModel ?? 'gpt-4o-mini',

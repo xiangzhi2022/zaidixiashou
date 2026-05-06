@@ -1,6 +1,6 @@
 import { Injectable, Logger, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service.js';
-import { ConnectBrowserDto, NavigateDto, ExecuteScriptDto, ScreenshotDto } from './dto/cdp.dto';
+import { ConnectBrowserDto, NavigateDto, ExecuteScriptDto, ScreenshotDto } from './dto/cdp.dto.js';
 import { CdpSessionStatus } from '@prisma/client';
 
 /** Platform login detection selectors */

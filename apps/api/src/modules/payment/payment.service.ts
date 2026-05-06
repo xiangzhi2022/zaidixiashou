@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { PrismaService } from '../../infrastructure/prisma/prisma.service.js';
 import { CreatePaymentDto } from './dto/payment.dto.js';
 import { PaymentMethod, PaymentStatus, SubscriptionPlan } from '@prisma/client';
+import * as crypto from 'crypto';
 
 const PLAN_PRICES: Record<string, number> = {
   BASIC: 9900,       // ¥99
@@ -17,23 +18,47 @@ export class PaymentService {
     const amount = PLAN_PRICES[dto.plan];
     if (!amount) throw new BadRequestException('Invalid plan');
 
+    const outTradeNo = `PAY${Date.now()}${crypto.randomBytes(4).toString('hex')}`;
+
+    // Find or create active subscription for the user
+    let subscription = await this.prisma.subscription.findFirst({
+      where: { userId, status: 'ACTIVE' },
+    });
+
+    if (!subscription) {
+      subscription = await this.prisma.subscription.create({
+        data: {
+          userId,
+          plan: SubscriptionPlan.FREE,
+          status: 'ACTIVE',
+          startedAt: new Date(),
+          expiresAt: new Date('2099-12-31'),
+          aiQuotaDaily: 50,
+          aiQuotaUsed: 0,
+          cdpConcurrency: 1,
+          acquisitionLimit: 10,
+        },
+      });
+    }
+
     const payment = await this.prisma.payment.create({
       data: {
+        subscriptionId: subscription.id,
         userId,
         amount,
-        method: dto.method as PaymentMethod,
+        method: dto.paymentMethod,
         status: PaymentStatus.PENDING,
-        metadata: { plan: dto.plan },
+        outTradeNo,
       },
     });
 
     // In production: generate real payment QR code via WeChat/Alipay SDK
-    const qrCodeUrl = this.generateMockQrCode(payment.id, dto.method);
+    const qrCodeUrl = this.generateMockQrCode(payment.id, dto.paymentMethod);
 
     return {
       paymentId: payment.id,
       amount,
-      method: dto.method,
+      method: dto.paymentMethod,
       qrCodeUrl,
       expiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
     };
@@ -56,22 +81,18 @@ export class PaymentService {
     // Update payment status
     await this.prisma.payment.update({
       where: { id: paymentId },
-      data: { status: PaymentStatus.COMPLETED, paidAt: new Date(), tradeNo: data.tradeNo },
+      data: { status: PaymentStatus.COMPLETED, paidAt: new Date(), transactionId: data.tradeNo },
     });
 
-    // Activate subscription
-    const metadata = payment.metadata as { plan: string } | null;
-    if (metadata?.plan) {
-      await this.prisma.subscription.create({
-        data: {
-          userId: payment.userId,
-          plan: metadata.plan as SubscriptionPlan,
-          status: 'ACTIVE',
-          currentPeriodStart: new Date(),
-          currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-        },
-      });
-    }
+    // Activate subscription - upgrade the plan
+    await this.prisma.subscription.update({
+      where: { id: payment.subscriptionId },
+      data: {
+        plan: SubscriptionPlan.BASIC,
+        startedAt: new Date(),
+        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      },
+    });
 
     return { status: PaymentStatus.COMPLETED };
   }

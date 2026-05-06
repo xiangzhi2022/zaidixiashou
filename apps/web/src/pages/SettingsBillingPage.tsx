@@ -1,125 +1,254 @@
-import { Gift, ArrowUpCircle, Sparkles, Monitor, Target, Code } from 'lucide-react';
+import { useEffect, useState, useCallback } from 'react';
+import { apiClient } from '../api/client';
+import {
+  CreditCard, CheckCircle, ArrowUpCircle, Receipt,
+  Package, Zap, Monitor, UserPlus, Shield
+} from 'lucide-react';
 
-const plans = [
-  {
-    id: 'free',
-    name: '免费版',
-    price: '¥0',
-    current: true,
-    badge: '当前套餐',
-    badgeBg: 'bg-primary/15',
-    badgeColor: 'text-primary',
-    features: [
-      { icon: Sparkles, label: 'AI 额度', value: '自带 Key 限额 50次/天' },
-      { icon: Monitor, label: 'CDP 并发', value: '1 连接' },
-      { icon: Target, label: '获客任务', value: '1 任务/月' },
-      { icon: Code, label: '平台 API', value: '不包含' },
-    ],
-  },
-  {
-    id: 'basic',
-    name: '基础版',
-    price: '¥99',
-    current: false,
-    badge: null,
-    features: [
-      { icon: Sparkles, label: 'AI 额度', value: '平台 API 500次/天' },
-      { icon: Monitor, label: 'CDP 并发', value: '2 连接' },
-      { icon: Target, label: '获客任务', value: '10 任务/月' },
-      { icon: Code, label: '平台 API', value: '包含' },
-    ],
-  },
-  {
-    id: 'pro',
-    name: '专业版',
-    price: '¥299',
-    current: false,
-    badge: '推荐',
-    badgeBg: 'bg-primary',
-    badgeColor: 'text-on-primary',
-    features: [
-      { icon: Sparkles, label: 'AI 额度', value: '平台 API 2,000次/天' },
-      { icon: Monitor, label: 'CDP 并发', value: '5 连接' },
-      { icon: Target, label: '获客任务', value: '不限' },
-      { icon: Code, label: '平台 API', value: '包含' },
-    ],
-  },
-  {
-    id: 'enterprise',
-    name: '企业版',
-    price: '¥799',
-    current: false,
-    badge: null,
-    features: [
-      { icon: Sparkles, label: 'AI 额度', value: '平台 API 不限' },
-      { icon: Monitor, label: 'CDP 并发', value: '不限' },
-      { icon: Target, label: '获客任务', value: '不限' },
-      { icon: Code, label: '平台 API', value: '包含 + 优先' },
-    ],
-  },
-];
+interface Plan {
+  id: string;
+  name: string;
+  displayName: string;
+  price: number;
+  currency: string;
+  interval: string;
+  features: {
+    aiQuota: number;
+    cdpConcurrent: number;
+    acquisitionTasks: number;
+    platformApis: number;
+  };
+}
+
+interface CurrentSubscription {
+  id: string;
+  plan: string;
+  status: string;
+  currentPeriodStart: string;
+  currentPeriodEnd: string;
+  cancelAtPeriodEnd: boolean;
+}
+
+interface QuotaInfo {
+  aiUsed: number;
+  aiQuota: number;
+  aiRemaining: number;
+}
+
+interface Invoice {
+  id: string;
+  amount: number;
+  currency: string;
+  status: string;
+  paidAt: string;
+  createdAt: string;
+}
+
+const PLAN_FEATURES: Record<string, { aiQuota: number; cdpConcurrent: number; acquisitionTasks: number; platformApis: number; price: number }> = {
+  FREE: { aiQuota: 100, cdpConcurrent: 1, acquisitionTasks: 5, platformApis: 2, price: 0 },
+  STARTER: { aiQuota: 2000, cdpConcurrent: 2, acquisitionTasks: 50, platformApis: 5, price: 99 },
+  PROFESSIONAL: { aiQuota: 10000, cdpConcurrent: 5, acquisitionTasks: 200, platformApis: 20, price: 299 },
+  ENTERPRISE: { aiQuota: -1, cdpConcurrent: -1, acquisitionTasks: -1, platformApis: -1, price: 999 },
+};
+
+const PLAN_LABELS: Record<string, string> = {
+  FREE: '免费版',
+  STARTER: '入门版',
+  PROFESSIONAL: '专业版',
+  ENTERPRISE: '企业版',
+};
+
+const PLAN_COLORS: Record<string, string> = {
+  FREE: '#6B7280',
+  STARTER: '#2F6BFF',
+  PROFESSIONAL: '#8B5CF6',
+  ENTERPRISE: '#F59E0B',
+};
 
 export function SettingsBillingPage() {
+  const [subscription, setSubscription] = useState<CurrentSubscription | null>(null);
+  const [quota, setQuota] = useState<QuotaInfo | null>(null);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [upgrading, setUpgrading] = useState(false);
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [subRes, quotaRes, invRes] = await Promise.allSettled([
+        apiClient.get('/subscriptions/current'),
+        apiClient.get('/subscriptions/quota'),
+        apiClient.get('/payments/history'),
+      ]);
+      if (subRes.status === 'fulfilled') setSubscription(subRes.value.data?.data ?? subRes.value.data);
+      if (quotaRes.status === 'fulfilled') setQuota(quotaRes.value.data?.data ?? quotaRes.value.data);
+      if (invRes.status === 'fulfilled') setInvoices(invRes.value.data?.data ?? invRes.value.data ?? []);
+    } catch {
+      // handle error
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
+
+  const currentPlan = subscription?.plan ?? 'FREE';
+  const planFeature = PLAN_FEATURES[currentPlan] ?? PLAN_FEATURES.FREE!;
+  const aiUsagePercent = quota ? (quota.aiQuota === -1 ? 0 : Math.round((quota.aiUsed / quota.aiQuota) * 100)) : 0;
+
+  const handleUpgrade = async (plan: string) => {
+    setUpgrading(true);
+    try {
+      await apiClient.post('/subscriptions/upgrade', { plan });
+      fetchData();
+    } catch { /* handle error */ }
+    finally {
+      setUpgrading(false);
+    }
+  };
+
+  const planOrder = ['FREE', 'STARTER', 'PROFESSIONAL', 'ENTERPRISE'];
+
   return (
-    <>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-on-surface">订阅与账单</h1>
-        <p className="text-sm text-on-surface-variant mt-1">管理您的 SaaS 订阅套餐、查看账单和支付记录</p>
-      </div>
+    <div className="page-container">
+      <h1 className="page-title"><CreditCard size={22} /> 订阅与账单</h1>
+      <p className="page-desc">管理订阅套餐、查看配额用量和账单记录</p>
 
       {/* Current Plan */}
-      <div className="bg-surface rounded-lg shadow-card p-5 mb-8 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-primary-container rounded-xl flex items-center justify-center"><Gift className="w-6 h-6 text-primary" /></div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-surface-container-high text-on-surface-variant">免费版</span>
-              <span className="text-lg font-semibold text-on-surface">免费版</span>
+      <div className="settings-card billing-current">
+        <div className="card-header">
+          <h2><Package size={18} /> 当前套餐</h2>
+          <span className="plan-badge-large" style={{ background: PLAN_COLORS[currentPlan] }}>
+            {PLAN_LABELS[currentPlan]}
+          </span>
+        </div>
+        <div className="billing-usage">
+          <div className="usage-item">
+            <div className="usage-header">
+              <Zap size={14} />
+              <span>AI 调用额度</span>
+              <span className="usage-num">
+                {quota ? (quota.aiQuota === -1 ? '无限' : `${quota.aiUsed} / ${quota.aiQuota}`) : '-'}
+              </span>
             </div>
-            <p className="text-sm text-on-surface-variant mt-0.5">永久免费 · 到期时间：无限期</p>
+            <div className="usage-bar">
+              <div className="usage-fill" style={{ width: `${Math.min(aiUsagePercent, 100)}%` }} />
+            </div>
+          </div>
+          <div className="usage-row">
+            <div className="usage-stat">
+              <Monitor size={14} />
+              <span>CDP 并发</span>
+              <strong>{planFeature.cdpConcurrent === -1 ? '无限' : planFeature.cdpConcurrent}</strong>
+            </div>
+            <div className="usage-stat">
+              <UserPlus size={14} />
+              <span>获客任务</span>
+              <strong>{planFeature.acquisitionTasks === -1 ? '无限' : planFeature.acquisitionTasks}</strong>
+            </div>
+            <div className="usage-stat">
+              <Shield size={14} />
+              <span>平台 API</span>
+              <strong>{planFeature.platformApis === -1 ? '无限' : planFeature.platformApis}</strong>
+            </div>
           </div>
         </div>
-        <button className="bg-primary text-on-primary px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all inline-flex items-center gap-2">
-          <ArrowUpCircle className="w-3.5 h-3.5" />升级套餐
-        </button>
+        {subscription && (
+          <div className="billing-period">
+            <span>当前周期：{new Date(subscription.currentPeriodStart).toLocaleDateString()} ~ {new Date(subscription.currentPeriodEnd).toLocaleDateString()}</span>
+            {subscription.cancelAtPeriodEnd && <span className="cancel-notice">到期后将取消</span>}
+          </div>
+        )}
       </div>
 
       {/* Plan Comparison */}
-      <div className="mb-10">
-        <h2 className="text-base font-semibold text-on-surface mb-4">套餐对比</h2>
-        <div className="grid grid-cols-4 gap-4">
-          {plans.map((plan) => (
-            <div key={plan.id} className={`bg-surface rounded-lg shadow-card p-5 border-2 relative flex flex-col ${plan.current ? 'border-primary' : 'border-transparent hover:border-outline/20 transition-colors'}`}>
-              <div className="mb-4 h-5">
-                {plan.badge && <span className={`inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium ${plan.badgeBg || ''} ${plan.badgeColor || ''}`}>{plan.badge}</span>}
-              </div>
-              <h3 className="text-base font-semibold text-on-surface mb-1">{plan.name}</h3>
-              <div className="flex items-baseline gap-1 mb-4">
-                <span className="text-2xl font-bold text-on-surface">{plan.price}</span>
-                <span className="text-xs text-on-surface-variant">/月</span>
-              </div>
-              <div className="space-y-3 flex-1">
-                {plan.features.map((f) => {
-                  const Icon = f.icon;
-                  return (
-                    <div key={f.label} className="flex items-start gap-2">
-                      <Icon className="w-4 h-4 text-on-surface-variant mt-0.5 shrink-0" />
-                      <div><p className="text-sm text-on-surface font-medium">{f.label}</p><p className="text-xs text-on-surface-variant">{f.value}</p></div>
-                    </div>
-                  );
-                })}
-              </div>
-              <div className="mt-5">
-                {plan.current ? (
-                  <button className="w-full bg-surface-container text-on-surface-variant px-4 py-2 rounded-md text-sm font-medium cursor-default" disabled>当前套餐</button>
-                ) : (
-                  <button className="w-full bg-primary text-on-primary px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all">升级</button>
+      <div className="settings-card">
+        <div className="card-header">
+          <h2><ArrowUpCircle size={18} /> 套餐对比</h2>
+        </div>
+        <div className="plan-grid">
+          {planOrder.map(plan => {
+            const feat = PLAN_FEATURES[plan] ?? PLAN_FEATURES.FREE!;
+            const isCurrent = plan === currentPlan;
+            return (
+              <div key={plan} className={`plan-card ${isCurrent ? 'plan-current' : ''}`}>
+                {isCurrent && <div className="plan-current-tag">当前套餐</div>}
+                <div className="plan-name" style={{ color: PLAN_COLORS[plan] }}>{PLAN_LABELS[plan]}</div>
+                <div className="plan-price">
+                  <span className="price-amount">¥{feat.price}</span>
+                  <span className="price-interval">/月</span>
+                </div>
+                <div className="plan-features">
+                  <div className="plan-feature">
+                    <Zap size={12} />
+                    <span>AI 调用: {feat.aiQuota === -1 ? '无限' : feat.aiQuota.toLocaleString()}</span>
+                  </div>
+                  <div className="plan-feature">
+                    <Monitor size={12} />
+                    <span>CDP 并发: {feat.cdpConcurrent === -1 ? '无限' : feat.cdpConcurrent}</span>
+                  </div>
+                  <div className="plan-feature">
+                    <UserPlus size={12} />
+                    <span>获客任务: {feat.acquisitionTasks === -1 ? '无限' : feat.acquisitionTasks}</span>
+                  </div>
+                  <div className="plan-feature">
+                    <Shield size={12} />
+                    <span>平台 API: {feat.platformApis === -1 ? '无限' : feat.platformApis}</span>
+                  </div>
+                </div>
+                {!isCurrent && (
+                  <button
+                    className="btn-upgrade"
+                    style={{ background: PLAN_COLORS[plan] }}
+                    onClick={() => handleUpgrade(plan)}
+                    disabled={upgrading}
+                  >
+                    {upgrading ? '处理中...' : '升级'}
+                  </button>
                 )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
-    </>
+
+      {/* Invoice History */}
+      <div className="settings-card">
+        <div className="card-header">
+          <h2><Receipt size={18} /> 账单记录</h2>
+        </div>
+        {invoices.length === 0 ? (
+          <div className="acq-empty">
+            <Receipt size={32} />
+            <p>暂无账单记录</p>
+          </div>
+        ) : (
+          <table className="acq-table">
+            <thead>
+              <tr>
+                <th>金额</th>
+                <th>状态</th>
+                <th>支付时间</th>
+                <th>创建时间</th>
+              </tr>
+            </thead>
+            <tbody>
+              {invoices.map(inv => (
+                <tr key={inv.id}>
+                  <td><strong>¥{inv.amount}</strong></td>
+                  <td>
+                    <span className="status-badge" style={{ background: inv.status === 'PAID' ? '#16A37B' : '#F59E0B' }}>
+                      {inv.status === 'PAID' ? '已支付' : inv.status === 'PENDING' ? '待支付' : inv.status}
+                    </span>
+                  </td>
+                  <td>{inv.paidAt ? new Date(inv.paidAt).toLocaleString() : '-'}</td>
+                  <td>{new Date(inv.createdAt).toLocaleString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
   );
 }

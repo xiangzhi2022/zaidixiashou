@@ -1,208 +1,447 @@
-import { useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+import { apiClient } from '../api/client';
 import {
-  UserPlus,
-  Send,
-  TrendingUp,
-  Loader,
-  Plus,
-  Download,
-  CheckCircle,
+  UserPlus, Plus, Play, Pause, Trash2, Send,
+  Search, Filter, TrendingUp, Users, Target, Mail
 } from 'lucide-react';
 
-const metrics = [
-  { label: '新增潜客', value: '326', icon: UserPlus, iconBg: 'bg-primary/10', iconColor: 'text-primary', sub: '↑ 12.5% 较昨日', subColor: 'text-success' },
-  { label: '已触达', value: '89', icon: Send, iconBg: 'bg-success/10', iconColor: 'text-success', sub: '↑ 8.2% 较昨日', subColor: 'text-success' },
-  { label: '触达转化率', value: '12.3%', icon: TrendingUp, iconBg: 'bg-warning/10', iconColor: 'text-warning', sub: '目标 15%', subColor: 'text-on-surface-variant' },
-  { label: '进行中任务', value: '3', icon: Loader, iconBg: 'bg-primary/10', iconColor: 'text-primary', sub: '2 个待启动', subColor: 'text-on-surface-variant' },
-];
+type TabKey = 'tasks' | 'prospects' | 'campaigns';
 
-interface Task {
-  name: string; platform: string; status: string; statusBg: string; statusColor: string; prospects: string; time: string; actions: { label: string; color: string }[];
+interface AcquisitionTask {
+  id: string;
+  name: string;
+  platform: string;
+  taskType: string;
+  status: string;
+  maxResults: number;
+  resultCount: number;
+  createdAt: string;
 }
-const tasks: Task[] = [
-  { name: '小红书旅行收纳话题抓取', platform: '小红书', status: '运行中', statusBg: 'bg-primary/15', statusColor: 'text-primary', prospects: '128人', time: '2025-01-15 14:30', actions: [{ label: '查看结果', color: 'text-primary' }, { label: '停止', color: 'text-error' }] },
-  { name: 'Instagram收纳Reels评论抓取', platform: 'Instagram', status: '已完成', statusBg: 'bg-success/15', statusColor: 'text-success', prospects: '89人', time: '2025-01-14 09:15', actions: [{ label: '查看结果', color: 'text-primary' }, { label: '重新运行', color: 'text-primary' }] },
-  { name: 'TikTok家居好物评论采集', platform: 'TikTok', status: '待启动', statusBg: 'bg-warning/15', statusColor: 'text-warning', prospects: '—', time: '2025-01-15 16:00', actions: [{ label: '启动', color: 'text-primary' }, { label: '删除', color: 'text-error' }] },
-  { name: 'LinkedIn跨境电商从业者搜索', platform: 'LinkedIn', status: '运行中', statusBg: 'bg-primary/15', statusColor: 'text-primary', prospects: '56人', time: '2025-01-15 11:20', actions: [{ label: '查看结果', color: 'text-primary' }, { label: '停止', color: 'text-error' }] },
-  { name: '抖音收纳达人粉丝抓取', platform: '抖音', status: '已失败', statusBg: 'bg-error/15', statusColor: 'text-error', prospects: '23人', time: '2025-01-13 20:45', actions: [{ label: '重试', color: 'text-primary' }, { label: '删除', color: 'text-error' }] },
-];
 
-interface Prospect {
-  name: string; platform: string; interaction: string; score: number; scoreColor: string; scoreBarColor: string; status: string; statusBg: string; statusColor: string;
+interface Lead {
+  id: string;
+  platform: string;
+  username: string;
+  intentScore: number;
+  status: string;
+  profileUrl?: string;
+  lastContactedAt?: string;
+  createdAt: string;
 }
-const prospects: Prospect[] = [
-  { name: '@旅行小确幸', platform: '小红书', interaction: '评论互动', score: 92, scoreColor: 'text-success', scoreBarColor: 'bg-success', status: '已评分', statusBg: 'bg-success/15', statusColor: 'text-success' },
-  { name: '@OrganizeQueen', platform: 'Instagram', interaction: '点赞收藏', score: 75, scoreColor: 'text-primary', scoreBarColor: 'bg-primary', status: '已评分', statusBg: 'bg-success/15', statusColor: 'text-success' },
-  { name: '@收纳控小王', platform: '小红书', interaction: '关注转发', score: 58, scoreColor: 'text-warning', scoreBarColor: 'bg-warning', status: '新潜客', statusBg: 'bg-primary/15', statusColor: 'text-primary' },
-  { name: '@traveler_jay', platform: 'TikTok', interaction: '评论互动', score: 35, scoreColor: 'text-error', scoreBarColor: 'bg-error', status: '已排除', statusBg: 'bg-surface-container-high', statusColor: 'text-on-surface-variant' },
-];
 
 interface Campaign {
-  name: string; platform: string; status: string; statusBg: string; statusColor: string; sent: string; actions: { label: string; color: string }[];
+  id: string;
+  name: string;
+  platform: string;
+  messageTemplate: string;
+  status: string;
+  sentCount: number;
+  repliedCount: number;
+  requiresApproval: boolean;
+  createdAt: string;
 }
-const campaigns: Campaign[] = [
-  { name: '旅行收纳新品体验邀请', platform: '小红书', status: '待审批', statusBg: 'bg-warning/15', statusColor: 'text-warning', sent: '0/45', actions: [{ label: '编辑模板', color: 'text-primary' }, { label: '提交审批', color: 'text-primary' }] },
-  { name: 'Instagram收纳达人合作邀请', platform: 'Instagram', status: '进行中', statusBg: 'bg-success/15', statusColor: 'text-success', sent: '32/89', actions: [{ label: '编辑模板', color: 'text-primary' }, { label: '暂停', color: 'text-error' }] },
-];
+
+interface Stats {
+  totalProspects: number;
+  contactedProspects: number;
+  conversionRate: number;
+  activeTasks: number;
+  activeCampaigns: number;
+}
+
+const STATUS_LABELS: Record<string, string> = {
+  PENDING: '待处理',
+  RUNNING: '运行中',
+  COMPLETED: '已完成',
+  FAILED: '失败',
+  CANCELLED: '已取消',
+};
+
+const STATUS_COLORS: Record<string, string> = {
+  PENDING: '#F59E0B',
+  RUNNING: '#2F6BFF',
+  COMPLETED: '#16A37B',
+  FAILED: '#EF4444',
+  CANCELLED: '#6B7280',
+};
+
+const LEAD_STATUS_LABELS: Record<string, string> = {
+  NEW: '新潜客',
+  CONTACTED: '已触达',
+  REPLIED: '已回复',
+  CONVERTED: '已转化',
+  LOST: '已流失',
+};
 
 export function AcquisitionPage() {
-  const [tab, setTab] = useState<'tasks' | 'prospects' | 'campaigns'>('tasks');
-  const [toast, setToast] = useState<string | null>(null);
-  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 2500); };
+  const [tab, setTab] = useState<TabKey>('tasks');
+  const [tasks, setTasks] = useState<AcquisitionTask[]>([]);
+  const [leads, setLeads] = useState<Lead[]>([]);
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // New task form
+  const [showNewTask, setShowNewTask] = useState(false);
+  const [newTask, setNewTask] = useState({ name: '', platform: 'XIAOHONGSHU', type: 'KEYWORD_SEARCH', keywords: '', maxResults: 100 });
+
+  // New campaign form
+  const [showNewCampaign, setShowNewCampaign] = useState(false);
+  const [newCampaign, setNewCampaign] = useState({ name: '', platform: 'XIAOHONGSHU', messageTemplate: '' });
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const statsRes = await apiClient.get('/acquisition/stats');
+      setStats(statsRes.data?.data ?? statsRes.data);
+
+      if (tab === 'tasks') {
+        const res = await apiClient.get('/acquisition/tasks');
+        setTasks(res.data?.data ?? res.data);
+      } else if (tab === 'prospects') {
+        const res = await apiClient.get('/acquisition/prospects');
+        setLeads(res.data?.data ?? res.data);
+      } else {
+        const res = await apiClient.get('/acquisition/campaigns');
+        setCampaigns(res.data?.data ?? res.data);
+      }
+    } catch {
+      // handle error
+    } finally {
+      setLoading(false);
+    }
+  }, [tab]);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
+
+  const handleCreateTask = async () => {
+    try {
+      await apiClient.post('/acquisition/tasks', newTask);
+      setShowNewTask(false);
+      setNewTask({ name: '', platform: 'XIAOHONGSHU', type: 'KEYWORD_SEARCH', keywords: '', maxResults: 100 });
+      fetchData();
+    } catch { /* handle error */ }
+  };
+
+  const handleDeleteTask = async (id: string) => {
+    try {
+      await apiClient.delete(`/acquisition/tasks/${id}`);
+      fetchData();
+    } catch { /* handle error */ }
+  };
+
+  const handleCreateCampaign = async () => {
+    try {
+      await apiClient.post('/acquisition/campaigns', newCampaign);
+      setShowNewCampaign(false);
+      setNewCampaign({ name: '', platform: 'XIAOHONGSHU', messageTemplate: '' });
+      fetchData();
+    } catch { /* handle error */ }
+  };
+
+  const handleSubmitApproval = async (id: string) => {
+    try {
+      await apiClient.post(`/acquisition/campaigns/${id}/submit-approval`);
+      fetchData();
+    } catch { /* handle error */ }
+  };
 
   return (
-    <>
-      <div className="flex items-center justify-between mb-6">
+    <div className="page-container">
+      {/* Header */}
+      <div className="acq-header">
         <div>
-          <h1 className="text-2xl font-bold text-on-surface">获客中心</h1>
-          <p className="text-sm text-on-surface-variant mt-1">跨平台潜客发现、AI 意向评分、触达活动管理</p>
+          <h1 className="page-title"><UserPlus size={22} /> 获客中心</h1>
+          <p className="page-desc">管理获客任务、潜客库和触达活动</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-4 gap-4 mb-6">
-        {metrics.map((m) => {
-          const Icon = m.icon;
-          return (
-            <div key={m.label} className="bg-surface rounded-lg shadow-card p-5 cursor-pointer hover:shadow-float transition-shadow">
-              <div className="flex items-center gap-2 mb-3">
-                <div className={`w-8 h-8 ${m.iconBg} rounded-md flex items-center justify-center`}><Icon className={`w-4 h-4 ${m.iconColor}`} /></div>
-                <span className="text-sm text-on-surface-variant">{m.label}</span>
-              </div>
-              <div className="text-2xl font-bold text-on-surface">{m.value}</div>
-              <div className={`text-xs ${m.subColor} mt-1`}>{m.sub}</div>
+      {/* Stats */}
+      {stats && (
+        <div className="acq-stats">
+          <div className="acq-stat">
+            <Users size={16} />
+            <div>
+              <strong>{stats.totalProspects}</strong>
+              <span>潜客总数</span>
             </div>
-          );
-        })}
-      </div>
+          </div>
+          <div className="acq-stat">
+            <Target size={16} />
+            <div>
+              <strong>{stats.contactedProspects}</strong>
+              <span>已触达</span>
+            </div>
+          </div>
+          <div className="acq-stat">
+            <TrendingUp size={16} />
+            <div>
+              <strong>{stats.conversionRate}%</strong>
+              <span>转化率</span>
+            </div>
+          </div>
+          <div className="acq-stat">
+            <Play size={16} />
+            <div>
+              <strong>{stats.activeTasks}</strong>
+              <span>进行中任务</span>
+            </div>
+          </div>
+        </div>
+      )}
 
-      <div className="flex items-center gap-1 bg-surface-container rounded-md p-1 w-fit mb-5">
-        {(['tasks', 'prospects', 'campaigns'] as const).map((t) => (
+      {/* Tabs */}
+      <div className="acq-tabs">
+        {(['tasks', 'prospects', 'campaigns'] as TabKey[]).map(t => (
           <button
             key={t}
+            className={`acq-tab ${tab === t ? 'active' : ''}`}
             onClick={() => setTab(t)}
-            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${tab === t ? 'bg-surface text-on-surface shadow-sm' : 'text-on-surface-variant hover:text-on-surface'}`}
           >
-            {t === 'tasks' ? '任务管理' : t === 'prospects' ? '潜客库' : '触达活动'}
+            {t === 'tasks' ? '获客任务' : t === 'prospects' ? '潜客库' : '触达活动'}
           </button>
         ))}
+        <div style={{ marginLeft: 'auto' }}>
+          {tab === 'tasks' && (
+            <button className="btn-primary" onClick={() => setShowNewTask(true)}>
+              <Plus size={16} /> 新建任务
+            </button>
+          )}
+          {tab === 'campaigns' && (
+            <button className="btn-primary" onClick={() => setShowNewCampaign(true)}>
+              <Plus size={16} /> 新建活动
+            </button>
+          )}
+        </div>
       </div>
 
+      {/* Tasks Tab */}
       {tab === 'tasks' && (
-        <>
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-sm text-on-surface-variant">共 {tasks.length} 个任务</span>
-            <button onClick={() => showToast('创建任务功能开发中')} className="bg-primary text-on-primary px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all inline-flex items-center gap-2">
-              <Plus className="w-3.5 h-3.5" />创建任务
-            </button>
-          </div>
-          <div className="bg-surface rounded-lg shadow-card overflow-hidden">
-            <div className="grid grid-cols-6 px-4 py-3 bg-surface-container text-xs font-semibold text-on-surface-variant uppercase tracking-wide">
-              <span>任务名</span><span>平台</span><span>状态</span><span>潜客数</span><span>创建时间</span><span>操作</span>
+        <div className="acq-table-wrap">
+          {loading ? (
+            <div className="acq-loading">加载中...</div>
+          ) : tasks.length === 0 ? (
+            <div className="acq-empty">
+              <Search size={32} />
+              <p>暂无获客任务，点击"新建任务"开始</p>
             </div>
-            <div className="divide-y divide-outline-variant/50">
-              {tasks.map((t, i) => (
-                <div key={i} className="grid grid-cols-6 px-4 py-3 hover:bg-surface-container/50 transition-colors items-center">
-                  <span className="text-sm font-medium text-on-surface">{t.name}</span>
-                  <span className="text-sm text-on-surface-variant">{t.platform}</span>
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium ${t.statusBg} ${t.statusColor} w-fit`}>{t.status}</span>
-                  <span className={`text-sm ${t.prospects === '—' ? 'text-on-surface-variant' : 'text-on-surface font-semibold'}`}>{t.prospects}</span>
-                  <span className="text-sm text-on-surface-variant">{t.time}</span>
-                  <div className="flex gap-3">
-                    {t.actions.map((a) => (
-                      <button key={a.label} className={`text-sm font-medium hover:underline ${a.color}`}>{a.label}</button>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </>
+          ) : (
+            <table className="acq-table">
+              <thead>
+                <tr>
+                  <th>任务名称</th>
+                  <th>平台</th>
+                  <th>类型</th>
+                  <th>状态</th>
+                  <th>结果数</th>
+                  <th>创建时间</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                {tasks.map(task => (
+                  <tr key={task.id}>
+                    <td><strong>{task.name}</strong></td>
+                    <td>{task.platform}</td>
+                    <td>{task.taskType}</td>
+                    <td>
+                      <span className="status-badge" style={{ background: STATUS_COLORS[task.status] ?? '#6B7280' }}>
+                        {STATUS_LABELS[task.status] ?? task.status}
+                      </span>
+                    </td>
+                    <td>{task.resultCount}/{task.maxResults}</td>
+                    <td>{new Date(task.createdAt).toLocaleDateString()}</td>
+                    <td>
+                      <div className="action-btns">
+                        <button className="btn-icon" title="删除" onClick={() => handleDeleteTask(task.id)}>
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
       )}
 
+      {/* Prospects Tab */}
       {tab === 'prospects' && (
-        <>
-          <div className="flex items-center gap-3 mb-4">
-            <select className="bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors cursor-pointer">
-              <option value="">全部平台</option><option>小红书</option><option>Instagram</option><option>TikTok</option><option>LinkedIn</option><option>抖音</option>
-            </select>
-            <select className="bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors cursor-pointer">
-              <option value="">全部意向等级</option><option>高意向</option><option>中意向</option><option>低意向</option>
-            </select>
-            <select className="bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors cursor-pointer">
-              <option value="">全部状态</option><option>新潜客</option><option>已评分</option><option>已触达</option><option>已排除</option>
-            </select>
-            <div className="ml-auto">
-              <button className="bg-surface-container text-on-surface px-4 py-2 rounded-md text-sm font-medium hover:bg-surface-container-high active:scale-[0.98] transition-all inline-flex items-center gap-2">
-                <Download className="w-3.5 h-3.5" />导出
-              </button>
+        <div className="acq-table-wrap">
+          {loading ? (
+            <div className="acq-loading">加载中...</div>
+          ) : leads.length === 0 ? (
+            <div className="acq-empty">
+              <Users size={32} />
+              <p>暂无潜客数据，运行获客任务后自动采集</p>
             </div>
-          </div>
-          <div className="bg-surface rounded-lg shadow-card overflow-hidden">
-            <div className="grid grid-cols-6 px-4 py-3 bg-surface-container text-xs font-semibold text-on-surface-variant uppercase tracking-wide">
-              <span>用户名</span><span>平台</span><span>互动类型</span><span>意向评分</span><span>状态</span><span>操作</span>
-            </div>
-            <div className="divide-y divide-outline-variant/50">
-              {prospects.map((p, i) => (
-                <div key={i} className="grid grid-cols-6 px-4 py-3 hover:bg-surface-container/50 transition-colors items-center">
-                  <span className="text-sm font-medium text-on-surface">{p.name}</span>
-                  <span className="text-sm text-on-surface-variant">{p.platform}</span>
-                  <span className="text-sm text-on-surface-variant">{p.interaction}</span>
-                  <div className="flex items-center gap-2">
-                    <div className="w-24 h-2 bg-surface-container-high rounded-full overflow-hidden">
-                      <div className={`h-full ${p.scoreBarColor} rounded-full`} style={{ width: `${p.score}%` }} />
-                    </div>
-                    <span className={`text-sm font-semibold ${p.scoreColor}`}>{p.score}</span>
-                  </div>
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium ${p.statusBg} ${p.statusColor} w-fit`}>{p.status}</span>
-                  <div className="flex gap-3">
-                    <button className="text-primary text-sm font-medium hover:underline">详情</button>
-                    <button className="text-primary text-sm font-medium hover:underline">{p.status === '已排除' ? '恢复' : '加入触达'}</button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </>
+          ) : (
+            <table className="acq-table">
+              <thead>
+                <tr>
+                  <th>用户名</th>
+                  <th>平台</th>
+                  <th>意图分数</th>
+                  <th>状态</th>
+                  <th>最近触达</th>
+                  <th>加入时间</th>
+                </tr>
+              </thead>
+              <tbody>
+                {leads.map(lead => (
+                  <tr key={lead.id}>
+                    <td><strong>{lead.username}</strong></td>
+                    <td>{lead.platform}</td>
+                    <td>
+                      <div className="score-bar">
+                        <div className="score-fill" style={{ width: `${Math.min(lead.intentScore, 100)}%` }} />
+                        <span>{lead.intentScore}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <span className="status-badge" style={{ background: lead.status === 'NEW' ? '#2F6BFF' : lead.status === 'CONVERTED' ? '#16A37B' : '#F59E0B' }}>
+                        {LEAD_STATUS_LABELS[lead.status] ?? lead.status}
+                      </span>
+                    </td>
+                    <td>{lead.lastContactedAt ? new Date(lead.lastContactedAt).toLocaleDateString() : '-'}</td>
+                    <td>{new Date(lead.createdAt).toLocaleDateString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
       )}
 
+      {/* Campaigns Tab */}
       {tab === 'campaigns' && (
-        <>
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-sm text-on-surface-variant">共 {campaigns.length} 个活动</span>
-            <button onClick={() => showToast('创建触达功能开发中')} className="bg-primary text-on-primary px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all inline-flex items-center gap-2">
-              <Plus className="w-3.5 h-3.5" />创建触达
-            </button>
-          </div>
-          <div className="bg-surface rounded-lg shadow-card overflow-hidden">
-            <div className="grid grid-cols-5 px-4 py-3 bg-surface-container text-xs font-semibold text-on-surface-variant uppercase tracking-wide">
-              <span>活动名</span><span>平台</span><span>状态</span><span>发送数</span><span>操作</span>
+        <div className="acq-table-wrap">
+          {loading ? (
+            <div className="acq-loading">加载中...</div>
+          ) : campaigns.length === 0 ? (
+            <div className="acq-empty">
+              <Mail size={32} />
+              <p>暂无触达活动，点击"新建活动"开始</p>
             </div>
-            <div className="divide-y divide-outline-variant/50">
-              {campaigns.map((c, i) => (
-                <div key={i} className="grid grid-cols-5 px-4 py-3 hover:bg-surface-container/50 transition-colors items-center">
-                  <span className="text-sm font-medium text-on-surface">{c.name}</span>
-                  <span className="text-sm text-on-surface-variant">{c.platform}</span>
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium ${c.statusBg} ${c.statusColor} w-fit`}>{c.status}</span>
-                  <span className="text-sm text-on-surface font-semibold">{c.sent}</span>
-                  <div className="flex gap-3">
-                    {c.actions.map((a) => (
-                      <button key={a.label} className={`text-sm font-medium hover:underline ${a.color}`}>{a.label}</button>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </>
+          ) : (
+            <table className="acq-table">
+              <thead>
+                <tr>
+                  <th>活动名称</th>
+                  <th>平台</th>
+                  <th>状态</th>
+                  <th>已发送</th>
+                  <th>已回复</th>
+                  <th>审批</th>
+                  <th>创建时间</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                {campaigns.map(c => (
+                  <tr key={c.id}>
+                    <td><strong>{c.name}</strong></td>
+                    <td>{c.platform}</td>
+                    <td>
+                      <span className="status-badge" style={{ background: STATUS_COLORS[c.status] ?? '#6B7280' }}>
+                        {STATUS_LABELS[c.status] ?? c.status}
+                      </span>
+                    </td>
+                    <td>{c.sentCount}</td>
+                    <td>{c.repliedCount}</td>
+                    <td>{c.requiresApproval ? '需要' : '不需要'}</td>
+                    <td>{new Date(c.createdAt).toLocaleDateString()}</td>
+                    <td>
+                      <div className="action-btns">
+                        {c.status === 'PENDING' && (
+                          <button className="btn-icon" title="提交审批" onClick={() => handleSubmitApproval(c.id)}>
+                            <Send size={14} />
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
       )}
 
-      {toast && (
-        <div className="fixed top-20 right-6 z-50">
-          <div className="bg-surface rounded-lg shadow-float px-4 py-3 flex items-center gap-2 text-sm font-medium text-on-surface border border-outline-variant/20">
-            <CheckCircle className="w-4 h-4 text-success" /><span>{toast}</span>
+      {/* New Task Modal */}
+      {showNewTask && (
+        <div className="modal-overlay" onClick={() => setShowNewTask(false)}>
+          <div className="modal-card" onClick={e => e.stopPropagation()}>
+            <h2>新建获客任务</h2>
+            <div className="form-group">
+              <label className="form-label">任务名称</label>
+              <input className="form-input" value={newTask.name} onChange={e => setNewTask({ ...newTask, name: e.target.value })} placeholder="如：小红书母婴关键词采集" />
+            </div>
+            <div className="form-group">
+              <label className="form-label">平台</label>
+              <select className="form-input" value={newTask.platform} onChange={e => setNewTask({ ...newTask, platform: e.target.value })}>
+                <option value="XIAOHONGSHU">小红书</option>
+                <option value="DOUYIN">抖音</option>
+                <option value="TIKTOK">TikTok</option>
+                <option value="INSTAGRAM">Instagram</option>
+                <option value="X_TWITTER">X/Twitter</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">任务类型</label>
+              <select className="form-input" value={newTask.type} onChange={e => setNewTask({ ...newTask, type: e.target.value })}>
+                <option value="KEYWORD_SEARCH">关键词搜索</option>
+                <option value="COMMENT_SCRAPE">评论采集</option>
+                <option value="FOLLOWER_SCRAPE">粉丝采集</option>
+                <option value="PROFILE_SCRAPE">主页采集</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">关键词 (逗号分隔)</label>
+              <input className="form-input" value={newTask.keywords} onChange={e => setNewTask({ ...newTask, keywords: e.target.value })} placeholder="如：母婴,育儿,宝宝" />
+            </div>
+            <div className="form-group">
+              <label className="form-label">最大结果数</label>
+              <input className="form-input" type="number" value={newTask.maxResults} onChange={e => setNewTask({ ...newTask, maxResults: Number(e.target.value) })} />
+            </div>
+            <div className="modal-actions">
+              <button className="btn-ghost" onClick={() => setShowNewTask(false)}>取消</button>
+              <button className="btn-primary" onClick={handleCreateTask} disabled={!newTask.name}>创建任务</button>
+            </div>
           </div>
         </div>
       )}
-    </>
+
+      {/* New Campaign Modal */}
+      {showNewCampaign && (
+        <div className="modal-overlay" onClick={() => setShowNewCampaign(false)}>
+          <div className="modal-card" onClick={e => e.stopPropagation()}>
+            <h2>新建触达活动</h2>
+            <div className="form-group">
+              <label className="form-label">活动名称</label>
+              <input className="form-input" value={newCampaign.name} onChange={e => setNewCampaign({ ...newCampaign, name: e.target.value })} placeholder="如：小红书母婴达人触达" />
+            </div>
+            <div className="form-group">
+              <label className="form-label">平台</label>
+              <select className="form-input" value={newCampaign.platform} onChange={e => setNewCampaign({ ...newCampaign, platform: e.target.value })}>
+                <option value="XIAOHONGSHU">小红书</option>
+                <option value="DOUYIN">抖音</option>
+                <option value="TIKTOK">TikTok</option>
+                <option value="INSTAGRAM">Instagram</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">消息模板</label>
+              <textarea className="form-textarea" value={newCampaign.messageTemplate} onChange={e => setNewCampaign({ ...newCampaign, messageTemplate: e.target.value })} placeholder="如：您好！我们是XXX品牌，对您的内容非常感兴趣..." rows={4} />
+            </div>
+            <div className="modal-actions">
+              <button className="btn-ghost" onClick={() => setShowNewCampaign(false)}>取消</button>
+              <button className="btn-primary" onClick={handleCreateCampaign} disabled={!newCampaign.name || !newCampaign.messageTemplate}>创建活动</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

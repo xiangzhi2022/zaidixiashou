@@ -20,17 +20,18 @@ export class SubscriptionService {
     });
     if (!sub) {
       // Return free plan info
+      const freeConfig = PLAN_CONFIGS['FREE']!;
       return {
         plan: SubscriptionPlan.FREE,
         status: 'ACTIVE',
-        aiQuota: PLAN_CONFIGS.FREE.aiQuota,
+        aiQuota: freeConfig.aiQuota,
         aiUsed: 0,
-        cdpConcurrent: PLAN_CONFIGS.FREE.cdpConcurrent,
-        acquisitionTasks: PLAN_CONFIGS.FREE.acquisitionTasks,
-        platformApis: PLAN_CONFIGS.FREE.platformApis,
+        cdpConcurrent: freeConfig.cdpConcurrent,
+        acquisitionTasks: freeConfig.acquisitionTasks,
+        platformApis: freeConfig.platformApis,
       };
     }
-    const config = PLAN_CONFIGS[sub.plan] ?? PLAN_CONFIGS.FREE;
+    const config = PLAN_CONFIGS[sub.plan] ?? PLAN_CONFIGS['FREE']!;
     return {
       ...sub,
       aiQuota: config.aiQuota,
@@ -57,25 +58,34 @@ export class SubscriptionService {
 
   async checkQuota(userId: string, resource: string): Promise<boolean> {
     const sub = await this.getCurrentSubscription(userId);
-    const config = PLAN_CONFIGS[sub.plan as string] ?? PLAN_CONFIGS.FREE;
+    const config = PLAN_CONFIGS[sub.plan as string] ?? PLAN_CONFIGS['FREE']!;
 
     if (resource === 'ai' && config.aiQuota !== -1) {
-      const used = await this.prisma.usageLog.count({
-        where: { userId, resource: 'AI_CALL', createdAt: { gte: new Date(new Date().setHours(0, 0, 0, 0)) } },
+      const subRecord = await this.prisma.subscription.findFirst({
+        where: { userId, status: 'ACTIVE' },
       });
+      const used = subRecord?.aiQuotaUsed ?? 0;
       return used < config.aiQuota;
     }
     return true; // Unlimited or unknown resource
   }
 
   async createSubscription(userId: string, plan: SubscriptionPlan, paymentId: string) {
+    const config = PLAN_CONFIGS[plan] ?? PLAN_CONFIGS['FREE']!;
     return this.prisma.subscription.create({
       data: {
         userId,
         plan,
         status: 'ACTIVE',
-        currentPeriodStart: new Date(),
-        currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        startedAt: new Date(),
+        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        aiQuotaDaily: config.aiQuota,
+        aiQuotaUsed: 0,
+        cdpConcurrency: config.cdpConcurrent,
+        acquisitionLimit: config.acquisitionTasks,
+        payments: {
+          connect: { id: paymentId },
+        },
       },
     });
   }

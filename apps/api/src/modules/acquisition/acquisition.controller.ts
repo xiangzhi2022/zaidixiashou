@@ -60,11 +60,12 @@ export class AcquisitionController {
     @Query('status') status?: LeadStatus,
     @Query('minScore') minScore?: number,
   ) {
-    return this.acquisitionService.getProspects(req.user.teamId || 'team_local', {
-      platform,
-      status,
-      minScore: minScore ? Number(minScore) : undefined,
-    });
+    const filters: { platform?: string; status?: LeadStatus; minScore?: number } = {};
+    if (platform) filters.platform = platform;
+    if (status) filters.status = status;
+    if (minScore) filters.minScore = Number(minScore);
+
+    return this.acquisitionService.getProspects(req.user.teamId || 'team_local', filters);
   }
 
   @Put('prospects/:id/status')
@@ -78,12 +79,10 @@ export class AcquisitionController {
   }
 
   // ===== Campaigns =====
+
   @Post('campaigns')
   @ApiOperation({ summary: '创建触达活动' })
-  async createCampaign(
-    @Req() req: { user: { id: string; teamId?: string } },
-    @Body() dto: CreateCampaignDto,
-  ) {
+  async createCampaign(@Req() req: { user: { id: string; teamId?: string } }, @Body() dto: CreateCampaignDto) {
     return this.acquisitionService.createCampaign(req.user.teamId || 'team_local', req.user.id, dto);
   }
 
@@ -108,7 +107,7 @@ export class AcquisitionController {
 
   @Post('campaigns/:id/submit-approval')
   @ApiOperation({ summary: '提交触达活动审批' })
-  async submitApproval(
+  async submitCampaignForApproval(
     @Req() req: { user: { id: string; teamId?: string } },
     @Param('id') id: string,
   ) {
