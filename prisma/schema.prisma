@@ -1,0 +1,582 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  OWNER
+  ADMIN
+  OPERATOR
+  VIEWER
+}
+
+enum Platform {
+  AMAZON
+  EBAY
+  SHOPIFY
+  TIKTOK_SHOP
+  XIAOHONGSHU
+  DOUYIN
+  TIKTOK
+  INSTAGRAM
+  X_TWITTER
+  MERCADOLIBRE
+}
+
+enum AuthType {
+  OAUTH
+  API_KEY
+  COOKIE
+  CDP
+  MCP_STDIO
+  OPENAPI
+}
+
+enum AccountStatus {
+  CONNECTED
+  PENDING_AUTH
+  NEEDS_LOGIN
+  EXPIRED
+  FAILED
+  DISCONNECTED
+}
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum ActionStatus {
+  QUEUED
+  RUNNING
+  WAITING_APPROVAL
+  SUCCEEDED
+  FAILED
+  CANCELED
+  RETRYING
+}
+
+enum DraftStatus {
+  DRAFT
+  PENDING_REVIEW
+  APPROVED
+  REJECTED
+  SCHEDULED
+  PUBLISHED
+  PUBLISH_FAILED
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CHANGE_REQUESTED
+  EXPIRED
+}
+
+enum AiPlanStatus {
+  PENDING
+  CONFIRMED
+  CANCELED
+  EXECUTING
+  COMPLETED
+  FAILED
+}
+
+enum AutopilotLevel {
+  OFF
+  DRAFT_ONLY
+  SEMI_AUTO
+  HIGH_AUTO
+}
+
+enum LoginMethod {
+  WECHAT
+  SMS
+  PASSWORD
+}
+
+enum SubscriptionPlan {
+  FREE
+  BASIC
+  PROFESSIONAL
+  ENTERPRISE
+}
+
+enum PaymentMethod {
+  WECHAT_PAY
+  ALIPAY
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
+  PAST_DUE
+}
+
+enum CdpSessionStatus {
+  CONNECTED
+  DISCONNECTED
+  ERROR
+}
+
+enum AcquisitionTaskStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum AcquisitionTaskType {
+  KEYWORD_SEARCH
+  COMMENT_SCRAPE
+  FOLLOWER_SCRAPE
+  PROFILE_SCRAPE
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  REPLIED
+  CONVERTED
+  LOST
+}
+
+enum AiKeyProvider {
+  OPENAI
+  ANTHROPIC
+  CUSTOM
+}
+
+enum AiKeyStatus {
+  ACTIVE
+  TESTING
+  FAILED
+  DISABLED
+}
+
+model User {
+  id            String           @id @default(cuid())
+  email         String?          @unique
+  phone         String?          @unique
+  name          String
+  passwordHash  String?
+  avatarUrl     String?
+  wechatOpenId  String?          @unique
+  wechatUnionId String?
+  loginMethod   LoginMethod      @default(SMS)
+  lastLoginAt   DateTime?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  memberships   TeamMember[]
+  auditLogs     AuditLog[]
+  aiKeys        AiKey[]
+  aiConfigs     AiConfig[]
+  subscriptions Subscription[]
+
+  @@map("users")
+}
+
+model Team {
+  id             String            @id @default(cuid())
+  name           String
+  autopilotLevel AutopilotLevel    @default(DRAFT_ONLY)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  members        TeamMember[]
+  accounts       PlatformAccount[]
+  actions        PlatformAction[]
+  riskRules      RiskRule[]
+  drafts         MediaDraft[]
+  approvals      ApprovalRequest[]
+  auditLogs      AuditLog[]
+  aiPlans        AiPlan[]
+  cdpSession     CdpSession?
+  acquisitionTasks AcquisitionTask[]
+  leads          Lead[]
+  outreachCampaigns OutreachCampaign[]
+
+  @@map("teams")
+}
+
+model TeamMember {
+  id        String   @id @default(cuid())
+  teamId    String
+  userId    String
+  role      UserRole @default(OPERATOR)
+  createdAt DateTime @default(now())
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, userId])
+  @@map("team_members")
+}
+
+model PlatformAccount {
+  id           String              @id @default(cuid())
+  teamId       String
+  platform     Platform
+  displayName  String
+  status       AccountStatus       @default(PENDING_AUTH)
+  authType     AuthType
+  scopes       String[]            @default([])
+  cdpSessionId String?
+  expiresAt    DateTime?
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+  team         Team                @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  credential   PlatformCredential?
+  actions      PlatformAction[]
+
+  @@unique([teamId, platform, displayName])
+  @@index([teamId, platform, status])
+  @@map("platform_accounts")
+}
+
+model PlatformCredential {
+  id               String          @id @default(cuid())
+  accountId        String          @unique
+  encryptedPayload String
+  iv               String
+  authTag          String
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  account          PlatformAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@map("platform_credentials")
+}
+
+model PlatformAction {
+  id             String          @id @default(cuid())
+  teamId         String
+  accountId      String
+  actionType     String
+  payload        Json
+  riskLevel      RiskLevel       @default(LOW)
+  requiresApproval Boolean       @default(false)
+  status         ActionStatus    @default(QUEUED)
+  idempotencyKey String          @unique
+  queuedAt       DateTime        @default(now())
+  executedAt     DateTime?
+  team           Team            @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  account        PlatformAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  connectorRuns  ConnectorRun[]
+
+  @@index([teamId, status])
+  @@index([accountId, actionType])
+  @@map("platform_actions")
+}
+
+model ConnectorRun {
+  id                     String         @id @default(cuid())
+  actionId               String
+  connectorName          String
+  requestPayloadSnapshot Json
+  responseSnapshot       Json?
+  status                 ActionStatus   @default(QUEUED)
+  errorCode              String?
+  errorMessage           String?
+  startedAt              DateTime       @default(now())
+  finishedAt             DateTime?
+  action                 PlatformAction @relation(fields: [actionId], references: [id], onDelete: Cascade)
+
+  @@index([actionId, status])
+  @@map("connector_runs")
+}
+
+model RiskRule {
+  id               String    @id @default(cuid())
+  teamId           String?
+  actionType       String
+  platform         Platform?
+  riskLevel        RiskLevel @default(MEDIUM)
+  requiresApproval Boolean   @default(true)
+  enabled          Boolean   @default(true)
+  createdAt        DateTime  @default(now())
+  team             Team?     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@index([teamId, actionType, platform])
+  @@map("risk_rules")
+}
+
+model MediaDraft {
+  id          String         @id @default(cuid())
+  teamId      String
+  platform    Platform
+  title       String
+  body        String
+  status      DraftStatus    @default(DRAFT)
+  riskLevel   RiskLevel      @default(MEDIUM)
+  scheduledAt DateTime?
+  submittedAt DateTime?
+  submittedBy String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  team        Team           @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  versions    DraftVersion[]
+
+  @@index([teamId, status])
+  @@index([platform, scheduledAt])
+  @@map("media_drafts")
+}
+
+model DraftVersion {
+  id        String     @id @default(cuid())
+  draftId   String
+  version   Int
+  body      String
+  snapshot  Json
+  createdAt DateTime   @default(now())
+  draft     MediaDraft @relation(fields: [draftId], references: [id], onDelete: Cascade)
+
+  @@unique([draftId, version])
+  @@map("draft_versions")
+}
+
+model ApprovalRequest {
+  id          String         @id @default(cuid())
+  teamId      String
+  actionType  String
+  targetId    String
+  riskLevel   RiskLevel      @default(HIGH)
+  status      ApprovalStatus @default(PENDING)
+  createdBy   String
+  reviewedBy  String?
+  reason      String
+  payloadSnapshot Json
+  createdAt   DateTime       @default(now())
+  reviewedAt  DateTime?
+  team        Team           @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@index([teamId, status])
+  @@map("approval_requests")
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  teamId     String
+  userId     String?
+  actionType String
+  targetId   String?
+  payload    Json
+  createdAt  DateTime @default(now())
+  team       Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user       User?    @relation(fields: [userId], references: [id])
+
+  @@index([teamId, actionType, createdAt])
+  @@map("audit_logs")
+}
+
+model AiPlan {
+  id        String       @id @default(cuid())
+  teamId    String
+  prompt    String
+  status    AiPlanStatus @default(PENDING)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  team      Team         @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  steps     AiPlanStep[]
+
+  @@index([teamId, status])
+  @@map("ai_plans")
+}
+
+model AiPlanStep {
+  id         String @id @default(cuid())
+  planId     String
+  stepOrder  Int
+  actionType String
+  payload    Json
+  plan       AiPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  @@unique([planId, stepOrder])
+  @@map("ai_plan_steps")
+}
+
+// ──────────────── CDP 浏览器连接 ────────────────
+
+model CdpSession {
+  id            String          @id @default(cuid())
+  teamId        String
+  status        CdpSessionStatus @default(DISCONNECTED)
+  debugPort     Int             @default(9222)
+  chromeVersion String?
+  connectedAt   DateTime?
+  lastHeartbeat DateTime?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  team          Team            @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId])
+  @@map("cdp_sessions")
+}
+
+// ──────────────── SaaS 订阅与支付 ────────────────
+
+model Subscription {
+  id              String             @id @default(cuid())
+  userId          String
+  plan            SubscriptionPlan   @default(FREE)
+  status          SubscriptionStatus @default(ACTIVE)
+  startedAt       DateTime           @default(now())
+  expiresAt       DateTime?
+  cancelledAt     DateTime?
+  aiQuotaDaily    Int                @default(100)
+  aiQuotaUsed     Int                @default(0)
+  cdpConcurrency  Int                @default(1)
+  acquisitionLimit Int              @default(5)
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  payments        Payment[]
+
+  @@index([userId, status])
+  @@map("subscriptions")
+}
+
+model Payment {
+  id             String        @id @default(cuid())
+  subscriptionId String
+  userId         String
+  amount         Decimal       @db.Decimal(10, 2)
+  currency       String        @default("CNY")
+  method         PaymentMethod
+  status         PaymentStatus @default(PENDING)
+  outTradeNo     String        @unique
+  transactionId  String?
+  paidAt         DateTime?
+  expiredAt      DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  subscription   Subscription  @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+  @@index([outTradeNo])
+  @@map("payments")
+}
+
+// ──────────────── 获客模块 ────────────────
+
+model AcquisitionTask {
+  id          String                @id @default(cuid())
+  teamId      String
+  name        String
+  platform    Platform
+  taskType    AcquisitionTaskType
+  keywords    String[]
+  status      AcquisitionTaskStatus @default(PENDING)
+  maxResults  Int                   @default(100)
+  resultCount Int                   @default(0)
+  config      Json?
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+  team        Team                  @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  leads       Lead[]
+
+  @@index([teamId, status])
+  @@map("acquisition_tasks")
+}
+
+model Lead {
+  id              String    @id @default(cuid())
+  taskId          String
+  teamId          String
+  platform        Platform
+  username        String
+  profileUrl      String?
+  interactionType String?
+  intentScore     Float     @default(0)
+  status          LeadStatus @default(NEW)
+  profileData     Json?
+  lastContactedAt DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  task            AcquisitionTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  team            Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@index([teamId, status])
+  @@index([taskId])
+  @@map("leads")
+}
+
+model OutreachCampaign {
+  id           String           @id @default(cuid())
+  teamId       String
+  name         String
+  platform     Platform
+  messageTemplate String
+  leadIds      String[]
+  status       AcquisitionTaskStatus @default(PENDING)
+  sentCount    Int              @default(0)
+  repliedCount Int              @default(0)
+  requiresApproval Boolean     @default(true)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  team         Team             @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@index([teamId, status])
+  @@map("outreach_campaigns")
+}
+
+// ──────────────── AI Key 管理 ────────────────
+
+model AiKey {
+  id            String        @id @default(cuid())
+  userId        String
+  label         String
+  provider      AiKeyProvider
+  endpoint      String
+  encryptedKey  String
+  iv            String
+  authTag       String
+  defaultModel  String
+  advancedModel String?
+  embeddingModel String?
+  isDefault     Boolean       @default(false)
+  status        AiKeyStatus   @default(ACTIVE)
+  lastTestedAt  DateTime?
+  lastTestResult String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, provider])
+  @@map("ai_keys")
+}
+
+model AiConfig {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  apiMode        String   @default("platform") // platform | custom
+  defaultKeyRef  String?  // AiKey.id
+  defaultModel   String   @default("gpt-4o-mini")
+  advancedModel  String   @default("gpt-4o")
+  embeddingModel String   @default("text-embedding-3-small")
+  maxConcurrency Int      @default(5)
+  timeoutMs      Int      @default(30000)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("ai_configs")
+}
+
+

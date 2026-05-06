@@ -1,0 +1,11 @@
+{
+  "extends": "@ai-commerce-ops/config/tsconfig/react",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    }
+  },
+  "include": ["src", "vite.config.ts"]
+}
+

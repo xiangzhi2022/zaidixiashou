@@ -1,0 +1,56 @@
+@import "tailwindcss";
+
+@theme {
+  /* === Brand === */
+  --color-primary: #2F6BFF;
+  --color-primary-container: #DBE8FF;
+  --color-on-primary: #ffffff;
+  /* === Background / Surface === */
+  --color-background: #F6F8FB;
+  --color-surface-container-lowest: #EDF0F5;
+  --color-surface: #FFFFFF;
+  --color-surface-container: #EDF0F5;
+  --color-surface-container-high: #E1E6EF;
+  --color-surface-container-highest: #D5DBE8;
+  /* === Text === */
+  --color-on-surface: #152033;
+  --color-on-surface-variant: #637089;
+  /* === Functional === */
+  --color-success: #16A37B;
+  --color-error: #E5484D;
+  --color-warning: #E5A000;
+  /* === Border === */
+  --color-outline: #C4CDD9;
+  --color-outline-variant: #E6EAF2;
+  /* === Radius === */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
+  --radius-full: 9999px;
+  /* === Shadow === */
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-float: 0 10px 25px rgba(0, 0, 0, 0.1);
+  --shadow-dialog: 0 25px 50px rgba(0, 0, 0, 0.15);
+  /* === Font === */
+  --font-sans: "Inter", "Noto Sans SC", system-ui, sans-serif;
+}
+
+/* Base resets */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}

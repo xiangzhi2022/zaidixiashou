@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/jquery/jquery-3.7.1.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/lucide/lucide-1.11.0.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/tailwindcss/tailwindcss-browser-4.2.4.min.js"></script>
+
+  <style type="text/tailwindcss">
+    @theme {
+      /* === 品牌色 === */
+      --color-primary:              #2F6BFF;
+      --color-primary-container:    #DBE8FF;
+      --color-on-primary:           #ffffff;
+      /* === 背景 / 表面 === */
+      --color-background:                 #F6F8FB;
+      --color-surface-container-lowest:   #EDF0F5;
+      --color-surface:                    #FFFFFF;
+      --color-surface-container:          #EDF0F5;
+      --color-surface-container-high:     #E1E6EF;
+      --color-surface-container-highest:  #D5DBE8;
+      /* === 文字 === */
+      --color-on-surface:           #152033;
+      --color-on-surface-variant:   #637089;
+      /* === 功能色 === */
+      --color-success:  #16A37B;
+      --color-error:    #E5484D;
+      --color-warning:  #E5A000;
+      /* === 边框 === */
+      --color-outline:          #C4CDD9;
+      --color-outline-variant:  #E6EAF2;
+      /* === 圆角 === */
+      --radius-sm:   0.25rem;
+      --radius-md:   0.375rem;
+      --radius-lg:   0.5rem;
+      --radius-xl:   0.75rem;
+      --radius-2xl:  1rem;
+      --radius-full: 9999px;
+      /* === 阴影 === */
+      --shadow-card:   0 2px 8px rgba(0,0,0,0.08);
+      --shadow-float:  0 10px 25px rgba(0,0,0,0.1);
+      --shadow-dialog: 0 25px 50px rgba(0,0,0,0.15);
+      /* === 字体 === */
+      --font-sans: "Inter", "Noto Sans SC", system-ui, sans-serif;
+    }
+  </style>
+
+  <link href="https://lf-code-agent.coze.cn/obj/x-ai-cn/fonts/google/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+
+  <!-- 图片兜底 -->
+  <script>
+    document.addEventListener('error', function (e) {
+      const img = e.target;
+      if (img.tagName !== 'IMG' || img.dataset.fallback) return;
+      img.dataset.fallback = '1';
+      const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const cat = img.getAttribute('data-category') || '其他';
+      const alt = img.getAttribute('alt') || '';
+      const label = esc(alt.length > 8 ? alt.slice(0, 8) + '…' : alt);
+      const icons = { '人物': '👤', '自然风景': '🏞', '动物': '🐾', '建筑城市': '🏙', '运动体育': '⚽', '交通工具': '🚗', '食物': '🍽', '服饰时尚': '👗', '商业科技': '💼', '游戏娱乐': '🎮', '艺术': '🎨', '其他': '🖼' };
+      const icon = icons[cat] || '🖼';
+      const w = img.width || 400, h = img.height || 300;
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><rect width="100%" height="100%" fill="%23f3f4f6"/><text x="50%" y="45%" text-anchor="middle" font-size="${Math.min(w, h) * 0.18}" dominant-baseline="central">${icon}</text><text x="50%" y="68%" text-anchor="middle" font-size="${Math.min(w, h) * 0.07}" fill="%239ca3af" font-family="system-ui,sans-serif" dominant-baseline="central">${label}</text></svg>`;
+      img.src = 'data:image/svg+xml,' + svg;
+    }, true);
+  </script>
+</head>
+
+<body class="bg-background text-on-surface font-sans">
+
+  <!-- @nav:start 导航组件，不需要的页面则不要复制此段（从 @nav:start 到 @nav:end） -->
+  <header class="bg-surface sticky top-0 z-40 h-14 flex items-center justify-between px-5 border-b border-outline-variant/20">
+    <div class="flex items-center gap-2.5">
+      <i data-lucide="zap" class="w-5 h-5 text-primary"></i>
+      <span class="font-bold text-base text-on-surface">AI Commerce Ops</span>
+    </div>
+    <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2 bg-surface-container rounded-md px-3 py-1.5 text-sm text-on-surface-variant">
+        <i data-lucide="terminal" class="w-4 h-4"></i>
+        <span>输入运营目标，AI 帮你执行</span>
+      </div>
+      <button class="relative p-2 rounded-md hover:bg-surface-container transition-colors">
+        <i data-lucide="bell" class="w-4 h-4 text-on-surface-variant"></i>
+        <span class="absolute top-1 right-1 w-2 h-2 bg-error rounded-full"></span>
+      </button>
+      <div class="w-8 h-8 bg-primary/10 text-primary rounded-full flex items-center justify-center text-sm font-medium">初</div>
+    </div>
+  </header>
+
+  <div class="flex" style="height: calc(100vh - 3.5rem)">
+    <aside class="w-56 shrink-0 bg-surface border-r border-outline-variant/20 overflow-y-auto">
+      <div class="p-3 space-y-0.5">
+        <p class="px-3 py-1 text-xs font-medium text-on-surface-variant/60 uppercase tracking-wider">电商运营</p>
+        <a href="home.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="layout-dashboard" class="w-4 h-4"></i>总览
+        </a>
+        <a href="orders.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="shopping-bag" class="w-4 h-4"></i>订单
+        </a>
+        <a href="products.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="package-search" class="w-4 h-4"></i>商品
+        </a>
+        <a href="messages.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors relative">
+          <i data-lucide="messages-square" class="w-4 h-4"></i>消息
+          <span class="ml-auto bg-error text-white text-xs rounded-full px-1.5 py-0.5 leading-none">64</span>
+        </a>
+
+        <p class="px-3 py-1 mt-2 text-xs font-medium text-on-surface-variant/60 uppercase tracking-wider">获客</p>
+        <a href="acquisition.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="user-plus" class="w-4 h-4"></i>获客中心
+        </a>
+
+        <p class="px-3 py-1 mt-2 text-xs font-medium text-on-surface-variant/60 uppercase tracking-wider">媒体运营</p>
+        <a href="media.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors relative">
+          <i data-lucide="megaphone" class="w-4 h-4"></i>运营中心
+          <span class="ml-auto bg-warning text-on-surface text-xs rounded-full px-1.5 py-0.5 leading-none">4</span>
+        </a>
+        <a href="media-creative.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="clapperboard" class="w-4 h-4"></i>图像视频生成
+        </a>
+        <a href="media-drafts.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors relative">
+          <i data-lucide="file-check" class="w-4 h-4"></i>草稿审核发布
+          <span class="ml-auto bg-warning text-on-surface text-xs rounded-full px-1.5 py-0.5 leading-none">4</span>
+        </a>
+        <a href="automation.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md bg-primary/10 text-primary font-medium text-sm transition-colors" aria-current="page">
+          <i data-lucide="workflow" class="w-4 h-4"></i>自动化
+        </a>
+
+        <p class="px-3 py-1 mt-2 text-xs font-medium text-on-surface-variant/60 uppercase tracking-wider">系统设置</p>
+        <a href="settings-accounts.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors relative">
+          <i data-lucide="key-round" class="w-4 h-4"></i>平台账号管理
+          <span class="ml-auto bg-warning text-on-surface text-xs rounded-full px-1.5 py-0.5 leading-none">3</span>
+        </a>
+        <a href="settings-ai-models.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="brain-circuit" class="w-4 h-4"></i>AI 模型设置
+        </a>
+        <a href="settings-autopilot.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="bot" class="w-4 h-4"></i>自动托管
+        </a>
+        <a href="settings-approval.html" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-sm font-medium transition-colors">
+          <i data-lucide="shield-check" class="w-4 h-4"></i>审批
+        </a>
+      </div>
+    </aside>
+  <!-- @nav:end 导航组件，不需要的页面则不要复制此段 -->
+
+  <main class="flex-1 min-w-0 overflow-y-auto bg-background p-6">
+    <!-- @main-content:start -->
+
+    <!-- 页面标题 + 新建按钮 -->
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h1 class="text-2xl font-bold text-on-surface">自动化</h1>
+        <p class="text-sm text-on-surface-variant mt-1">配置定时自动化任务，让 AI 按规则执行运营动作</p>
+      </div>
+      <button id="btn-create-automation" class="bg-primary text-on-primary px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all inline-flex items-center gap-2">
+        <i data-lucide="plus" class="w-3.5 h-3.5"></i>新建自动化
+      </button>
+    </div>
+
+    <!-- 统计卡片 -->
+    <div class="grid grid-cols-4 gap-4 mb-6">
+      <!-- 统计-运行中 -->
+      <div class="bg-surface rounded-lg shadow-card p-4">
+        <div class="flex items-center gap-2 mb-2">
+          <i data-lucide="play-circle" class="w-4 h-4 text-success"></i>
+          <span class="text-xs font-medium text-on-surface-variant">运行中</span>
+        </div>
+        <p class="text-2xl font-bold text-on-surface">3</p>
+      </div>
+      <!-- 统计-待审核 -->
+      <div class="bg-surface rounded-lg shadow-card p-4">
+        <div class="flex items-center gap-2 mb-2">
+          <i data-lucide="clock" class="w-4 h-4 text-warning"></i>
+          <span class="text-xs font-medium text-on-surface-variant">待审核</span>
+        </div>
+        <p class="text-2xl font-bold text-on-surface">1</p>
+      </div>
+      <!-- 统计-已暂停 -->
+      <div class="bg-surface rounded-lg shadow-card p-4">
+        <div class="flex items-center gap-2 mb-2">
+          <i data-lucide="pause-circle" class="w-4 h-4 text-on-surface-variant"></i>
+          <span class="text-xs font-medium text-on-surface-variant">已暂停</span>
+        </div>
+        <p class="text-2xl font-bold text-on-surface">0</p>
+      </div>
+      <!-- 统计-今日执行 -->
+      <div class="bg-surface rounded-lg shadow-card p-4">
+        <div class="flex items-center gap-2 mb-2">
+          <i data-lucide="activity" class="w-4 h-4 text-primary"></i>
+          <span class="text-xs font-medium text-on-surface-variant">今日执行</span>
+        </div>
+        <p class="text-2xl font-bold text-on-surface">12</p>
+      </div>
+    </div>
+
+    <!-- 自动化列表 -->
+    <div class="bg-surface rounded-lg shadow-card overflow-hidden mb-8">
+      <!-- 列表头部 -->
+      <div class="grid grid-cols-12 gap-4 px-5 py-3 bg-surface-container text-xs font-semibold text-on-surface-variant uppercase tracking-wide">
+        <span class="col-span-4">规则名称</span>
+        <span class="col-span-3">描述</span>
+        <span class="col-span-2">状态</span>
+        <span class="col-span-3 text-right">操作</span>
+      </div>
+      <div id="automation-list" class="divide-y divide-outline-variant/50">
+
+        <!-- 列表-自动化规则1：每天9点汇总媒体数据 -->
+        <div class="automation-item grid grid-cols-12 gap-4 px-5 py-4 hover:bg-surface-container/50 transition-colors items-center" data-id="auto-1">
+          <div class="col-span-4 flex items-center gap-3">
+            <div class="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center shrink-0">
+              <i data-lucide="bar-chart-3" class="w-4 h-4 text-primary"></i>
+            </div>
+            <div>
+              <p class="text-sm font-medium text-on-surface">每天9点汇总媒体数据</p>
+              <p class="text-xs text-on-surface-variant mt-0.5">定时 · 每天 09:00</p>
+            </div>
+          </div>
+          <div class="col-span-3">
+            <p class="text-sm text-on-surface-variant">自动汇总各平台媒体运营数据，生成日报</p>
+          </div>
+          <div class="col-span-2">
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-success/15 text-success">
+              <span class="w-1.5 h-1.5 rounded-full bg-success mr-1.5"></span>运行中
+            </span>
+          </div>
+          <div class="col-span-3 flex items-center justify-end gap-3">
+            <!-- 启停开关 - 开启态 -->
+            <label class="toggle-switch relative inline-flex items-center cursor-pointer" data-automation-id="auto-1">
+              <input type="checkbox" class="sr-only peer" checked />
+              <div class="w-9 h-5 bg-surface-container-high rounded-full peer peer-checked:bg-primary transition-colors after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-4"></div>
+            </label>
+            <button id="btn-log-auto-1" class="p-1.5 rounded-md hover:bg-surface-container transition-colors text-on-surface-variant hover:text-on-surface" title="执行日志">
+              <i data-lucide="scroll-text" class="w-4 h-4"></i>
+            </button>
+            <button id="btn-edit-auto-1" class="p-1.5 rounded-md hover:bg-surface-container transition-colors text-on-surface-variant hover:text-on-surface" title="编辑">
+              <i data-lucide="pencil" class="w-4 h-4"></i>
+            </button>
+            <button id="btn-delete-auto-1" class="p-1.5 rounded-md hover:bg-surface-container transition-colors text-on-surface-variant hover:text-error" title="删除">
+              <i data-lucide="trash-2" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- 列表-自动化规则2：每2小时扫描高意向用户 -->
+        <div class="automation-item grid grid-cols-12 gap-4 px-5 py-4 hover:bg-surface-container/50 transition-colors items-center" data-id="auto-2">
+          <div class="col-span-4 flex items-center gap-3">
+            <div class="w-8 h-8 rounded-md bg-success/10 flex items-center justify-center shrink-0">
+              <i data-lucide="user-search" class="w-4 h-4 text-success"></i>
+            </div>
+            <div>
+              <p class="text-sm font-medium text-on-surface">每2小时扫描高意向用户</p>
+              <p class="text-xs text-on-surface-variant mt-0.5">定时 · 每 2 小时</p>
+            </div>
+          </div>
+          <div class="col-span-3">
+            <p class="text-sm text-on-surface-variant">自动扫描获客平台，识别高意向潜客</p>
+          </div>
+          <div class="col-span-2">
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-success/15 text-success">
+              <span class="w-1.5 h-1.5 rounded-full bg-success mr-1.5"></span>运行中
+            </span>
+          </div>
+          <div class="col-span-3 flex items-center justify-end gap-3">
+            <!-- 启停开关 - 开启态 -->
+            <label class="toggle-switch relative inline-flex items-center cursor-pointer" data-automation-id="auto-2">
+              <input type="checkbox" class="sr-only peer" checked />
+              <div class="w-9 h-5 bg-surface-container-high rounded-full peer peer-checked:bg-primary transition-colors after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-4"></div>
+            </label>
+            <button id="btn-log-auto-2" class="p-1.5 rounded-md hover:bg-surface-container transition-colors text-on-surface-variant hover:text-on-surface" title="执行日志">
+              <i data-lucide="scroll-text" class="w-4 h-4"></i>
+            </button>
+            <button id="btn-edit-auto-2" class="p-1.5 rounded-md hover:bg-surface-container transition-colors text-on-surface-variant hover:text-on-surface" title="编辑">
+              <i data-lucide="pencil" class="w-4 h-4"></i>
+            </button>
+            <button id="btn-delete-auto-2" class="p-1.5 rounded-md hover:bg-surface-container transition-colors text-on-surface-variant hover:text-error" title="删除">
+              <i data-lucide="trash-2" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- 列表-自动化规则3：好友自动消息 - 待审核 -->
+        <div class="automation-item grid grid-cols-12 gap-4 px-5 py-4 hover:bg-surface-container/50 transition-colors items-center" data-id="auto-3">
+          <div class="col-span-4 flex items-center gap-3">
+            <div class="w-8 h-8 rounded-md bg-warning/10 flex items-center justify-center shrink-0">
+              <i data-lucide="message-circle" class="w-4 h-4 text-warning"></i>
+            </div>
+            <div>
+              <p class="text-sm font-medium text-on-surface">好友自动消息</p>
+              <p class="text-xs text-on-surface-variant mt-0.5">事件 · 新好友添加时</p>
+            </div>
+          </div>
+          <div class="col-span-3">
+            <p class="text-sm text-on-surface-variant">新好友添加时自动发送欢迎消息</p>
+          </div>
+          <div class="col-span-2">
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-warning/15 text-warning">
+              <span class="w-1.5 h-1.5 rounded-full bg-warning mr-1.5"></span>待审核
+            </span>
+          </div>
+          <div class="col-span-3 flex items-center justify-end gap-3">
+            <!-- 启停开关 - 开启态（待审核但已开启） -->
+            <label class="toggle-switch relative inline-flex items-center cursor-pointer" data-automation-id="auto-3">
+              <input type="checkbox" class="sr-only peer" checked />
+              <div class="w-9 h-5 bg-surface-container-high rounded-full peer peer-checked:bg-primary transition-colors after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-4"></div>
+            </label>
+            <button id="btn-log-auto-3" class="p-1.5 rounded-md hover:bg-surface-container transition-colors text-on-surface-variant hover:text-on-surface" title="执行日志">
+              <i data-lucide="scroll-text" class="w-4 h-4"></i>
+            </button>
+            <button id="btn-edit-auto-3" class="p-1.5 rounded-md hover:bg-surface-container transition-colors text-on-surface-variant hover:text-on-surface" title="编辑">
+              <i data-lucide="pencil" class="w-4 h-4"></i>
+            </button>
+            <button id="btn-delete-auto-3" class="p-1.5 rounded-md hover:bg-surface-container transition-colors text-on-surface-variant hover:text-error" title="删除">
+              <i data-lucide="trash-2" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- 列表-自动化规则4：媒体草稿每日汇总 -->
+        <div class="automation-item grid grid-cols-12 gap-4 px-5 py-4 hover:bg-surface-container/50 transition-colors items-center" data-id="auto-4">
+          <div class="col-span-4 flex items-center gap-3">
+            <div class="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center shrink-0">
+              <i data-lucide="file-spreadsheet" class="w-4 h-4 text-primary"></i>
+            </div>
+            <div>
+              <p class="text-sm font-medium text-on-surface">媒体草稿每日汇总</p>
+              <p class="text-xs text-on-surface-variant mt-0.5">定时 · 每天 18:00</p>
+            </div>
+          </div>
+          <div class="col-span-3">
+            <p class="text-sm text-on-surface-variant">每日汇总待审核草稿，推送审核提醒</p>
+          </div>
+          <div class="col-span-2">
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-success/15 text-success">
+              <span class="w-1.5 h-1.5 rounded-full bg-success mr-1.5"></span>运行中
+            </span>
+          </div>
+          <div class="col-span-3 flex items-center justify-end gap-3">
+            <!-- 启停开关 - 开启态 -->
+            <label class="toggle-switch relative inline-flex items-center cursor-pointer" data-automation-id="auto-4">
+              <input type="checkbox" class="sr-only peer" checked />
+              <div class="w-9 h-5 bg-surface-container-high rounded-full peer peer-checked:bg-primary transition-colors after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-4"></div>
+            </label>
+            <button id="btn-log-auto-4" class="p-1.5 rounded-md hover:bg-surface-container transition-colors text-on-surface-variant hover:text-on-surface" title="执行日志">
+              <i data-lucide="scroll-text" class="w-4 h-4"></i>
+            </button>
+            <button id="btn-edit-auto-4" class="p-1.5 rounded-md hover:bg-surface-container transition-colors text-on-surface-variant hover:text-on-surface" title="编辑">
+              <i data-lucide="pencil" class="w-4 h-4"></i>
+            </button>
+            <button id="btn-delete-auto-4" class="p-1.5 rounded-md hover:bg-surface-container transition-colors text-on-surface-variant hover:text-error" title="删除">
+              <i data-lucide="trash-2" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- 新建自动化表单区域 -->
+    <div class="bg-surface rounded-lg shadow-card p-5">
+      <div class="flex items-center gap-2 mb-5">
+        <i data-lucide="plus-circle" class="w-5 h-5 text-primary"></i>
+        <h2 class="text-base font-semibold text-on-surface">新建自动化</h2>
+      </div>
+
+      <form id="form-create-automation" class="space-y-5">
+        <!-- 规则名称 -->
+        <div>
+          <label for="input-rule-name" class="block text-sm font-medium text-on-surface mb-1.5">规则名称</label>
+          <input id="input-rule-name" type="text" class="w-full bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors" placeholder="输入自动化规则名称，如"每日数据汇总"" />
+        </div>
+
+        <!-- 触发条件 -->
+        <div>
+          <label class="block text-sm font-medium text-on-surface mb-1.5">触发条件</label>
+          <div class="flex gap-3">
+            <label id="trigger-timed" class="flex-1 relative cursor-pointer">
+              <input type="radio" name="trigger-type" value="timed" class="sr-only peer" checked />
+              <div class="border-2 border-outline-variant/30 rounded-lg p-4 peer-checked:border-primary peer-checked:bg-primary/5 transition-all">
+                <div class="flex items-center gap-2 mb-1">
+                  <i data-lucide="clock" class="w-4 h-4 text-on-surface-variant peer-checked:text-primary"></i>
+                  <span class="text-sm font-medium text-on-surface">定时触发</span>
+                </div>
+                <p class="text-xs text-on-surface-variant">按固定时间间隔自动执行</p>
+              </div>
+            </label>
+            <label id="trigger-event" class="flex-1 relative cursor-pointer">
+              <input type="radio" name="trigger-type" value="event" class="sr-only peer" />
+              <div class="border-2 border-outline-variant/30 rounded-lg p-4 peer-checked:border-primary peer-checked:bg-primary/5 transition-all">
+                <div class="flex items-center gap-2 mb-1">
+                  <i data-lucide="zap" class="w-4 h-4 text-on-surface-variant"></i>
+                  <span class="text-sm font-medium text-on-surface">事件触发</span>
+                </div>
+                <p class="text-xs text-on-surface-variant">特定事件发生时自动执行</p>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- 执行动作 -->
+        <div>
+          <label class="block text-sm font-medium text-on-surface mb-1.5">执行动作</label>
+          <div class="flex gap-3">
+            <label id="action-data" class="flex-1 relative cursor-pointer">
+              <input type="radio" name="action-type" value="data-summary" class="sr-only peer" checked />
+              <div class="border-2 border-outline-variant/30 rounded-lg p-4 peer-checked:border-primary peer-checked:bg-primary/5 transition-all">
+                <div class="flex items-center gap-2 mb-1">
+                  <i data-lucide="bar-chart-3" class="w-4 h-4 text-on-surface-variant"></i>
+                  <span class="text-sm font-medium text-on-surface">数据汇总</span>
+                </div>
+                <p class="text-xs text-on-surface-variant">汇总运营数据生成报告</p>
+              </div>
+            </label>
+            <label id="action-message" class="flex-1 relative cursor-pointer">
+              <input type="radio" name="action-type" value="message-gen" class="sr-only peer" />
+              <div class="border-2 border-outline-variant/30 rounded-lg p-4 peer-checked:border-primary peer-checked:bg-primary/5 transition-all">
+                <div class="flex items-center gap-2 mb-1">
+                  <i data-lucide="message-square" class="w-4 h-4 text-on-surface-variant"></i>
+                  <span class="text-sm font-medium text-on-surface">消息生成</span>
+                </div>
+                <p class="text-xs text-on-surface-variant">自动生成回复或推送消息</p>
+              </div>
+            </label>
+            <label id="action-schedule" class="flex-1 relative cursor-pointer">
+              <input type="radio" name="action-type" value="content-schedule" class="sr-only peer" />
+              <div class="border-2 border-outline-variant/30 rounded-lg p-4 peer-checked:border-primary peer-checked:bg-primary/5 transition-all">
+                <div class="flex items-center gap-2 mb-1">
+                  <i data-lucide="calendar-clock" class="w-4 h-4 text-on-surface-variant"></i>
+                  <span class="text-sm font-medium text-on-surface">内容排期</span>
+                </div>
+                <p class="text-xs text-on-surface-variant">自动排期发布内容</p>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- 保存按钮 -->
+        <div class="flex items-center gap-3 pt-2">
+          <button id="btn-save-automation" type="button" class="bg-primary text-on-primary px-5 py-2 rounded-md text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all inline-flex items-center gap-2">
+            <i data-lucide="check" class="w-4 h-4"></i>保存
+          </button>
+          <button id="btn-cancel-automation" type="button" class="bg-surface-container text-on-surface border-none px-5 py-2 rounded-md text-sm font-medium hover:bg-surface-container-high active:scale-[0.98] transition-all">取消</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- @main-content:end -->
+  </main>
+  </div>
+
+  <!-- 删除确认弹窗 -->
+  <div id="modal-delete-confirm" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-surface rounded-xl shadow-dialog max-w-md w-full p-6">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-full bg-error/10 flex items-center justify-center shrink-0">
+          <i data-lucide="alert-triangle" class="w-5 h-5 text-error"></i>
+        </div>
+        <h3 class="text-lg font-semibold text-on-surface">确认删除</h3>
+      </div>
+      <p class="text-sm text-on-surface-variant mb-6">删除后该自动化规则将停止运行且无法恢复，确定要删除吗？</p>
+      <div class="flex justify-end gap-3">
+        <button id="btn-delete-cancel" class="bg-surface-container text-on-surface border-none px-4 py-2 rounded-md text-sm font-medium hover:bg-surface-container-high active:scale-[0.98] transition-all">取消</button>
+        <button id="btn-delete-confirm" class="bg-error text-white px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all">确认删除</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 执行日志抽屉 -->
+  <div id="drawer-log" class="fixed inset-0 z-50 hidden">
+    <div id="drawer-log-overlay" class="absolute inset-0 bg-black/50"></div>
+    <div class="absolute right-0 top-0 bottom-0 w-[480px] bg-surface shadow-dialog overflow-y-auto transform transition-transform duration-300">
+      <div class="p-5 border-b border-outline-variant/20 flex items-center justify-between">
+        <h3 class="text-base font-semibold text-on-surface">执行日志</h3>
+        <button id="btn-close-log-drawer" class="p-1.5 rounded-md hover:bg-surface-container transition-colors text-on-surface-variant hover:text-on-surface">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+      <div class="p-5 space-y-3">
+        <!-- 日志条目1 -->
+        <div class="flex gap-3">
+          <div class="flex flex-col items-center">
+            <div class="w-2 h-2 rounded-full bg-success mt-1.5 shrink-0"></div>
+            <div class="w-px flex-1 bg-outline-variant/30 mt-1"></div>
+          </div>
+          <div class="pb-4">
+            <p class="text-sm font-medium text-on-surface">执行成功</p>
+            <p class="text-xs text-on-surface-variant mt-0.5">汇总 3 个平台数据，生成日报</p>
+            <p class="text-xs text-on-surface-variant/60 mt-1">今天 09:00</p>
+          </div>
+        </div>
+        <!-- 日志条目2 -->
+        <div class="flex gap-3">
+          <div class="flex flex-col items-center">
+            <div class="w-2 h-2 rounded-full bg-success mt-1.5 shrink-0"></div>
+            <div class="w-px flex-1 bg-outline-variant/30 mt-1"></div>
+          </div>
+          <div class="pb-4">
+            <p class="text-sm font-medium text-on-surface">执行成功</p>
+            <p class="text-xs text-on-surface-variant mt-0.5">汇总 3 个平台数据，生成日报</p>
+            <p class="text-xs text-on-surface-variant/60 mt-1">昨天 09:00</p>
+          </div>
+        </div>
+        <!-- 日志条目3 -->
+        <div class="flex gap-3">
+          <div class="flex flex-col items-center">
+            <div class="w-2 h-2 rounded-full bg-warning mt-1.5 shrink-0"></div>
+            <div class="w-px flex-1 bg-outline-variant/30 mt-1"></div>
+          </div>
+          <div class="pb-4">
+            <p class="text-sm font-medium text-on-surface">部分成功</p>
+            <p class="text-xs text-on-surface-variant mt-0.5">小红书数据获取超时，其余平台正常</p>
+            <p class="text-xs text-on-surface-variant/60 mt-1">前天 09:01</p>
+          </div>
+        </div>
+        <!-- 日志条目4 -->
+        <div class="flex gap-3">
+          <div class="flex flex-col items-center">
+            <div class="w-2 h-2 rounded-full bg-success mt-1.5 shrink-0"></div>
+          </div>
+          <div>
+            <p class="text-sm font-medium text-on-surface">执行成功</p>
+            <p class="text-xs text-on-surface-variant mt-0.5">汇总 3 个平台数据，生成日报</p>
+            <p class="text-xs text-on-surface-variant/60 mt-1">3 天前 09:00</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    $(function () {
+      // 新建自动化按钮 - 滚动到底部表单区域并聚焦
+      $('#btn-create-automation').on('click', function () {
+        $('html, body').animate({ scrollTop: $('#form-create-automation').offset().top - 80 }, 400);
+        $('#input-rule-name').focus();
+      });
+
+      // 启停开关切换
+      $('#automation-list').on('change', '.toggle-switch input[type="checkbox"]', function () {
+        var $item = $(this).closest('.automation-item');
+        var autoId = $item.data('id');
+        var isEnabled = $(this).is(':checked');
+        var $statusPill = $item.find('.col-span-2 span');
+
+        if (isEnabled) {
+          // 开启：恢复之前的状态（运行中或待审核）
+          // 这里简化处理，统一设为运行中
+          $statusPill.attr('class', 'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-success/15 text-success');
+          $statusPill.html('<span class="w-1.5 h-1.5 rounded-full bg-success mr-1.5"></span>运行中');
+        } else {
+          // 关闭：设为已暂停
+          $statusPill.attr('class', 'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-surface-container-high text-on-surface-variant');
+          $statusPill.html('<span class="w-1.5 h-1.5 rounded-full bg-on-surface-variant mr-1.5"></span>已暂停');
+        }
+      });
+
+      // 执行日志按钮 - 打开日志抽屉
+      $('#automation-list').on('click', '[id^="btn-log-auto-"]', function () {
+        $('#drawer-log').removeClass('hidden');
+      });
+
+      // 关闭日志抽屉
+      $('#btn-close-log-drawer, #drawer-log-overlay').on('click', function () {
+        $('#drawer-log').addClass('hidden');
+      });
+
+      // 编辑按钮
+      // 编辑按钮 - 点击后应实现编辑自动化弹窗：
+      // 1. 弹出编辑表单弹窗，自动填入当前规则的名称、触发条件、执行动作
+      // 2. 用户可修改规则名称、触发条件（定时/事件）、执行动作（数据汇总/消息生成/内容排期）
+      // 3. 点击保存后更新列表中对应行的数据
+      // 4. 点击取消关闭弹窗不做变更
+      $('#automation-list').on('click', '[id^="btn-edit-auto-"]', function () {
+        var autoId = $(this).closest('.automation-item').data('id');
+        console.log('编辑自动化规则:', autoId, '- 应弹出编辑弹窗，预填当前规则配置');
+      });
+
+      // 删除按钮 - 打开确认弹窗
+      var deleteTargetId = null;
+      $('#automation-list').on('click', '[id^="btn-delete-auto-"]', function () {
+        deleteTargetId = $(this).closest('.automation-item').data('id');
+        $('#modal-delete-confirm').removeClass('hidden');
+      });
+
+      // 取消删除
+      $('#btn-delete-cancel').on('click', function () {
+        $('#modal-delete-confirm').addClass('hidden');
+        deleteTargetId = null;
+      });
+
+      // 确认删除
+      $('#btn-delete-confirm').on('click', function () {
+        if (deleteTargetId) {
+          $('.automation-item[data-id="' + deleteTargetId + '"]').fadeOut(300, function () {
+            $(this).remove();
+          });
+          console.log('已删除自动化规则:', deleteTargetId);
+        }
+        $('#modal-delete-confirm').addClass('hidden');
+        deleteTargetId = null;
+      });
+
+      // 保存新建自动化
+      // 保存按钮 - 点击后应实现保存自动化规则：
+      // 1. 验证规则名称不为空
+      // 2. 获取选中的触发条件（定时/事件）和执行动作（数据汇总/消息生成/内容排期）
+      // 3. 在列表顶部插入新的自动化行，状态默认为"待审核"
+      // 4. 清空表单，滚动到列表区域
+      $('#btn-save-automation').on('click', function () {
+        var ruleName = $('#input-rule-name').val().trim();
+        if (!ruleName) {
+          $('#input-rule-name').focus().addClass('ring-2 ring-error/30');
+          setTimeout(function () { $('#input-rule-name').removeClass('ring-2 ring-error/30'); }, 2000);
+          return;
+        }
+        console.log('保存自动化规则:', ruleName, '- 应在列表中新增一行并清空表单');
+        // 清空表单
+        $('#input-rule-name').val('');
+        $('html, body').animate({ scrollTop: $('#automation-list').offset().top - 80 }, 400);
+      });
+
+      // 取消新建
+      $('#btn-cancel-automation').on('click', function () {
+        $('#input-rule-name').val('');
+        $('input[name="trigger-type"][value="timed"]').prop('checked', true);
+        $('input[name="action-type"][value="data-summary"]').prop('checked', true);
+      });
+    });
+  </script>
+
+  <script>lucide.createIcons();</script>
+</body>
+
+</html>
