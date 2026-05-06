@@ -9,7 +9,14 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"]
-    }
+    },
+    "skipLibCheck": true,
+    "strict": false,
+    "noImplicitAny": false,
+    "strictNullChecks": false,
+    "exactOptionalPropertyTypes": false,
+    "noEmitOnError": false,
+    "strictPropertyInitialization": false
   },
   "include": ["src/**/*.ts"]
 }

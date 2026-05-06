@@ -37,7 +37,7 @@
     "@ai-commerce-ops/config": "workspace:*",
     "@nestjs/cli": "^10.4.8",
     "@types/node": "^22.10.2",
-    "tsx": "^4.19.2",
+    "tsx": "^4.21.0",
     "typescript": "5.4.5"
   }
 }

@@ -1,7 +1,15 @@
-import { Controller, Post, Get, Body, UseGuards, Req } from '@nestjs/common';
+import { Controller, Post, Get, Body, Query, UseGuards, Req } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthService } from './auth.service.js';
-import { SmsLoginDto, WechatLoginDto } from './dto/auth.dto.js';
+import { 
+  SmsLoginDto, 
+  WechatLoginDto, 
+  AlipayLoginDto,
+  EmailLoginDto,
+  EmailRegisterDto,
+  QRCodeGenerateDto,
+  QRCodeStatusDto 
+} from './dto/auth.dto.js';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard.js';
 
 @ApiTags('认证')
@@ -21,10 +29,40 @@ export class AuthController {
     return this.authService.loginBySms(dto);
   }
 
+  @Post('email/login')
+  @ApiOperation({ summary: '邮箱密码登录' })
+  async loginByEmail(@Body() dto: EmailLoginDto) {
+    return this.authService.loginByEmail(dto);
+  }
+
+  @Post('email/register')
+  @ApiOperation({ summary: '邮箱注册' })
+  async registerByEmail(@Body() dto: EmailRegisterDto) {
+    return this.authService.registerByEmail(dto);
+  }
+
   @Post('wechat/login')
   @ApiOperation({ summary: '微信扫码登录' })
   async loginByWechat(@Body() dto: WechatLoginDto) {
     return this.authService.loginByWechat(dto);
+  }
+
+  @Post('alipay/login')
+  @ApiOperation({ summary: '支付宝扫码登录' })
+  async loginByAlipay(@Body() dto: AlipayLoginDto) {
+    return this.authService.loginByAlipay(dto);
+  }
+
+  @Post('qrcode/generate')
+  @ApiOperation({ summary: '生成登录二维码' })
+  async generateQRCode(@Body() dto: QRCodeGenerateDto) {
+    return this.authService.generateQRCode(dto.type);
+  }
+
+  @Get('qrcode/status')
+  @ApiOperation({ summary: '查询二维码状态' })
+  async getQRCodeStatus(@Query('scene') scene: string) {
+    return this.authService.getQRCodeStatus(scene);
   }
 
   @Get('profile')

@@ -19,9 +19,9 @@
         </div>
 
         <section class="user-card" aria-label="用户登录">
-          <div class="user-avatar">未</div>
+          <div class="user-avatar" id="userAvatar">未</div>
           <div class="user-info">
-            <strong>未登录</strong>
+            <strong id="userName">未登录</strong>
             <span>登录后同步账号、审批和自动化</span>
           </div>
           <button class="login-button" id="loginBtn">登录</button>
@@ -84,6 +84,96 @@
 
         <section id="pageContent" class="page-content"></section>
       </main>
+    </div>
+
+    <!-- 登录弹窗 -->
+    <div class="login-modal" id="loginModal">
+      <div class="login-overlay" id="loginOverlay"></div>
+      <div class="login-container">
+        <button class="login-close" id="loginClose"><i data-lucide="x"></i></button>
+        <div class="login-header">
+          <div class="brand-mark" style="width:48px;height:48px;background:#f59e0b;color:#111827;font-size:20px;font-weight:800;border-radius:10px;display:grid;place-items:center;">AI</div>
+          <h2>欢迎登录</h2>
+          <p>AI Commerce Ops Dashboard</p>
+        </div>
+        
+        <!-- 登录方式切换 -->
+        <div class="login-tabs">
+          <button class="login-tab active" data-tab="sms">短信登录</button>
+          <button class="login-tab" data-tab="email">邮箱登录</button>
+          <button class="login-tab" data-tab="qrcode">扫码登录</button>
+        </div>
+        
+        <!-- 短信登录 -->
+        <div class="login-panel active" id="panel-sms">
+          <div class="form-group">
+            <input type="tel" class="input" id="smsPhone" placeholder="请输入手机号" maxlength="11">
+          </div>
+          <div class="form-group captcha-group">
+            <input type="text" class="input" id="smsCode" placeholder="请输入验证码" maxlength="6">
+            <button class="captcha-btn" id="sendSmsBtn">获取验证码</button>
+          </div>
+          <button class="primary-button full-width" id="smsLoginBtn">登录</button>
+          <p class="login-hint">登录即表示同意<a href="#">《用户协议》</a>和<a href="#">《隐私政策》</a></p>
+        </div>
+        
+        <!-- 邮箱登录 -->
+        <div class="login-panel" id="panel-email">
+          <div class="form-group">
+            <input type="email" class="input" id="emailInput" placeholder="请输入邮箱">
+          </div>
+          <div class="form-group">
+            <input type="password" class="input" id="emailPassword" placeholder="请输入密码">
+          </div>
+          <div class="form-row">
+            <a href="#" class="forgot-link">忘记密码？</a>
+          </div>
+          <button class="primary-button full-width" id="emailLoginBtn">登录</button>
+          <div class="divider"><span>或</span></div>
+          <button class="outline-button full-width" id="emailRegisterBtn">注册新账号</button>
+        </div>
+        
+        <!-- 扫码登录 -->
+        <div class="login-panel" id="panel-qrcode">
+          <div class="qrcode-tabs">
+            <button class="qrcode-tab active" data-qrtype="WECHAT">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M8.5 11a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm5 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z" fill="#07C160"/><path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2.588 20.7A1 1 0 0 0 4 22l3.532-.85A9.959 9.959 0 0 0 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2z" fill="#07C160"/></svg>
+              <span>微信</span>
+            </button>
+            <button class="qrcode-tab" data-qrtype="ALIPAY">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#1677FF"/><path d="M9.5 8.5c0-1.5 1.5-2.5 3-2.5s3 1 3 2.5c0 2-3 2.5-3 4.5h3v-2H9.5c0-2.5 3-3 3-5.5 0-2-1.5-3.5-4.5-3.5S6.5 5.5 6.5 8c0 2.5 3 3 3 5.5H6.5v2h6.5v2H12v-6.5c1.5 0 2.5-1 2.5-2.5z" fill="#FFF"/></svg>
+              <span>支付宝</span>
+            </button>
+          </div>
+          <div class="qrcode-box" id="qrcodeBox">
+            <div class="qrcode-placeholder">
+              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="3" height="3"/><rect x="18" y="14" width="3" height="3"/><rect x="14" y="18" width="3" height="3"/><rect x="18" y="18" width="3" height="3"/></svg>
+              <p>正在生成二维码...</p>
+            </div>
+          </div>
+          <div class="qrcode-status" id="qrcodeStatus">
+            <span class="dot warn"></span>
+            <span>打开<span id="scanPlatform">微信</span>扫一扫</span>
+          </div>
+          <p class="login-hint">登录后即可同步电商平台账号和媒体运营数据</p>
+        </div>
+        
+        <!-- 注册弹窗 -->
+        <div class="register-panel" id="registerPanel" style="display:none;">
+          <h3>注册新账号</h3>
+          <div class="form-group">
+            <input type="email" class="input" id="regEmail" placeholder="请输入邮箱">
+          </div>
+          <div class="form-group">
+            <input type="password" class="input" id="regPassword" placeholder="请输入密码（至少6位）">
+          </div>
+          <div class="form-group">
+            <input type="password" class="input" id="regPassword2" placeholder="请确认密码">
+          </div>
+          <button class="primary-button full-width" id="doRegisterBtn">注册</button>
+          <button class="ghost-button full-width" id="backToLoginBtn">返回登录</button>
+        </div>
+      </div>
     </div>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
