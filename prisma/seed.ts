@@ -5,25 +5,90 @@ import {
   Platform, PrismaClient, RiskLevel, SubscriptionPlan,
   SubscriptionStatus, UserRole
 } from '@prisma/client';
+import * as crypto from 'crypto';
 
 const prisma = new PrismaClient();
 
+// 开发模式密码hash (简单sha256, 密码: admin123)
+function hashPassword(password: string): string {
+  const salt = 'dev_salt';
+  return crypto.createHash('sha256').update(password + salt).digest('hex');
+}
+
 async function main(): Promise<void> {
-  // ── User ──
-  const user = await prisma.user.upsert({
-    where: { email: 'admin@example.local' },
+  // ── User (SMS登录测试) ──
+  const smsUser = await prisma.user.upsert({
+    where: { phone: '13800138000' },
     update: {},
     create: {
-      email: 'admin@example.local',
+      email: 'sms@example.local',
       phone: '13800138000',
-      name: 'Local Admin',
-      passwordHash: '$2b$10$dummy.hash.for.dev.only',
+      name: '短信测试用户',
+      passwordHash: hashPassword('admin123'),
       avatarUrl: null,
       wechatOpenId: null,
+      alipayOpenId: null,
       loginMethod: LoginMethod.SMS,
       lastLoginAt: new Date()
     }
   });
+
+  // ── User (Email登录测试) ──
+  const emailUser = await prisma.user.upsert({
+    where: { email: 'admin@example.local' },
+    update: {},
+    create: {
+      email: 'admin@example.local',
+      phone: '13800138001',
+      name: '管理员',
+      passwordHash: hashPassword('admin123'),
+      avatarUrl: null,
+      wechatOpenId: null,
+      alipayOpenId: null,
+      loginMethod: LoginMethod.EMAIL,
+      lastLoginAt: new Date()
+    }
+  });
+
+  // ── User (微信登录测试) ──
+  const wechatUser = await prisma.user.upsert({
+    where: { wechatOpenId: 'wx_test_dev' },
+    update: {},
+    create: {
+      email: 'wechat@example.local',
+      phone: '13800138002',
+      name: '微信测试用户',
+      passwordHash: '',
+      avatarUrl: null,
+      wechatOpenId: 'wx_test_dev',
+      alipayOpenId: null,
+      loginMethod: LoginMethod.WECHAT,
+      lastLoginAt: new Date()
+    }
+  });
+
+  // ── User (支付宝登录测试) ──
+  const alipayUser = await prisma.user.upsert({
+    where: { alipayOpenId: 'ali_test_dev' },
+    update: {},
+    create: {
+      email: 'alipay@example.local',
+      phone: '13800138003',
+      name: '支付宝测试用户',
+      passwordHash: '',
+      avatarUrl: null,
+      wechatOpenId: null,
+      alipayOpenId: 'ali_test_dev',
+      loginMethod: LoginMethod.ALIPAY,
+      lastLoginAt: new Date()
+    }
+  });
+
+  console.log('✅ 创建了4个测试用户:');
+  console.log('  1. 短信登录: 手机号 13800138000, 验证码 888888');
+  console.log('  2. 邮箱登录: admin@example.local / admin123');
+  console.log('  3. 微信登录: 开发模式 wx_test_dev');
+  console.log('  4. 支付宝登录: 开发模式 ali_test_dev');
 
   // ── Team ──
   const team = await prisma.team.upsert({
@@ -36,32 +101,36 @@ async function main(): Promise<void> {
   });
 
   // ── TeamMember ──
-  await prisma.teamMember.upsert({
-    where: { teamId_userId: { teamId: team.id, userId: user.id } },
-    update: { role: UserRole.OWNER },
-    create: {
-      teamId: team.id,
-      userId: user.id,
-      role: UserRole.OWNER
-    }
-  });
-
-  // ── Subscription ──
-  const existingSub = await prisma.subscription.findFirst({ where: { userId: user.id } });
-  if (!existingSub) {
-    await prisma.subscription.create({
-      data: {
+  for (const user of [smsUser, emailUser, wechatUser, alipayUser]) {
+    await prisma.teamMember.upsert({
+      where: { teamId_userId: { teamId: team.id, userId: user.id } },
+      update: { role: UserRole.OWNER },
+      create: {
+        teamId: team.id,
         userId: user.id,
-        plan: SubscriptionPlan.PROFESSIONAL,
-        status: SubscriptionStatus.ACTIVE,
-        startedAt: new Date(),
-        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-        aiQuotaDaily: 500,
-        aiQuotaUsed: 0,
-        cdpConcurrency: 3,
-        acquisitionLimit: 50
+        role: UserRole.OWNER
       }
     });
+  }
+
+  // ── Subscription ──
+  for (const user of [smsUser, emailUser, wechatUser, alipayUser]) {
+    const existingSub = await prisma.subscription.findFirst({ where: { userId: user.id } });
+    if (!existingSub) {
+      await prisma.subscription.create({
+        data: {
+          userId: user.id,
+          plan: SubscriptionPlan.PROFESSIONAL,
+          status: SubscriptionStatus.ACTIVE,
+          startedAt: new Date(),
+          expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+          aiQuotaDaily: 500,
+          aiQuotaUsed: 0,
+          cdpConcurrency: 3,
+          acquisitionLimit: 50
+        }
+      });
+    }
   }
 
   // ── Platform Accounts ──
@@ -123,24 +192,26 @@ async function main(): Promise<void> {
   }
 
   // ── AI Key (demo) ──
-  const existingKey = await prisma.aiKey.findFirst({ where: { userId: user.id } });
-  if (!existingKey) {
-    await prisma.aiKey.create({
-      data: {
-        userId: user.id,
-        label: 'OpenAI GPT-4o',
-        provider: AiKeyProvider.OPENAI,
-        endpoint: 'https://api.openai.com/v1',
-        encryptedKey: 'demo-encrypted-key',
-        iv: 'demo-iv',
-        authTag: 'demo-auth-tag',
-        defaultModel: 'gpt-4o-mini',
-        advancedModel: 'gpt-4o',
-        embeddingModel: 'text-embedding-3-small',
-        isDefault: true,
-        status: AiKeyStatus.ACTIVE
-      }
-    });
+  for (const user of [smsUser, emailUser]) {
+    const existingKey = await prisma.aiKey.findFirst({ where: { userId: user.id } });
+    if (!existingKey) {
+      await prisma.aiKey.create({
+        data: {
+          userId: user.id,
+          label: 'OpenAI GPT-4o',
+          provider: AiKeyProvider.OPENAI,
+          endpoint: 'https://api.openai.com/v1',
+          encryptedKey: 'demo-encrypted-key',
+          iv: 'demo-iv',
+          authTag: 'demo-auth-tag',
+          defaultModel: 'gpt-4o-mini',
+          advancedModel: 'gpt-4o',
+          embeddingModel: 'text-embedding-3-small',
+          isDefault: true,
+          status: AiKeyStatus.ACTIVE
+        }
+      });
+    }
   }
 
   // ── Acquisition Task (demo) ──

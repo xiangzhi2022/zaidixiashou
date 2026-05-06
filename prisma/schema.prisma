@@ -98,7 +98,9 @@ enum AutopilotLevel {
 
 enum LoginMethod {
   WECHAT
+  ALIPAY
   SMS
+  EMAIL
   PASSWORD
 }
 
@@ -168,6 +170,7 @@ enum AiKeyStatus {
   TESTING
   FAILED
   DISABLED
+  DELETED
 }
 
 model User {
@@ -179,6 +182,7 @@ model User {
   avatarUrl     String?
   wechatOpenId  String?          @unique
   wechatUnionId String?
+  alipayOpenId  String?          @unique
   loginMethod   LoginMethod      @default(SMS)
   lastLoginAt   DateTime?
   createdAt     DateTime         @default(now())
@@ -429,24 +433,37 @@ model CdpSession {
 // ──────────────── SaaS 订阅与支付 ────────────────
 
 model Subscription {
-  id              String             @id @default(cuid())
-  userId          String
-  plan            SubscriptionPlan   @default(FREE)
-  status          SubscriptionStatus @default(ACTIVE)
-  startedAt       DateTime           @default(now())
-  expiresAt       DateTime?
-  cancelledAt     DateTime?
-  aiQuotaDaily    Int                @default(100)
-  aiQuotaUsed     Int                @default(0)
-  cdpConcurrency  Int                @default(1)
-  acquisitionLimit Int              @default(5)
-  createdAt       DateTime           @default(now())
-  updatedAt       DateTime           @updatedAt
-  user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  payments        Payment[]
+  id                   String             @id @default(cuid())
+  userId               String
+  plan                 SubscriptionPlan   @default(FREE)
+  status               SubscriptionStatus @default(ACTIVE)
+  startedAt            DateTime           @default(now())
+  expiresAt            DateTime?
+  cancelledAt          DateTime?
+  currentPeriodStart   DateTime           @default(now())
+  currentPeriodEnd     DateTime?
+  aiQuotaDaily         Int                @default(100)
+  aiQuotaUsed          Int                @default(0)
+  cdpConcurrency       Int                @default(1)
+  acquisitionLimit     Int                @default(5)
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  user                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  payments             Payment[]
 
   @@index([userId, status])
   @@map("subscriptions")
+}
+
+model UsageLog {
+  id        String   @id @default(cuid())
+  userId    String
+  resource  String   // AI_CALL, API_CALL, etc.
+  amount    Int      @default(1)
+  createdAt DateTime @default(now())
+
+  @@index([userId, resource, createdAt])
+  @@map("usage_logs")
 }
 
 model Payment {
@@ -579,4 +596,49 @@ model AiConfig {
   @@map("ai_configs")
 }
 
+// ──────────────── 登录与验证码 ────────────────
+
+model SMSVerification {
+  id        String   @id @default(cuid())
+  phone     String
+  code      String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([phone, code])
+  @@index([expiresAt])
+  @@map("sms_verifications")
+}
+
+model LoginQRCode {
+  id           String         @id @default(cuid())
+  scene        String         @unique  // 二维码场景ID
+  type         QRCodeType     // WECHAT | ALIPAY
+  state        QRCodeState    @default(PENDING)
+  userId       String?
+  openId       String?        // 第三方平台openId
+  expiresAt    DateTime
+  scannedAt    DateTime?
+  confirmedAt  DateTime?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  @@index([scene])
+  @@index([expiresAt])
+  @@map("login_qrcodes")
+}
+
+enum QRCodeType {
+  WECHAT
+  ALIPAY
+}
+
+enum QRCodeState {
+  PENDING
+  SCANNED
+  CONFIRMED
+  EXPIRED
+  CANCELED
+}
 

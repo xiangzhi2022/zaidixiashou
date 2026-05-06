@@ -932,3 +932,390 @@ svg {
     grid-template-columns: 1fr;
   }
 }
+
+/* ============ 登录弹窗样式 ============ */
+
+.login-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-modal.active {
+  display: flex;
+}
+
+.login-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+}
+
+.login-container {
+  position: relative;
+  width: 400px;
+  max-width: calc(100vw - 32px);
+  background: #fff;
+  border-radius: 16px;
+  padding: 32px;
+  box-shadow: 0 24px 48px rgba(15, 23, 42, 0.2);
+}
+
+.login-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: #f1f5f9;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  color: #64748b;
+  transition: all 0.15s;
+}
+
+.login-close:hover {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+
+.login-close svg {
+  width: 18px;
+  height: 18px;
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.login-header h2 {
+  margin: 12px 0 4px;
+  font-size: 22px;
+  color: #1e293b;
+}
+
+.login-header p {
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.login-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  padding: 4px;
+  background: #f1f5f9;
+  border-radius: 10px;
+}
+
+.login-tab {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.login-tab:hover {
+  color: #1e293b;
+}
+
+.login-tab.active {
+  background: #fff;
+  color: #1e293b;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.login-panel {
+  display: none;
+}
+
+.login-panel.active {
+  display: block;
+}
+
+.form-group {
+  margin-bottom: 14px;
+}
+
+.form-group .input {
+  width: 100%;
+  height: 44px;
+  padding: 0 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 14px;
+  transition: border-color 0.15s;
+}
+
+.form-group .input:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.captcha-group {
+  display: flex;
+  gap: 10px;
+}
+
+.captcha-group .input {
+  flex: 1;
+}
+
+.captcha-btn {
+  min-width: 110px;
+  height: 44px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+  font-size: 13px;
+  color: #2563eb;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.captcha-btn:hover:not(:disabled) {
+  background: #eff6ff;
+  border-color: #2563eb;
+}
+
+.captcha-btn:disabled {
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.primary-button.full-width {
+  height: 46px;
+  border: none;
+  border-radius: 10px;
+  background: #f59e0b;
+  color: #111827;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.primary-button.full-width:hover {
+  background: #d97706;
+}
+
+.outline-button.full-width {
+  height: 46px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+  color: #1e293b;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.outline-button.full-width:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.login-hint {
+  margin: 16px 0 0;
+  text-align: center;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.login-hint a {
+  color: #2563eb;
+  text-decoration: none;
+}
+
+.login-hint a:hover {
+  text-decoration: underline;
+}
+
+.form-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 14px;
+}
+
+.forgot-link {
+  font-size: 13px;
+  color: #2563eb;
+  text-decoration: none;
+}
+
+.forgot-link:hover {
+  text-decoration: underline;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 20px 0;
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: #e2e8f0;
+}
+
+/* 扫码登录 */
+.qrcode-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  justify-content: center;
+}
+
+.qrcode-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+  font-size: 14px;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.qrcode-tab:hover {
+  border-color: #cbd5e1;
+  color: #1e293b;
+}
+
+.qrcode-tab.active {
+  border-color: #2563eb;
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.qrcode-box {
+  width: 200px;
+  height: 200px;
+  margin: 0 auto 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+}
+
+.qrcode-placeholder {
+  text-align: center;
+  color: #94a3b8;
+}
+
+.qrcode-placeholder p {
+  margin: 12px 0 0;
+  font-size: 13px;
+}
+
+.qrcode-box canvas {
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.qrcode-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #1e293b;
+}
+
+.qrcode-status .dot {
+  width: 8px;
+  height: 8px;
+}
+
+.qrcode-status .dot.ok {
+  background: #22c55e;
+}
+
+.qrcode-status .dot.warn {
+  background: #f59e0b;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* 注册面板 */
+.register-panel {
+  text-align: center;
+}
+
+.register-panel h3 {
+  margin: 0 0 20px;
+  font-size: 18px;
+  color: #1e293b;
+}
+
+.register-panel .form-group {
+  text-align: left;
+}
+
+.register-panel .ghost-button {
+  margin-top: 10px;
+}
+
+/* 已登录状态 */
+.user-card.logged-in .login-button {
+  display: none;
+}
+
+.user-card.logged-in .logout-btn {
+  display: block;
+}
+
+.logout-btn {
+  display: none;
+  min-height: 32px;
+  border: 0;
+  border-radius: 8px;
+  padding: 0 10px;
+  background: #ef4444;
+  color: #fff;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.logout-btn:hover {
+  background: #dc2626;
+}

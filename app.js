@@ -85,6 +85,365 @@ const pages = {
   },
 };
 
+// ============ 登录状态管理 ============
+const AUTH_TOKEN_KEY = 'auth_token';
+const AUTH_USER_KEY = 'auth_user';
+let currentUser = null;
+let currentQRCodeType = 'WECHAT';
+let qrCodePollInterval = null;
+
+// ============ 登录弹窗控制 ============
+function openLoginModal() {
+  const modal = $('#loginModal');
+  modal.classList.add('active');
+  // 初始化二维码
+  if ($('.login-tab.active')?.dataset.tab === 'qrcode') {
+    generateQRCode();
+  }
+}
+
+function closeLoginModal() {
+  const modal = $('#loginModal');
+  modal.classList.remove('active');
+  // 停止轮询
+  if (qrCodePollInterval) {
+    clearInterval(qrCodePollInterval);
+    qrCodePollInterval = null;
+  }
+}
+
+function switchLoginTab(tab) {
+  document.querySelectorAll('.login-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.login-panel').forEach(p => p.classList.remove('active'));
+  
+  $(`.login-tab[data-tab="${tab}"]`)?.classList.add('active');
+  $(`#panel-${tab}`)?.classList.add('active');
+  
+  // 切换到扫码登录时生成二维码
+  if (tab === 'qrcode') {
+    generateQRCode();
+  } else if (qrCodePollInterval) {
+    clearInterval(qrCodePollInterval);
+    qrCodePollInterval = null;
+  }
+}
+
+function switchQRCodeType(type) {
+  currentQRCodeType = type;
+  document.querySelectorAll('.qrcode-tab').forEach(t => t.classList.remove('active'));
+  $(`.qrcode-tab[data-qrtype="${type}"]`)?.classList.add('active');
+  $('#scanPlatform').textContent = type === 'WECHAT' ? '微信' : '支付宝';
+  generateQRCode();
+}
+
+// ============ 登录 API 调用 ============
+const API_BASE = '/api';
+
+async function apiRequest(endpoint, options = {}) {
+  const token = localStorage.getItem(AUTH_TOKEN_KEY);
+  const headers = {
+    'Content-Type': 'application/json',
+    ...options.headers,
+  };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  
+  const response = await fetch(`${API_BASE}${endpoint}`, {
+    ...options,
+    headers,
+  });
+  
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: '请求失败' }));
+    throw new Error(error.message || '请求失败');
+  }
+  
+  return response.json();
+}
+
+// 发送短信验证码
+async function sendSmsCode() {
+  const phone = $('#smsPhone').value.trim();
+  if (!phone || !/^1\d{10}$/.test(phone)) {
+    showToast('请输入正确的手机号');
+    return;
+  }
+  
+  const btn = $('#sendSmsBtn');
+  btn.disabled = true;
+  btn.textContent = '发送中...';
+  
+  try {
+    await apiRequest('/auth/sms/send', {
+      method: 'POST',
+      body: JSON.stringify({ phone }),
+    });
+    
+    showToast('验证码已发送');
+    // 60秒倒计时
+    let countdown = 60;
+    const timer = setInterval(() => {
+      countdown--;
+      btn.textContent = `${countdown}秒后重试`;
+      if (countdown <= 0) {
+        clearInterval(timer);
+        btn.disabled = false;
+        btn.textContent = '获取验证码';
+      }
+    }, 1000);
+  } catch (error) {
+    showToast(error.message);
+    btn.disabled = false;
+    btn.textContent = '获取验证码';
+  }
+}
+
+// 短信登录
+async function loginBySms() {
+  const phone = $('#smsPhone').value.trim();
+  const code = $('#smsCode').value.trim();
+  
+  if (!phone || !/^1\d{10}$/.test(phone)) {
+    showToast('请输入正确的手机号');
+    return;
+  }
+  if (!code || code.length !== 6) {
+    showToast('请输入6位验证码');
+    return;
+  }
+  
+  try {
+    const result = await apiRequest('/auth/sms/login', {
+      method: 'POST',
+      body: JSON.stringify({ phone, code }),
+    });
+    
+    handleLoginSuccess(result);
+  } catch (error) {
+    showToast(error.message);
+  }
+}
+
+// 邮箱登录
+async function loginByEmail() {
+  const email = $('#emailInput').value.trim();
+  const password = $('#emailPassword').value;
+  
+  if (!email || !/^[\w.-]+@[\w.-]+\.\w+$/.test(email)) {
+    showToast('请输入正确的邮箱');
+    return;
+  }
+  if (!password || password.length < 6) {
+    showToast('密码至少6位');
+    return;
+  }
+  
+  try {
+    const result = await apiRequest('/auth/email/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    });
+    
+    handleLoginSuccess(result);
+  } catch (error) {
+    showToast(error.message);
+  }
+}
+
+// 邮箱注册
+async function registerByEmail() {
+  const email = $('#regEmail').value.trim();
+  const password = $('#regPassword').value;
+  const password2 = $('#regPassword2').value;
+  
+  if (!email || !/^[\w.-]+@[\w.-]+\.\w+$/.test(email)) {
+    showToast('请输入正确的邮箱');
+    return;
+  }
+  if (!password || password.length < 6) {
+    showToast('密码至少6位');
+    return;
+  }
+  if (password !== password2) {
+    showToast('两次密码不一致');
+    return;
+  }
+  
+  try {
+    const result = await apiRequest('/auth/email/register', {
+      method: 'POST',
+      body: JSON.stringify({ email, password, name: email.split('@')[0] }),
+    });
+    
+    handleLoginSuccess(result);
+  } catch (error) {
+    showToast(error.message);
+  }
+}
+
+// 生成二维码
+async function generateQRCode() {
+  const qrcodeBox = $('#qrcodeBox');
+  const status = $('#qrcodeStatus');
+  
+  // 显示加载状态
+  qrcodeBox.innerHTML = `
+    <div class="qrcode-placeholder">
+      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" stroke-width="1.5">
+        <rect x="3" y="3" width="7" height="7" rx="1"/>
+        <rect x="14" y="3" width="7" height="7" rx="1"/>
+        <rect x="3" y="14" width="7" height="7" rx="1"/>
+        <rect x="14" y="14" width="3" height="3"/>
+        <rect x="18" y="14" width="3" height="3"/>
+        <rect x="14" y="18" width="3" height="3"/>
+        <rect x="18" y="18" width="3" height="3"/>
+      </svg>
+      <p>正在生成二维码...</p>
+    </div>
+  `;
+  
+  try {
+    const result = await apiRequest('/auth/qrcode/generate', {
+      method: 'POST',
+      body: JSON.stringify({ type: currentQRCodeType }),
+    });
+    
+    // 生成二维码图片 (使用 qrcode.js 或简单模拟)
+    // 实际项目中这里会调用微信/支付宝SDK
+    qrcodeBox.innerHTML = `
+      <div style="text-align:center;padding:20px;">
+        <div style="width:160px;height:160px;margin:0 auto;background:#f8fafc;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;color:#94a3b8;">
+          <div>
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" stroke-width="1.5">
+              <rect x="3" y="3" width="7" height="7" rx="1"/>
+              <rect x="14" y="3" width="7" height="7" rx="1"/>
+              <rect x="3" y="14" width="7" height="7" rx="1"/>
+              <rect x="14" y="14" width="3" height="3"/>
+              <rect x="18" y="14" width="3" height="3"/>
+              <rect x="14" y="18" width="3" height="3"/>
+              <rect x="18" y="18" width="3" height="3"/>
+            </svg>
+            <p style="margin:8px 0 0;font-size:11px;">${currentQRCodeType === 'WECHAT' ? '微信' : '支付宝'}<br>扫码登录</p>
+            <p style="margin:4px 0 0;color:#f59e0b;font-size:10px;">开发模式</p>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    // 更新状态
+    const platformName = currentQRCodeType === 'WECHAT' ? '微信' : '支付宝';
+    status.innerHTML = `<span class="dot warn"></span><span>打开${platformName}扫一扫</span>`;
+    
+    // 开发模式：直接轮询状态
+    // 实际项目中，二维码会被微信/支付宝扫描后回调
+    if (qrCodePollInterval) clearInterval(qrCodePollInterval);
+    qrCodePollInterval = setInterval(async () => {
+      await pollQRCodeStatus(result.scene);
+    }, 2000);
+    
+  } catch (error) {
+    qrcodeBox.innerHTML = `
+      <div class="qrcode-placeholder">
+        <p>生成失败，请重试</p>
+      </div>
+    `;
+    showToast(error.message);
+  }
+}
+
+// 轮询二维码状态
+async function pollQRCodeStatus(scene) {
+  try {
+    const result = await apiRequest(`/auth/qrcode/status?scene=${scene}`);
+    
+    if (result.state === 'CONFIRMED') {
+      // 登录成功
+      clearInterval(qrCodePollInterval);
+      qrCodePollInterval = null;
+      handleLoginSuccess(result.tokens);
+    } else if (result.state === 'EXPIRED') {
+      // 二维码过期
+      clearInterval(qrCodePollInterval);
+      qrCodePollInterval = null;
+      showToast('二维码已过期，请刷新');
+    }
+  } catch (error) {
+    // 忽略轮询错误
+  }
+}
+
+// 处理登录成功
+function handleLoginSuccess(result) {
+  localStorage.setItem(AUTH_TOKEN_KEY, result.accessToken);
+  localStorage.setItem(AUTH_REFRESH_TOKEN_KEY, result.refreshToken);
+  
+  // 获取用户信息
+  apiRequest('/auth/profile').then(user => {
+    currentUser = user;
+    localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user));
+    updateUserUI(user);
+    closeLoginModal();
+    showToast(`欢迎回来，${user.name}`);
+  }).catch(() => {
+    // 如果获取用户信息失败，仍然认为登录成功
+    updateUserUI({ name: '用户', phone: '', email: '' });
+    closeLoginModal();
+    showToast('登录成功');
+  });
+}
+
+// 登出
+function logout() {
+  localStorage.removeItem(AUTH_TOKEN_KEY);
+  localStorage.removeItem(AUTH_REFRESH_TOKEN_KEY);
+  localStorage.removeItem(AUTH_USER_KEY);
+  currentUser = null;
+  updateUserUI(null);
+  showToast('已退出登录');
+}
+
+// 更新用户 UI
+function updateUserUI(user) {
+  const userCard = $('.user-card');
+  const userAvatar = $('#userAvatar');
+  const userName = $('#userName');
+  const loginBtn = $('#loginBtn');
+  
+  if (user) {
+    userCard.classList.add('logged-in');
+    userAvatar.textContent = user.name.charAt(0).toUpperCase();
+    userName.textContent = user.name;
+    
+    // 添加退出按钮
+    if (!userCard.querySelector('.logout-btn')) {
+      const logoutBtn = document.createElement('button');
+      logoutBtn.className = 'logout-btn';
+      logoutBtn.textContent = '退出';
+      logoutBtn.onclick = logout;
+      userCard.appendChild(logoutBtn);
+    }
+  } else {
+    userCard.classList.remove('logged-in');
+    userAvatar.textContent = '未';
+    userName.textContent = '未登录';
+    userCard.querySelector('.logout-btn')?.remove();
+  }
+}
+
+// 检查登录状态
+function checkAuthStatus() {
+  const userJson = localStorage.getItem(AUTH_USER_KEY);
+  if (userJson) {
+    try {
+      currentUser = JSON.parse(userJson);
+      updateUserUI(currentUser);
+    } catch (e) {
+      localStorage.removeItem(AUTH_USER_KEY);
+    }
+  }
+}
+
 const $ = (selector) => document.querySelector(selector);
 
 function metric(label, value, note, tone = "") {
@@ -487,10 +846,56 @@ document.addEventListener("click", (event) => {
 
   if (event.target.closest("#runCommandBtn")) showToast("已生成执行计划，等待确认");
   if (event.target.closest("#refreshBtn")) showToast("数据已刷新");
-  if (event.target.closest("#loginBtn")) showToast("登录面板将在这里打开");
+  
+  // 登录弹窗事件
+  if (event.target.closest("#loginBtn")) openLoginModal();
+  if (event.target.closest("#loginClose") || event.target.closest("#loginOverlay")) closeLoginModal();
+  
+  // 登录方式切换
+  if (event.target.closest(".login-tab")) {
+    switchLoginTab(event.target.closest(".login-tab").dataset.tab);
+  }
+  
+  // 扫码类型切换
+  if (event.target.closest(".qrcode-tab")) {
+    switchQRCodeType(event.target.closest(".qrcode-tab").dataset.qrtype);
+  }
+  
+  // 发送短信验证码
+  if (event.target.closest("#sendSmsBtn")) sendSmsCode();
+  
+  // 短信登录
+  if (event.target.closest("#smsLoginBtn")) loginBySms();
+  
+  // 邮箱登录
+  if (event.target.closest("#emailLoginBtn")) loginByEmail();
+  
+  // 邮箱注册
+  if (event.target.closest("#emailRegisterBtn")) {
+    $('#registerPanel').style.display = 'block';
+    $('#panel-email').style.display = 'none';
+  }
+  
+  // 返回登录
+  if (event.target.closest("#backToLoginBtn")) {
+    $('#registerPanel').style.display = 'none';
+    $('#panel-email').style.display = 'block';
+  }
+  
+  // 执行注册
+  if (event.target.closest("#doRegisterBtn")) registerByEmail();
+  
   if (event.target.closest(".js-approve")) showToast("已批准，进入执行队列");
   if (event.target.closest(".js-deny")) showToast("已驳回，保留记录");
   if (event.target.closest(".js-action")) showToast("操作已加入工作流");
 });
 
+// 键盘事件 - ESC 关闭弹窗
+document.addEventListener("keydown", (event) => {
+  if (event.key === 'Escape') {
+    closeLoginModal();
+  }
+});
+
 setPage("overview");
+checkAuthStatus();
