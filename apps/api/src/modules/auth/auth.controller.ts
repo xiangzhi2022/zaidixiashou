@@ -69,7 +69,7 @@ export class AuthController {
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: '获取当前用户信息' })
-  async getProfile(@Req() req: { user: { id: string } }) {
-    return this.authService.getProfile(req.user.id);
+  async getProfile(@Req() req: { user: { sub: string } }) {
+    return this.authService.getProfile(req.user.sub);
   }
 }

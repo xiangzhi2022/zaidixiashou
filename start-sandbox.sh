@@ -107,18 +107,80 @@ log_step "检查基础设施..."
 HAS_PG=false
 HAS_REDIS=false
 
+# --- PostgreSQL ---
 if command -v pg_isready &>/dev/null && pg_isready -q 2>/dev/null; then
   HAS_PG=true
-  log_info "PostgreSQL: 可用"
+  log_info "PostgreSQL: 已运行"
+elif command -v pg_ctlcluster &>/dev/null; then
+  log_step "正在启动 PostgreSQL..."
+  pg_ctlcluster 16 main start &>/dev/null 2>&1
+  sleep 2
+  if pg_isready -q 2>/dev/null; then
+    HAS_PG=true
+    log_info "PostgreSQL: 启动成功"
+    # 确保 dev 用户和 ai_commerce_ops 数据库存在
+    su - postgres -c "psql -c \"SELECT 1 FROM pg_roles WHERE rolname='dev'\"" -tA 2>/dev/null | grep -q 1 || \
+      su - postgres -c "psql -c \"CREATE USER dev WITH PASSWORD 'dev' SUPERUSER;\"" &>/dev/null
+    su - postgres -c "psql -lqt" 2>/dev/null | cut -d '|' -f1 | grep -qw ai_commerce_ops || \
+      su - postgres -c "psql -c \"CREATE DATABASE ai_commerce_ops OWNER dev;\"" &>/dev/null
+  else
+    log_warn "PostgreSQL: 启动失败（将使用 Mock API）"
+  fi
 else
-  log_warn "PostgreSQL: 不可用（将使用 Mock API）"
+  # PostgreSQL 未安装 → 自动安装
+  log_step "PostgreSQL 未安装，正在自动安装..."
+  DEBIAN_FRONTEND=noninteractive apt-get update -qq &>/dev/null
+  DEBIAN_FRONTEND=noninteractive apt-get install -y -qq postgresql postgresql-client &>/dev/null
+  if command -v pg_ctlcluster &>/dev/null; then
+    log_step "正在启动 PostgreSQL..."
+    pg_ctlcluster 16 main start &>/dev/null 2>&1 || pg_ctlcluster 14 main start &>/dev/null 2>&1 || true
+    sleep 3
+    if pg_isready -q 2>/dev/null; then
+      HAS_PG=true
+      log_info "PostgreSQL: 安装并启动成功"
+      su - postgres -c "psql -c \"SELECT 1 FROM pg_roles WHERE rolname='dev'\"" -tA 2>/dev/null | grep -q 1 || \
+        su - postgres -c "psql -c \"CREATE USER dev WITH PASSWORD 'dev' SUPERUSER;\"" &>/dev/null
+      su - postgres -c "psql -lqt" 2>/dev/null | cut -d '|' -f1 | grep -qw ai_commerce_ops || \
+        su - postgres -c "psql -c \"CREATE DATABASE ai_commerce_ops OWNER dev;\"" &>/dev/null
+    else
+      log_warn "PostgreSQL: 安装后启动失败（将使用 Mock API）"
+    fi
+  else
+    log_warn "PostgreSQL: 自动安装失败（将使用 Mock API）"
+  fi
 fi
 
+# --- Redis ---
 if command -v redis-cli &>/dev/null && redis-cli ping &>/dev/null 2>&1; then
   HAS_REDIS=true
-  log_info "Redis: 可用"
+  log_info "Redis: 已运行"
+elif command -v redis-server &>/dev/null; then
+  log_step "正在启动 Redis..."
+  redis-server --daemonize yes --port 6379 &>/dev/null 2>&1
+  sleep 1
+  if redis-cli ping &>/dev/null 2>&1; then
+    HAS_REDIS=true
+    log_info "Redis: 启动成功"
+  else
+    log_warn "Redis: 启动失败（将使用 Mock API）"
+  fi
 else
-  log_warn "Redis: 不可用（将使用 Mock API）"
+  # Redis 未安装 → 自动安装
+  log_step "Redis 未安装，正在自动安装..."
+  DEBIAN_FRONTEND=noninteractive apt-get install -y -qq redis-server &>/dev/null
+  if command -v redis-server &>/dev/null; then
+    log_step "正在启动 Redis..."
+    redis-server --daemonize yes --port 6379 &>/dev/null 2>&1
+    sleep 1
+    if redis-cli ping &>/dev/null 2>&1; then
+      HAS_REDIS=true
+      log_info "Redis: 安装并启动成功"
+    else
+      log_warn "Redis: 安装后启动失败（将使用 Mock API）"
+    fi
+  else
+    log_warn "Redis: 自动安装失败（将使用 Mock API）"
+  fi
 fi
 
 # 1.6 清理残留端口
@@ -147,9 +209,31 @@ fi
 # 2.2 决定 API 模式
 if [ "$HAS_PG" = true ] && [ "$HAS_REDIS" = true ]; then
   API_MODE="full"
+
+  # 2.2.1 数据库迁移与初始化
+  log_step "同步数据库 Schema..."
+  DATABASE_URL="${DATABASE_URL:-postgresql://dev:dev@localhost:5432/ai_commerce_ops}" \
+    npx prisma db push --schema prisma/schema.prisma --accept-data-loss 2>&1 | tail -5
+  log_info "数据库同步完成"
+
+  log_step "生成 Prisma Client..."
+  DATABASE_URL="${DATABASE_URL:-postgresql://dev:dev@localhost:5432/ai_commerce_ops}" \
+    npx prisma generate --schema prisma/schema.prisma 2>&1 | tail -3
+
   log_step "构建完整 API..."
-  pnpm --filter api build 2>&1 | tail -3
+  pnpm --filter api build 2>&1 | tail -5
   log_info "API 构建完成"
+
+  log_step "检查种子数据..."
+  USER_COUNT=$(DATABASE_URL="${DATABASE_URL:-postgresql://dev:dev@localhost:5432/ai_commerce_ops}" \
+    su - postgres -c "psql -d ai_commerce_ops -t -c 'SELECT count(*) FROM users;'" 2>/dev/null | tr -d ' ')
+  if [ -z "$USER_COUNT" ] || [ "$USER_COUNT" = "0" ]; then
+    log_info "初始化种子数据..."
+    DATABASE_URL="${DATABASE_URL:-postgresql://dev:dev@localhost:5432/ai_commerce_ops}" \
+      npx tsx prisma/seed.ts 2>&1 | tail -3
+  else
+    log_info "数据库已有 $USER_COUNT 个用户，跳过种子"
+  fi
 else
   API_MODE="mock"
   log_info "使用 Mock API 模式（无需 PostgreSQL/Redis）"
@@ -164,20 +248,19 @@ log_header "Phase 3: 启动服务"
 log_step "启动 API 服务 (端口 3001)..."
 if [ "$API_MODE" = "full" ]; then
   # 完整模式：NestJS API
-  cd apps/api
   DATABASE_URL="${DATABASE_URL:-postgresql://dev:dev@localhost:5432/ai_commerce_ops}" \
   REDIS_URL="${REDIS_URL:-redis://localhost:6379}" \
   JWT_SECRET="${JWT_SECRET:-dev-jwt-secret-change-in-production-min-32-chars}" \
   CREDENTIAL_ENCRYPTION_KEY="${CREDENTIAL_ENCRYPTION_KEY:-$(printf 'a%.0s' {1..64})}" \
   S3_BUCKET="${S3_BUCKET:-mock-bucket}" \
   S3_ENDPOINT="${S3_ENDPOINT:-http://localhost:9000}" \
-  node dist/main.js > "$LOG_DIR/api.log" 2>&1 &
-  cd "$SCRIPT_DIR"
+  node apps/api/dist/main.js > "$LOG_DIR/api.log" 2>&1 &
+  API_PID=$!
 else
   # Mock 模式：轻量 Node.js Mock API
   PORT=3001 node apps/api/mock-server.js > "$LOG_DIR/api.log" 2>&1 &
+  API_PID=$!
 fi
-API_PID=$!
 log_info "API 进程 PID: $API_PID"
 
 # 等待 API 启动

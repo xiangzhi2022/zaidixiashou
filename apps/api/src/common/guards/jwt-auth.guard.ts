@@ -16,7 +16,8 @@ export class JwtAuthGuard implements CanActivate {
 
     try {
       const payload = await this.jwtService.verifyAsync(token);
-      (request as any).user = payload;
+      // Normalize: JWT uses 'sub' for user ID, but controllers expect 'id'
+      (request as any).user = { ...payload, id: payload.sub };
     } catch {
       throw new UnauthorizedException('认证令牌无效或已过期');
     }

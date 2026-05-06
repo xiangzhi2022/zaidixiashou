@@ -1,5 +1,4 @@
 import { Injectable, OnModuleDestroy, Logger } from '@nestjs/common';
-import Redis from 'ioredis';
 
 // 内存存储 Map，替代 Redis
 const mockRedis = new Map<string, { value: string; expiry?: number }>();
@@ -8,7 +7,8 @@ const mockRedis = new Map<string, { value: string; expiry?: number }>();
 export class RedisService implements OnModuleDestroy {
   private readonly logger = new Logger(RedisService.name);
   private useMock = true;
-  private client: Redis | null = null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private client: any = null;
 
   constructor() {
     // 直接使用 mock 模式，不尝试连接 Redis
