@@ -3,6 +3,7 @@ import { apiClient } from '../api/client';
 
 interface User {
   id: string;
+  email?: string;
   phone?: string;
   wechatOpenId?: string;
   name?: string;

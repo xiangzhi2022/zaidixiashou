@@ -19,7 +19,7 @@ function LoginPage() {
   const [isRegister, setIsRegister] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [qrCodeScene, setQrCodeScene] = useState('');
+  const [_qrCodeScene, setQrCodeScene] = useState('');
   const [qrStatus, setQrStatus] = useState<'waiting' | 'scanned' | 'confirmed' | 'expired'>('waiting');
   
   const { login } = useAuth();
@@ -141,7 +141,7 @@ function LoginPage() {
         body: JSON.stringify({ email, password, name: email.split('@')[0] }),
       });
       
-      login(result.accessToken, { id: '1', name: email.split('@')[0], email });
+      login(result.accessToken, { id: '1', name: email.split('@')[0] ?? '', email });
       navigate('/');
     } catch (err) {
       setError(err instanceof Error ? err.message : '注册失败');
